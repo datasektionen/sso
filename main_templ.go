@@ -70,7 +70,7 @@ func index(user *User) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if user == nil {
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section style=\"display: flex; gap: 1em; align-items: baseline\"><h2>Dev:</h2><a href=\"/register\">register</a> <a href=\"/login/dev\">login by username</a></section><form method=\"get\" action=\"/login/passkey\"><input type=\"text\" name=\"kthid\" placeholder=\"KTH ID\"> <button>login with passkey</button></form>")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section style=\"display: flex; gap: 1em; align-items: baseline\"><h2>Dev:</h2><a href=\"/register\">register</a> <a href=\"/login/dev\">login by username</a></section><form method=\"get\" action=\"/login/passkey\"><input type=\"text\" name=\"kthid\" placeholder=\"KTH ID\"> <button>login with passkey</button></form><a href=\"/login/oidc/kth\">login with kth</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -122,7 +122,7 @@ func account(user User) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(user.KTHID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `main.templ`, Line: 42, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `main.templ`, Line: 43, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -140,7 +140,7 @@ func account(user User) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(passkey.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `main.templ`, Line: 48, Col: 26}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `main.templ`, Line: 49, Col: 26}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -153,7 +153,7 @@ func account(user User) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(passkey.ID.String())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `main.templ`, Line: 50, Col: 73}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `main.templ`, Line: 51, Col: 73}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {

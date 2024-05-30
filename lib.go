@@ -20,8 +20,7 @@ func route(f func(r *http.Request) ToResponse) http.Handler {
 			err := resp.(error)
 			var httpErr HttpError
 			if errors.As(err, &httpErr) {
-				w.WriteHeader(httpErr.StatusCode)
-				w.Write([]byte(httpErr.Error()))
+				httpErr.ServeHTTP(w, r)
 			} else {
 				slog.Error("Error serving request", "path", r.URL.Path, "error", err)
 				w.WriteHeader(http.StatusInternalServerError)

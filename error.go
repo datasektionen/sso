@@ -15,10 +15,19 @@ func (h HttpError) Error() string {
 	return s
 }
 
+func (h HttpError) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(h.StatusCode)
+	w.Write([]byte(h.Error()))
+}
+
 func BadRequest(message string) error {
 	return HttpError{Message: message, StatusCode: http.StatusBadRequest}
 }
 
 func Unauthorized() error {
 	return HttpError{StatusCode: http.StatusUnauthorized}
+}
+
+func Forbidden() error {
+	return HttpError{StatusCode: http.StatusForbidden}
 }

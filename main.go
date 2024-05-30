@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 //go:generate templ generate
 
 func main() {
-	s, err := NewService()
+	s, err := NewService(context.Background())
 	if err != nil {
 		slog.Error("Could set shit up", "error", err)
 		os.Exit(1)
@@ -25,6 +26,8 @@ func main() {
 	http.Handle("POST /login/dev", route(s.DoLoginDev))
 	http.Handle("GET /login/passkey", route(s.BeginLoginPasskey))
 	http.Handle("POST /login/passkey", route(s.FinishLoginPasskey))
+	http.Handle("GET /login/oidc/kth", route(s.LoginOIDCProviderKTH))
+	http.Handle("GET /oidc/kth/callback", route(s.OIDCProviderKTHCallback))
 	http.Handle("GET /passkey/add", route(s.BeginAddPasskey))
 	http.Handle("POST /passkey/add", route(s.FinishAddPasskey))
 	http.Handle("POST /passkey/remove", route(s.RemovePasskey))

@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/logout/services/legacyapi"
 	"github.com/datasektionen/logout/services/oidcrp"
 	"github.com/datasektionen/logout/services/passkey"
 	"github.com/datasektionen/logout/services/user"
@@ -29,13 +31,17 @@ func main() {
 		panic(err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	user := must(user.NewService(db))
 	passkey := must(passkey.NewService(db))
-	oidcrp := must(oidcrp.NewService(context.Background()))
+	oidcrp := must(oidcrp.NewService(ctx))
+	legacyapi := must(legacyapi.NewService(ctx, db))
+	cancel()
 
 	user.Assign(passkey)
 	passkey.Assign(user)
 	oidcrp.Assign(user)
+	legacyapi.Assign(user)
 
 	colonPort := ":" + strconv.Itoa(config.Config.Port)
 	l, err := net.Listen("tcp", colonPort)

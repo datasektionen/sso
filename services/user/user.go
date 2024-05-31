@@ -26,7 +26,7 @@ func NewService(db *sqlx.DB) (*service, error) {
 	}
 
 	http.Handle("GET /{$}", httputil.Route(s.index))
-	http.Handle("GET /logout", httputil.Route(s.logout))
+	http.Handle("GET /logout", httputil.Route(s.Logout))
 	http.Handle("GET /account", httputil.Route(s.account))
 	http.Handle("GET /register", httputil.Route(s.showRegister))
 	http.Handle("POST /register", httputil.Route(s.doRegister))
@@ -56,3 +56,17 @@ func (s *service) GetLoggedInUser(r *http.Request) (*export.User, error) {
 	user, err := s.GetUser(r.Context(), kthid)
 	return user, nil
 }
+
+func (s *service) Logout(r *http.Request) httputil.ToResponse {
+	sessionCookie, _ := r.Cookie("session")
+	if sessionCookie != nil {
+		if err := s.RemoveSession(r.Context(), sessionCookie.Value); err != nil {
+			return err
+		}
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{Name: "session", MaxAge: -1})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	})
+}
+

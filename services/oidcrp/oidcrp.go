@@ -19,6 +19,7 @@ type service struct {
 }
 
 func NewService(ctx context.Context) (*service, error) {
+	// TODO: persist?
 	hashKey := make([]byte, 32)
 	if _, err := rand.Read(hashKey); err != nil {
 		return nil, err

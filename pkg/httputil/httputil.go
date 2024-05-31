@@ -1,6 +1,7 @@
 package httputil
 
 import (
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -32,8 +33,22 @@ func Route(f func(r *http.Request) ToResponse) http.Handler {
 		case http.Handler:
 			h := resp.(http.Handler)
 			h.ServeHTTP(w, r)
+		case jsonValue:
+			j := resp.(jsonValue).any
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(j); err != nil {
+				slog.Error("Error writing json", "value", j)
+			}
+		default:
+			slog.Error("Got invalid response type when serving request", "url", r.URL.String(), "response", resp)
 		}
 	})
+}
+
+type jsonValue struct{ any }
+
+func JSON(val any) jsonValue {
+	return jsonValue{val}
 }
 
 type HttpError struct {

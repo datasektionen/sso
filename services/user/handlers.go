@@ -3,28 +3,56 @@ package user
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/datasektionen/logout/pkg/httputil"
 )
 
 func (s *service) index(r *http.Request) httputil.ToResponse {
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
+	returnPath := r.FormValue("return-path")
+	if returnPath != "" && returnPath[0] != '/' {
+		return httputil.BadRequest("Invalid return path")
 	}
-	return Index(user)
-}
-
-func (s *service) logout(r *http.Request) httputil.ToResponse {
-	sessionCookie, _ := r.Cookie("session")
-	if sessionCookie != nil {
-		if err := s.RemoveSession(r.Context(), sessionCookie.Value); err != nil {
-			return err
+	hasCookie := false
+	if returnPath == "" {
+		c, _ := r.Cookie("return-path")
+		if c != nil {
+			returnPath = c.Value
+			hasCookie = true
 		}
 	}
+	if returnPath == "" {
+		returnPath = "/account"
+	}
+	if kthid, err := s.GetLoggedInKTHID(r); err != nil {
+		return err
+	} else if kthid != "" {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if hasCookie {
+				http.SetCookie(w, &http.Cookie{Name: "return-path", MaxAge: -1})
+			}
+			http.Redirect(w, r, returnPath, http.StatusSeeOther)
+		})
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{Name: "session", MaxAge: -1})
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		if returnPath != "" {
+			http.SetCookie(w, &http.Cookie{
+				Name:     "return-path",
+				Value:    returnPath,
+				Path:     "/",
+				MaxAge:   int((time.Minute * 10).Seconds()),
+				Secure:   true,
+				HttpOnly: true,
+				SameSite: http.SameSiteLaxMode,
+			})
+		}
+		httputil.Route(func(r *http.Request) httputil.ToResponse {
+			user, err := s.GetLoggedInUser(r)
+			if err != nil {
+				return err
+			}
+			return Index(user)
+		}).ServeHTTP(w, r)
 	})
 }
 
@@ -81,6 +109,6 @@ func (s *service) doLoginDev(r *http.Request) httputil.ToResponse {
 			Value: sessionID.String(),
 			Path:  "/",
 		})
-		http.Redirect(w, r, "/account", http.StatusSeeOther)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 }

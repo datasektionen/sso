@@ -51,6 +51,6 @@ func (s *service) kthCallback(r *http.Request) httputil.ToResponse {
 			Value: sessionID.String(),
 			Path:  "/",
 		})
-		http.Redirect(w, r, "/account", http.StatusSeeOther)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}, s.relyingParty)
 }

@@ -60,7 +60,6 @@ func (s *service) finishLoginPasskey(r *http.Request) httputil.ToResponse {
 			Value: sessionID.String(),
 			Path:  "/",
 		})
-		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 }
 

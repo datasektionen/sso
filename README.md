@@ -13,7 +13,7 @@ find -name '*.templ' | entr go generate ./...
 ```
 
 ```sh
-find -name "*.go" | entr -r go run .
+find -name '*.go' | entr -r go run .
 ```
 
 ### Mocking an OIDC provider

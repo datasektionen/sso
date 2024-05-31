@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/httputil"
 	user "github.com/datasektionen/logout/services/user/export"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
@@ -29,10 +29,10 @@ func NewService(ctx context.Context) (*service, error) {
 	}
 	rp, err := rp.NewRelyingPartyOIDC(
 		ctx,
-		os.Getenv("KTH_ISSUER_URL"),
-		os.Getenv("KTH_CLIENT_ID"),
-		os.Getenv("KTH_CLIENT_SECRET"),
-		os.Getenv("KTH_RP_ORIGIN")+"/oidc/kth/callback",
+		config.Config.KTHOIDCIssuerURL.String(),
+		config.Config.KTHOIDCClientID,
+		config.Config.KTHOIDCClientSecret,
+		config.Config.KTHOIDCRPOrigin.String()+"/oidc/kth/callback",
 		[]string{"openid", "profile", "email"},
 		rp.WithCookieHandler(oidcHttp.NewCookieHandler(
 			hashKey,

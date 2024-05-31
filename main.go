@@ -6,7 +6,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 
+	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/services/oidcrp"
 	"github.com/datasektionen/logout/services/passkey"
 	"github.com/datasektionen/logout/services/user"
@@ -22,7 +24,7 @@ func must[T any](t T, err error) T {
 }
 
 func main() {
-	db, err := sqlx.Connect("pgx", "postgresql://logout:logout@localhost:5432/logout")
+	db, err := sqlx.Connect("pgx", config.Config.DatabaseURL.String())
 	if err != nil {
 		panic(err)
 	}
@@ -35,16 +37,13 @@ func main() {
 	passkey.Assign(user)
 	oidcrp.Assign(user)
 
-	port, ok := os.LookupEnv("PORT")
-	if !ok {
-		port = "3000"
-	}
-	l, err := net.Listen("tcp", ":"+port)
+	colonPort := ":" + strconv.Itoa(config.Config.Port)
+	l, err := net.Listen("tcp", colonPort)
 	if err != nil {
-		slog.Error("Could not start listening for connections", "port", port, "error", err)
+		slog.Error("Could not start listening for connections", "port", colonPort, "error", err)
 		os.Exit(1)
 	}
-	slog.Info("Server started", "address", "http://localhost:"+port)
+	slog.Info("Server started", "address", "http://localhost"+colonPort)
 	slog.Error("Failed serving http server", "error", http.Serve(l, nil))
 	os.Exit(1)
 }

@@ -3,6 +3,7 @@ package passkey
 import (
 	"net/http"
 
+	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/services/passkey/export"
 	user "github.com/datasektionen/logout/services/user/export"
@@ -22,9 +23,9 @@ var _ export.Service = &service{}
 
 func NewService(db *sqlx.DB) (*service, error) {
 	wa, err := webauthn.New(&webauthn.Config{
-		RPID:          "localhost",
+		RPID:          config.Config.Origin.Hostname(),
 		RPDisplayName: "Konglig Datasektionen",
-		RPOrigins:     []string{"http://localhost:3000"},
+		RPOrigins:     []string{config.Config.Origin.String()},
 	})
 	if err != nil {
 		return nil, err

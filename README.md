@@ -1,9 +1,15 @@
+## Routes
+
+```sh
+grep -r 'http.Handle(' --no-filename services/ | sed 's/\s\+//'
+```
+
 ## Development
 
 ### Running with automatic recompiling & rerunning
 
 ```sh
-find -name '*.templ' | entr -r go generate
+find -name '*.templ' | entr go generate ./...
 ```
 
 ```sh
@@ -18,10 +24,10 @@ Start a vault dev server (tested with version v1.16.2):
 vault server -dev
 ```
 
-In another terminal, type the following:
+In another terminal, set it up with the following:
 
 ```sh
-export VAULT_ADDR='http://127.0.0.1:8200'
+export VAULT_ADDR=http://127.0.0.1:8200
 
 vault auth enable userpass
 vault auth tune -listing-visibility=unauth userpass
@@ -46,7 +52,7 @@ KTH_RP_ORIGIN=http://localhost:3000
 
 Then set the env variables printed at the end. Then you can log in using
 `turetek` as username and password when you've registered `turetek` in the
-system. Note that it doesn't mock all the fields we get from kth.
+system. Note that it doesn't mock all the claims we get from kth.
 
 ## Example claims from KTH:
 

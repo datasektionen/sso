@@ -1,0 +1,70 @@
+package user
+
+import (
+	"github.com/datasektionen/logout/pkg/templates"
+	"github.com/datasektionen/logout/services/user/export"
+	passkey "github.com/datasektionen/logout/services/passkey/export"
+)
+
+templ Index(user *export.User) {
+	@templates.Layout() {
+		<h1>Logout</h1>
+		if user == nil {
+			<section style="display: flex; gap: 1em; align-items: baseline">
+				<h2>Dev:</h2>
+				<a href="/register">register</a>
+				<a href="/login/dev">login by username</a>
+			</section>
+			<form method="get" action="/login/passkey">
+				<input type="text" name="kthid" placeholder="KTH ID"/>
+				<button>login with passkey</button>
+			</form>
+			<a href="/login/oidc/kth">login with kth</a>
+		} else {
+			<a href="/logout">logout</a>
+		}
+	}
+}
+
+templ Account(user export.User, passkeys []passkey.Passkey) {
+	@templates.Layout() {
+		<h1>Logout</h1>
+		<a href="/logout">logout</a>
+		<p>Hello there, { user.KTHID }</p>
+		<section>
+			<h2>Passkeys:</h2>
+			<ul>
+				for _, passkey := range passkeys {
+					<li style="display: flex; gap: 0.5em">
+						<span>{ passkey.Name }</span>
+						<form method="post" action="/passkey/remove">
+							<input type="hidden" name="passkey-id" value={ passkey.ID.String() }/>
+							<button>x</button>
+						</form>
+					</li>
+				}
+			</ul>
+			<a href="/passkey/add">add passkey</a>
+		</section>
+	}
+}
+
+templ Register() {
+	@templates.Layout() {
+		<form method="post" action="/register">
+			<label for="kthid">KTH-ID:</label>
+			<input id="kthid" name="kthid" type="text"/>
+			<button>Register</button>
+		</form>
+	}
+}
+
+templ LoginDev() {
+	@templates.Layout() {
+		<form method="post" action="/login/dev">
+			<label for="kthid">KTH-ID:</label>
+			<input id="kthid" name="kthid" type="text"/>
+			<button>Login</button>
+		</form>
+	}
+}

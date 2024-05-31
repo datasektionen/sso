@@ -6,31 +6,34 @@ import (
 	"net"
 	"net/http"
 	"os"
+
+	"github.com/datasektionen/logout/services/oidcrp"
+	"github.com/datasektionen/logout/services/passkey"
+	"github.com/datasektionen/logout/services/user"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
-//go:generate templ generate
+func must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
 
 func main() {
-	s, err := NewService(context.Background())
+	db, err := sqlx.Connect("pgx", "postgresql://logout:logout@localhost:5432/logout")
 	if err != nil {
-		slog.Error("Could set shit up", "error", err)
-		os.Exit(1)
+		panic(err)
 	}
 
-	http.Handle("GET /{$}", route(s.Index))
-	http.Handle("GET /logout", route(s.Logout))
-	http.Handle("GET /account", route(s.Account))
-	http.Handle("GET /register", route(s.ShowRegister))
-	http.Handle("POST /register", route(s.DoRegister))
-	http.Handle("GET /login/dev", route(s.ShowLoginDev))
-	http.Handle("POST /login/dev", route(s.DoLoginDev))
-	http.Handle("GET /login/passkey", route(s.BeginLoginPasskey))
-	http.Handle("POST /login/passkey", route(s.FinishLoginPasskey))
-	http.Handle("GET /login/oidc/kth", route(s.LoginOIDCProviderKTH))
-	http.Handle("GET /oidc/kth/callback", route(s.OIDCProviderKTHCallback))
-	http.Handle("GET /passkey/add", route(s.BeginAddPasskey))
-	http.Handle("POST /passkey/add", route(s.FinishAddPasskey))
-	http.Handle("POST /passkey/remove", route(s.RemovePasskey))
+	user := must(user.NewService(db))
+	passkey := must(passkey.NewService(db))
+	oidcrp := must(oidcrp.NewService(context.Background()))
+
+	user.Assign(passkey)
+	passkey.Assign(user)
+	oidcrp.Assign(user)
 
 	port, ok := os.LookupEnv("PORT")
 	if !ok {

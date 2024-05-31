@@ -6,6 +6,34 @@ grep -r 'http.Handle(' --no-filename services/ | sed 's/\s\+//'
 
 ## Development
 
+### Install dependencies
+
+Download a go compiler, at least version 1.22
+
+Download the correct version of [templ](https://templ.guide/) using:
+```sh
+go install github.com/a-h/templ/cmd/templ@$(grep -oPm1 'github.com/a-h/templ \K[^ ]*' go.sum)
+```
+
+### Database
+
+Start a postgresql database, using e.g.:
+```sh
+docker run -d --name logout-db -p 5432:5432 -e POSTGRES_PASSWORD=logout -e POSTGRES_DB=logout -e POSTGRES_USER=logout postgres:16-alpine3.19
+```
+...or add a user and database to an existing instance:
+```sql
+CREATE USER logout WITH PASSWORD 'logout';
+CREATE DATABASE logout WITH OWNER logout;
+```
+
+### Environment variables
+
+Copy `example.env` to `.env` and change anything if needed.
+
+The best way (objectively, of course) to load them is by installing
+[direnv](https://direnv.net/).
+
 ### Running with automatic recompiling & rerunning
 
 ```sh
@@ -17,6 +45,8 @@ find -name '*.go' | entr -r go run .
 ```
 
 ### Mocking an OIDC provider
+
+Only needed if you want to test the "Login with KTH" button.
 
 Start a vault dev server (tested with version v1.16.2):
 

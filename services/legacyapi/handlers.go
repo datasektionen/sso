@@ -11,11 +11,11 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *service) hello(r *http.Request) httputil.ToResponse {
+func (s *service) hello(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return "Hello Login!!!!"
 }
 
-func (s *service) login(r *http.Request) httputil.ToResponse {
+func (s *service) login(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	callbackString := r.FormValue("callback")
 	callback, err := url.Parse(callbackString)
 	if err != nil {
@@ -40,21 +40,20 @@ func (s *service) login(r *http.Request) httputil.ToResponse {
 		callback.Hostname() == "127.0.0.1") {
 		return httputil.BadRequest("Invalid callback url")
 	}
-	return http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{
-			Name:     "legacyapi-callback",
-			Value:    callback.String(),
-			Path:     "/legacyapi",
-			MaxAge:   int((time.Minute * 10).Seconds()),
-			Secure:   true,
-			HttpOnly: true,
-			SameSite: http.SameSiteLaxMode,
-		})
-		http.Redirect(w, r, "/?return-path="+url.QueryEscape("/legacyapi/callback"), http.StatusSeeOther)
-	}))
+	http.SetCookie(w, &http.Cookie{
+		Name:     "legacyapi-callback",
+		Value:    callback.String(),
+		Path:     "/legacyapi",
+		MaxAge:   int((time.Minute * 10).Seconds()),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	http.Redirect(w, r, "/?return-path="+url.QueryEscape("/legacyapi/callback"), http.StatusSeeOther)
+	return nil
 }
 
-func (s *service) callback(r *http.Request) httputil.ToResponse {
+func (s *service) callback(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	callback, _ := r.Cookie("legacyapi-callback")
 	if callback == nil {
 		return httputil.BadRequest("Idk where you came from. Maybe you took longer than 10 minutes?")
@@ -73,7 +72,7 @@ func (s *service) callback(r *http.Request) httputil.ToResponse {
 	return http.RedirectHandler(callback.Value+token.String(), http.StatusSeeOther)
 }
 
-func (s *service) verify(r *http.Request) httputil.ToResponse {
+func (s *service) verify(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	token, err := uuid.Parse(strings.TrimSuffix(r.PathValue("token"), ".json"))
 	if err != nil {
 		return httputil.BadRequest("Invalid token")
@@ -95,7 +94,7 @@ func (s *service) verify(r *http.Request) httputil.ToResponse {
 	})
 }
 
-func (s *service) logout(r *http.Request) httputil.ToResponse {
+func (s *service) logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.user.GetLoggedInUser(r)
 	if err != nil {
 		return err
@@ -105,5 +104,5 @@ func (s *service) logout(r *http.Request) httputil.ToResponse {
 			return err
 		}
 	}
-	return s.user.Logout(r)
+	return s.user.Logout(w, r)
 }

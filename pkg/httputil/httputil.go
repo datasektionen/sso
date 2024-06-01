@@ -11,9 +11,12 @@ import (
 
 type ToResponse any
 
-func Route(f func(r *http.Request) ToResponse) http.Handler {
+func Route(f func(w http.ResponseWriter, r *http.Request) ToResponse) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := f(r)
+		resp := f(w, r)
+		if resp == nil {
+			return
+		}
 		switch resp.(type) {
 		case templ.Component:
 			resp.(templ.Component).Render(r.Context(), w)

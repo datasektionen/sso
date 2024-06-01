@@ -13,7 +13,7 @@ import (
 
 var hackSession *webauthn.SessionData
 
-func (s *service) beginLoginPasskey(r *http.Request) httputil.ToResponse {
+func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.user.GetUser(r.Context(), r.FormValue("kthid"))
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func (s *service) beginLoginPasskey(r *http.Request) httputil.ToResponse {
 	return LoginPasskey(credAss)
 }
 
-func (s *service) finishLoginPasskey(r *http.Request) httputil.ToResponse {
+func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.user.GetUser(r.Context(), r.FormValue("kthid"))
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (s *service) finishLoginPasskey(r *http.Request) httputil.ToResponse {
 	return s.user.LoginUser(r.Context(), user.KTHID)
 }
 
-func (s *service) beginAddPasskey(r *http.Request) httputil.ToResponse {
+func (s *service) beginAddPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.user.GetLoggedInUser(r)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (s *service) beginAddPasskey(r *http.Request) httputil.ToResponse {
 	return AddPasskey(creation)
 }
 
-func (s *service) finishAddPasskey(r *http.Request) httputil.ToResponse {
+func (s *service) finishAddPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.user.GetLoggedInUser(r)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (s *service) finishAddPasskey(r *http.Request) httputil.ToResponse {
 	return ""
 }
 
-func (s *service) removePasskey(r *http.Request) httputil.ToResponse {
+func (s *service) removePasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.user.GetLoggedInUser(r)
 	if err != nil {
 		return err

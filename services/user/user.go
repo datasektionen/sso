@@ -9,6 +9,7 @@ import (
 	passkey "github.com/datasektionen/logout/services/passkey/export"
 	"github.com/datasektionen/logout/services/user/export"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 //go:generate templ generate
@@ -40,6 +41,9 @@ func (s *service) Assign(passkey passkey.Service) {
 
 func (s *service) GetUser(ctx context.Context, kthid string) (*export.User, error) {
 	user, err := s.db.GetUser(ctx, kthid)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +77,14 @@ func (s *service) GetLoggedInKTHID(r *http.Request) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	return s.db.GetSession(r.Context(), sessionID)
+	session, err := s.db.GetSession(r.Context(), sessionID)
+	if err == pgx.ErrNoRows {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return session, nil
 }
 
 func (s *service) GetLoggedInUser(r *http.Request) (*export.User, error) {
@@ -81,11 +92,20 @@ func (s *service) GetLoggedInUser(r *http.Request) (*export.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	if kthid == "" {
+		return nil, nil
+	}
 	user, err := s.db.GetUser(r.Context(), kthid)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
 	return &export.User{KTHID: user.Kthid, WebAuthnID: user.WebauthnID}, nil
 }
 
-func (s *service) Logout(r *http.Request) httputil.ToResponse {
+func (s *service) Logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	sessionCookie, _ := r.Cookie("session")
 	if sessionCookie != nil {
 		sessionID, err := uuid.Parse(sessionCookie.Value)
@@ -95,8 +115,7 @@ func (s *service) Logout(r *http.Request) httputil.ToResponse {
 			}
 		}
 	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{Name: "session", MaxAge: -1})
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-	})
+	http.SetCookie(w, &http.Cookie{Name: "session", MaxAge: -1})
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }

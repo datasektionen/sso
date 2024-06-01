@@ -8,7 +8,7 @@ import (
 	"github.com/datasektionen/logout/pkg/httputil"
 )
 
-func (s *service) index(r *http.Request) httputil.ToResponse {
+func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	returnPath := r.FormValue("return-path")
 	if returnPath != "" && returnPath[0] != '/' {
 		return httputil.BadRequest("Invalid return path")
@@ -27,35 +27,30 @@ func (s *service) index(r *http.Request) httputil.ToResponse {
 	if kthid, err := s.GetLoggedInKTHID(r); err != nil {
 		return err
 	} else if kthid != "" {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if hasCookie {
-				http.SetCookie(w, &http.Cookie{Name: "return-path", MaxAge: -1})
-			}
-			http.Redirect(w, r, returnPath, http.StatusSeeOther)
+		if hasCookie {
+			http.SetCookie(w, &http.Cookie{Name: "return-path", MaxAge: -1})
+		}
+		http.Redirect(w, r, returnPath, http.StatusSeeOther)
+		return nil
+	}
+	if returnPath != "" {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "return-path",
+			Value:    returnPath,
+			MaxAge:   int((time.Minute * 10).Seconds()),
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
 		})
 	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if returnPath != "" {
-			http.SetCookie(w, &http.Cookie{
-				Name:     "return-path",
-				Value:    returnPath,
-				MaxAge:   int((time.Minute * 10).Seconds()),
-				Secure:   true,
-				HttpOnly: true,
-				SameSite: http.SameSiteLaxMode,
-			})
-		}
-		httputil.Route(func(r *http.Request) httputil.ToResponse {
-			user, err := s.GetLoggedInUser(r)
-			if err != nil {
-				return err
-			}
-			return Index(user)
-		}).ServeHTTP(w, r)
-	})
+	user, err := s.GetLoggedInUser(r)
+	if err != nil {
+		return err
+	}
+	return Index(user)
 }
 
-func (s *service) account(r *http.Request) httputil.ToResponse {
+func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.GetLoggedInUser(r)
 	if err != nil {
 		return err
@@ -70,11 +65,11 @@ func (s *service) account(r *http.Request) httputil.ToResponse {
 	return Account(*user, passkeys)
 }
 
-func (s *service) showRegister(r *http.Request) httputil.ToResponse {
+func (s *service) showRegister(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return Register()
 }
 
-func (s *service) doRegister(r *http.Request) httputil.ToResponse {
+func (s *service) doRegister(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	kthid := r.FormValue("kthid")
 	if len(kthid) < 2 {
 		return httputil.BadRequest("Invalid kthid")
@@ -86,11 +81,11 @@ func (s *service) doRegister(r *http.Request) httputil.ToResponse {
 	return http.RedirectHandler("/", http.StatusSeeOther)
 }
 
-func (s *service) showLoginDev(r *http.Request) httputil.ToResponse {
+func (s *service) showLoginDev(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return LoginDev()
 }
 
-func (s *service) doLoginDev(r *http.Request) httputil.ToResponse {
+func (s *service) doLoginDev(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.GetUser(r.Context(), r.FormValue("kthid"))
 	if err != nil {
 		return err
@@ -102,12 +97,11 @@ func (s *service) doLoginDev(r *http.Request) httputil.ToResponse {
 	if err != nil {
 		return err
 	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{
-			Name:  "session",
-			Value: sessionID.String(),
-			Path:  "/",
-		})
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.SetCookie(w, &http.Cookie{
+		Name:  "session",
+		Value: sessionID.String(),
+		Path:  "/",
 	})
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }

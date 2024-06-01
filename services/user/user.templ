@@ -6,23 +6,20 @@ import (
 	passkey "github.com/datasektionen/logout/services/passkey/export"
 )
 
-templ Index(user *export.User) {
+templ Index(passkeyLogin func() templ.Component) {
 	@templates.Layout() {
-		<h1>Logout</h1>
-		if user == nil {
-			<section style="display: flex; gap: 1em; align-items: baseline">
-				<h2>Dev:</h2>
-				<a href="/register">register</a>
-				<a href="/login/dev">login by username</a>
-			</section>
-			<form method="get" action="/login/passkey">
-				<input type="text" name="kthid" placeholder="KTH ID"/>
-				<button>login with passkey</button>
-			</form>
-			<a href="/login/oidc/kth">login with kth</a>
-		} else {
-			<a href="/logout">logout</a>
-		}
+		<div class="page-center-container">
+			<main>
+				<img class="shield" src="/static/skold_vit.svg"/>
+				<!--section style="display: flex; gap: 1em; align-items: baseline">
+					<h2>Dev:</h2>
+					<a href="/register">register</a>
+					<a href="/login/dev">login by username</a>
+				</section-->
+				<a autofocus class="oidc-link" href="/login/oidc/kth">Log In with KTH</a>
+				@passkeyLogin()
+			</main>
+		</div>
 	}
 }
 

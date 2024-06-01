@@ -3,6 +3,7 @@ package export
 import (
 	"context"
 
+	"github.com/a-h/templ"
 	user "github.com/datasektionen/logout/services/user/export"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 
 type Service interface {
 	ListPasskeysForUser(ctx context.Context, kthid string) ([]Passkey, error)
+	LoginForm() templ.Component
 }
 
 type Passkey struct {

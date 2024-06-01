@@ -1,0 +1,132 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    --off-white: #f7f7f7;
+    --cerise-strong: #ee2a7b;
+}
+
+body {
+    background-color: #111828;
+    color: var(--off-white);
+    font-family: sans-serif;
+}
+
+.page-center-container {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+}
+
+main {
+    background-color: #2a3344;
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1em;
+    border-radius: 4px;
+    width: 340px;
+}
+
+.shield {
+    height: 160px;
+    margin-inline: auto;
+    display: block;
+    padding-bottom: 1em;
+}
+
+.oidc-link {
+    background-color: #3f4c66;
+    padding: 0.4em;
+    color: var(--off-white);
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+    text-decoration: none;
+    text-align: center;
+    border: 1px solid #00000000;
+    position: relative;
+    user-select: none;
+}
+
+form {
+    width: 100%;
+}
+
+form * {
+    font-size: inherit;
+}
+
+input[type="text"] {
+    background-color: #1c243b;
+    border: 1px solid #666;
+    padding: 0.4em;
+    border-radius: 4px;
+    color: var(--off-white);
+    height: 2em;
+}
+
+.small {
+    font-size: 0.9em;
+}
+
+form :focus, a:focus {
+    border: 1px solid var(--cerise-strong);
+    outline: none;
+}
+
+button {
+    background-color: #3f4c66;
+    border: 1px solid #666;
+    flex-shrink: 0;
+    height: 2em;
+    width: 2em;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.white-icon {
+    filter: invert(100%);
+}
+
+.row {
+    display: flex;
+    gap: 0.5em;
+}
+
+input#kthid {
+    flex-basis: 100%;
+}
+
+form .error {
+    padding: 0.6em;
+    margin-top: 0.4em;
+    background-color: #ff000080;
+    color: var(--off-white);
+    border-radius: 4px;
+}
+
+.spinner:after {
+    content: " ";
+    display: block;
+    position: absolute;
+    width: 2em;
+    height: 2em;
+    margin: 8px;
+    border-radius: 50%;
+    border: 1px solid;
+    border-color: white transparent white transparent;
+    animation: spinner 1.6s linear infinite;
+    box-sizing: border-box;
+}
+@keyframes spinner {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

@@ -43,11 +43,7 @@ func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 			SameSite: http.SameSiteLaxMode,
 		})
 	}
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
-	}
-	return Index(user)
+	return Index(s.passkey.LoginForm)
 }
 
 func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

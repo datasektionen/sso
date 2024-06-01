@@ -7,6 +7,7 @@ import (
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/services/passkey/export"
+	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 )
@@ -30,11 +31,23 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 	if err != nil {
 		return err
 	}
-	return LoginPasskey(credAss)
+	return httputil.JSON(credAss)
 }
 
 func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.user.GetUser(r.Context(), r.FormValue("kthid"))
+	var body struct {
+		KTHID string `json:"kthid"`
+		protocol.CredentialAssertionResponse
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		return httputil.BadRequest("Invalid credential")
+	}
+	credAss, err := body.CredentialAssertionResponse.Parse()
+	if err != nil {
+		return httputil.BadRequest("Invalid credential")
+	}
+
+	user, err := s.user.GetUser(r.Context(), body.KTHID)
 	if err != nil {
 		return err
 	}
@@ -45,7 +58,8 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 	if err != nil {
 		return err
 	}
-	_, err = s.webauthn.FinishLogin(export.WebAuthnUser{User: user, Passkeys: passkeys}, *hackSession, r)
+
+	_, err = s.webauthn.ValidateLogin(export.WebAuthnUser{User: user, Passkeys: passkeys}, *hackSession, credAss)
 	if err != nil {
 		return err
 	}

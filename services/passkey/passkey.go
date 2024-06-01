@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/a-h/templ"
 	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
@@ -35,8 +36,8 @@ func NewService(db *database.Queries) (*service, error) {
 
 	s := &service{db: db, webauthn: wa}
 
-	http.Handle("GET /login/passkey", httputil.Route(s.beginLoginPasskey))
-	http.Handle("POST /login/passkey", httputil.Route(s.finishLoginPasskey))
+	http.Handle("POST /login/passkey/begin", httputil.Route(s.beginLoginPasskey))
+	http.Handle("POST /login/passkey/finish", httputil.Route(s.finishLoginPasskey))
 	http.Handle("GET /passkey/add", httputil.Route(s.beginAddPasskey))
 	http.Handle("POST /passkey/add", httputil.Route(s.finishAddPasskey))
 	http.Handle("POST /passkey/remove", httputil.Route(s.removePasskey))
@@ -66,4 +67,8 @@ func (s *service) ListPasskeysForUser(ctx context.Context, kthid string) ([]expo
 		}
 	}
 	return passkeys, nil
+}
+
+func (s *service) LoginForm() templ.Component {
+	return LoginForm()
 }

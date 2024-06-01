@@ -5,26 +5,71 @@ import (
 	"github.com/datasektionen/logout/pkg/templates"
 )
 
-templ LoginPasskey(ca *protocol.CredentialAssertion) {
-	@templates.Layout() {
-		@templ.JSONScript("credential-assertion", ca)
-		@base64ArrayBufferScript()
-		<script type="module">
-			let decodebase64url = data =>
-				Uint8Array.from(window.atob(data.replace(/-/g, "+").replace(/_/g, "/")), v => v.charCodeAt(0));
-			let encodebase64url = data =>
-				base64ArrayBuffer(data).replace(/\+/g, "-").replace(/\//g, "_");
+templ LoginForm() {
+	<form id="passkey-login">
+		<label class="small" for="kthid">Log In using a Passkey</label>
+		<div class="row">
+			<input
+				id="kthid"
+				required
+				type="text"
+				name="kthid"
+				placeholder="KTH ID"
+			/>
+			<button><img class="white-icon" src="/static/key_icon.svg"/></button>
+		</div>
+	</form>
+	@base64Helpers()
+	<script>
+		let form = document.querySelector("#passkey-login");
+		let button = form.querySelector("button");
 
-			let ca = JSON.parse(document.querySelector("#credential-assertion").textContent);
+		function showError(message) {
+			let el = document.createElement("p");
+			el.innerText = message;
+			el.classList.add("error");
+			form.appendChild(el);
+		}
+
+		if (!("credentials" in navigator)) {
+			form.remove();
+		}
+
+		form.onsubmit = (event) => (async function() {
+			event.preventDefault();
+			for (let e of form.querySelectorAll(".error")) {
+				e.remove();
+			}
+			let kthid = new FormData(form).get("kthid");
+			button.classList.add("spinner");
+			let beginRes = await fetch("/login/passkey/begin", {
+				method: "post",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+					"Accept": "application/json",
+				},
+				body: new URLSearchParams({ kthid }).toString(),
+			});
+			let ca = await beginRes.json();
+			if (beginRes.status != 200) {
+				throw new Error(ca.message);
+				return;
+			}
 			ca.publicKey.challenge = decodebase64url(ca.publicKey.challenge);
 			for (let c of ca.publicKey.allowCredentials) {
 				c.id = decodebase64url(c.id);
 			}
-			let cred = await navigator.credentials.get(ca);
-			let res = await fetch("/login/passkey" + window.location.search, {
+			let cred;
+			try {
+				cred = await navigator.credentials.get(ca);
+			} catch (err) {
+				throw new Error("Request denied or canceled");
+			}
+			let finishRes = await fetch("/login/passkey/finish", {
 				method: "post",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
+					kthid,
 					id: cred.id,
 					rawId: encodebase64url(cred.rawId),
 					type: cred.type,
@@ -37,9 +82,13 @@ templ LoginPasskey(ca *protocol.CredentialAssertion) {
 					},
 				}),
 			});
-			if (res.status == 200) window.location = "/";
-		</script>
-	}
+			if (finishRes.status == 200) window.location = "/";
+		}().catch(err => {
+			button.classList.remove("spinner");
+			if (err.message) err = err.message;
+			showError(err);
+		}));
+	</script>
 }
 
 templ AddPasskey(cc *protocol.CredentialCreation) {
@@ -49,13 +98,8 @@ templ AddPasskey(cc *protocol.CredentialCreation) {
 			<button>Add</button>
 		</form>
 		@templ.JSONScript("credential-creation", cc)
-		@base64ArrayBufferScript()
+		@base64Helpers()
 		<script>
-			let decodebase64url = data =>
-				Uint8Array.from(window.atob(data.replace(/-/g, "+").replace(/_/g, "/")), v => v.charCodeAt(0));
-			let encodebase64url = data =>
-				base64ArrayBuffer(data).replace(/\+/g, "-").replace(/\//g, "_");
-
 			async function addPasskey(event) {
 				event.preventDefault();
 				let name = document.querySelector("#passkey-name").value;
@@ -82,8 +126,12 @@ templ AddPasskey(cc *protocol.CredentialCreation) {
 	}
 }
 
-templ base64ArrayBufferScript() {
+templ base64Helpers() {
 	<script>
+		let decodebase64url = data =>
+			Uint8Array.from(window.atob(data.replace(/-/g, "+").replace(/_/g, "/")), v => v.charCodeAt(0));
+		let encodebase64url = data =>
+			base64ArrayBuffer(data).replace(/\+/g, "-").replace(/\//g, "_");
 /*
 MIT LICENSE
 Copyright 2011 Jon Leighton
@@ -140,7 +188,7 @@ function base64ArrayBuffer(arrayBuffer) {
 
 		base64 += encodings[a] + encodings[b] + encodings[c] + '='
 	}
-	
+
 	return base64
 }
 	</script>

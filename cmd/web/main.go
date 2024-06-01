@@ -15,6 +15,7 @@ import (
 	"github.com/datasektionen/logout/services/legacyapi"
 	"github.com/datasektionen/logout/services/oidcrp"
 	"github.com/datasektionen/logout/services/passkey"
+	"github.com/datasektionen/logout/services/static"
 	"github.com/datasektionen/logout/services/user"
 )
 
@@ -35,6 +36,8 @@ func main() {
 	passkey.Assign(user)
 	oidcrp.Assign(user)
 	legacyapi.Assign(user)
+
+	static.Mount()
 
 	colonPort := ":" + strconv.Itoa(config.Config.Port)
 	l, err := net.Listen("tcp", colonPort)

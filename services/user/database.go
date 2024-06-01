@@ -19,6 +19,7 @@ func (s *service) migrateDB() error {
 		create table if not exists sessions (
 			id uuid primary key default gen_random_uuid(),
 			kthid text not null,
+			last_used_at timestamp not null default now(),
 
 			foreign key (kthid) references users (kthid)
 		);
@@ -39,7 +40,11 @@ func (s *service) CreateSession(ctx context.Context, kthid string) (uuid.UUID, e
 func (s *service) GetSession(sessionID string) (string, error) {
 	var kthid string
 	if err := s.db.QueryRowx(`--sql
-		select kthid from sessions where id = $1
+		update sessions
+		set last_used_at = now()
+		where id = $1
+		and last_used_at > now() - interval '8 hours'
+		returning kthid
 	`, sessionID).Scan(&kthid); err == sql.ErrNoRows {
 		return "", nil
 	} else if err != nil {

@@ -18,13 +18,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func must[T any](t T, err error) T {
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
 func main() {
 	db, err := sqlx.Connect("pgx", config.Config.DatabaseURL.String())
 	if err != nil {
@@ -52,4 +45,11 @@ func main() {
 	slog.Info("Server started", "address", "http://localhost"+colonPort)
 	slog.Error("Failed serving http server", "error", http.Serve(l, nil))
 	os.Exit(1)
+}
+
+func must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

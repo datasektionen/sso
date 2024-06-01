@@ -5,12 +5,11 @@ import (
 	"net/http"
 
 	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/google/uuid"
 )
 
 type Service interface {
 	GetUser(ctx context.Context, kthid string) (*User, error)
-	CreateSession(ctx context.Context, kthid string) (uuid.UUID, error)
+	LoginUser(ctx context.Context, kthid string) httputil.ToResponse
 	GetLoggedInUser(r *http.Request) (*User, error)
 	Logout(r *http.Request) httputil.ToResponse
 }

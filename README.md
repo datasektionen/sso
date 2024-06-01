@@ -115,3 +115,12 @@ system. Note that it doesn't mock all the claims we get from kth.
     "ver": "1.0"
 }
 ```
+
+## Cookie [`SameSite`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#samesitesamesite-value) mode
+
+It may seem like most cookies could and should have the `SameSite` attribute
+set to `Strict`, but when the user is redirected back from the KTH login page
+to `/oidc/kth/callback` that redirects the user further within this system and
+then cookies must be sent, but from some local testing it seems they're not
+since the user was (indirectly) redirected from KTH. Therefore they're set to
+`Lax`.

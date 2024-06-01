@@ -50,17 +50,7 @@ func (s *service) finishLoginPasskey(r *http.Request) httputil.ToResponse {
 	if err != nil {
 		return err
 	}
-	sessionID, err := s.user.CreateSession(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{
-			Name:  "session",
-			Value: sessionID.String(),
-			Path:  "/",
-		})
-	})
+	return s.user.LoginUser(r.Context(), user.KTHID)
 }
 
 func (s *service) beginAddPasskey(r *http.Request) httputil.ToResponse {

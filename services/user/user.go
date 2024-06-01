@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/datasektionen/logout/pkg/httputil"
@@ -40,12 +41,30 @@ func (s *service) Assign(passkey passkey.Service) {
 	s.passkey = passkey
 }
 
+func (s *service) LoginUser(ctx context.Context, kthid string) httputil.ToResponse {
+	sessionID, err := s.createSession(ctx, kthid)
+	if err != nil {
+		return err
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    sessionID.String(),
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	})
+}
+
 func (s *service) GetLoggedInKTHID(r *http.Request) (string, error) {
 	sessionCookie, _ := r.Cookie("session")
 	if sessionCookie == nil {
 		return "", nil
 	}
-	return s.GetSession(sessionCookie.Value)
+	return s.getSession(sessionCookie.Value)
 }
 
 func (s *service) GetLoggedInUser(r *http.Request) (*export.User, error) {
@@ -60,7 +79,7 @@ func (s *service) GetLoggedInUser(r *http.Request) (*export.User, error) {
 func (s *service) Logout(r *http.Request) httputil.ToResponse {
 	sessionCookie, _ := r.Cookie("session")
 	if sessionCookie != nil {
-		if err := s.RemoveSession(r.Context(), sessionCookie.Value); err != nil {
+		if err := s.removeSession(r.Context(), sessionCookie.Value); err != nil {
 			return err
 		}
 	}
@@ -69,4 +88,3 @@ func (s *service) Logout(r *http.Request) httputil.ToResponse {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 }
-

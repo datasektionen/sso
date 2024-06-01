@@ -39,7 +39,6 @@ func (s *service) index(r *http.Request) httputil.ToResponse {
 			http.SetCookie(w, &http.Cookie{
 				Name:     "return-path",
 				Value:    returnPath,
-				Path:     "/",
 				MaxAge:   int((time.Minute * 10).Seconds()),
 				Secure:   true,
 				HttpOnly: true,
@@ -80,7 +79,7 @@ func (s *service) doRegister(r *http.Request) httputil.ToResponse {
 	if len(kthid) < 2 {
 		return httputil.BadRequest("Invalid kthid")
 	}
-	if err := s.CreateUser(r.Context(), kthid); err != nil {
+	if err := s.createUser(r.Context(), kthid); err != nil {
 		return err
 	}
 	slog.Info("User registrated", "kthid", kthid)
@@ -99,7 +98,7 @@ func (s *service) doLoginDev(r *http.Request) httputil.ToResponse {
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	sessionID, err := s.CreateSession(r.Context(), user.KTHID)
+	sessionID, err := s.createSession(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}

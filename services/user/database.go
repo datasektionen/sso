@@ -27,7 +27,7 @@ func (s *service) migrateDB() error {
 	return err
 }
 
-func (s *service) CreateSession(ctx context.Context, kthid string) (uuid.UUID, error) {
+func (s *service) createSession(ctx context.Context, kthid string) (uuid.UUID, error) {
 	var sessionID uuid.UUID
 	if err := s.db.QueryRowxContext(ctx, `--sql
 		insert into sessions (kthid) values ($1) returning id
@@ -37,7 +37,7 @@ func (s *service) CreateSession(ctx context.Context, kthid string) (uuid.UUID, e
 	return sessionID, nil
 }
 
-func (s *service) GetSession(sessionID string) (string, error) {
+func (s *service) getSession(sessionID string) (string, error) {
 	var kthid string
 	if err := s.db.QueryRowx(`--sql
 		update sessions
@@ -53,14 +53,14 @@ func (s *service) GetSession(sessionID string) (string, error) {
 	return kthid, nil
 }
 
-func (s *service) RemoveSession(ctx context.Context, sessionID string) error {
+func (s *service) removeSession(ctx context.Context, sessionID string) error {
 	_, err := s.db.ExecContext(ctx, `--sql
 		delete from sessions where id = $1
 	`, sessionID)
 	return err
 }
 
-func (s *service) CreateUser(ctx context.Context, kthid string) error {
+func (s *service) createUser(ctx context.Context, kthid string) error {
 	var webAuthnID [64]byte
 	if _, err := rand.Read(webAuthnID[:]); err != nil {
 		return err

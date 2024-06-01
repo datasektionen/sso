@@ -40,17 +40,8 @@ func (s *service) kthCallback(r *http.Request) httputil.ToResponse {
 			httputil.Forbidden().(httputil.HttpError).ServeHTTP(w, r)
 			return
 		}
-		sessionID, err := s.user.CreateSession(r.Context(), user.KTHID)
-		if err != nil {
-			slog.Error("Could not create session", "kthid", user.KTHID, "error", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		http.SetCookie(w, &http.Cookie{
-			Name:  "session",
-			Value: sessionID.String(),
-			Path:  "/",
-		})
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		httputil.Route(func(r *http.Request) httputil.ToResponse {
+			return s.user.LoginUser(r.Context(), user.KTHID)
+		}).ServeHTTP(w, r)
 	}, s.relyingParty)
 }

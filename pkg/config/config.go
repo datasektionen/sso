@@ -25,7 +25,7 @@ func init() {
 		KTHOIDCClientSecret: os.Getenv("KTH_CLIENT_SECRET"),
 		KTHOIDCRPOrigin:     getOrigin("KTH_RP_ORIGIN"),
 		Origin:              getOrigin("ORIGIN"),
-		Port:                getInt("PORT", 3000),
+		Port:                getInt("PORT", 7000),
 		DatabaseURL:         getURL("DATABASE_URL"),
 	}
 }

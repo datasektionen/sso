@@ -70,13 +70,13 @@ vault write identity/entity-alias \
 
 vault write identity/oidc/scope/profile template=$(echo '{"username":{{identity.entity.name}}}' | base64 -)
 vault write identity/oidc/provider/default scopes_supported="profile"
-vault write identity/oidc/client/logout redirect_uris="http://localhost:3000/oidc/kth/callback" assignments=allow_all
+vault write identity/oidc/client/logout redirect_uris="http://localhost:7000/oidc/kth/callback" assignments=allow_all
 
 echo -n "
 KTH_ISSUER_URL=$(vault read -field=issuer identity/oidc/provider/default)
 KTH_CLIENT_ID=$(vault read -field=client_id identity/oidc/client/logout)
 KTH_CLIENT_SECRET=$(vault read -field=client_secret identity/oidc/client/logout)
-KTH_RP_ORIGIN=http://localhost:3000
+KTH_RP_ORIGIN=http://localhost:7000
 "
 ```
 

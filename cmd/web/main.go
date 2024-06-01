@@ -7,19 +7,19 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
 	"time"
 
 	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/services/legacyapi"
 	"github.com/datasektionen/logout/services/oidcrp"
 	"github.com/datasektionen/logout/services/passkey"
 	"github.com/datasektionen/logout/services/user"
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/jmoiron/sqlx"
 )
 
 func main() {
-	db, err := sqlx.Connect("pgx", config.Config.DatabaseURL.String())
+	db, err := database.ConnectAndMigrate(context.Background())
 	if err != nil {
 		panic(err)
 	}

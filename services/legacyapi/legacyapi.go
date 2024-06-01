@@ -5,18 +5,18 @@ import (
 	"crypto/rand"
 	"net/http"
 
+	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	user "github.com/datasektionen/logout/services/user/export"
-	"github.com/jmoiron/sqlx"
 )
 
 type service struct {
-	db      *sqlx.DB
+	db      *database.Queries
 	user    user.Service
 	hmacKey [64]byte
 }
 
-func NewService(ctx context.Context, db *sqlx.DB) (*service, error) {
+func NewService(ctx context.Context, db *database.Queries) (*service, error) {
 	// TODO: persist?
 	var hmacKey [64]byte
 	_, err := rand.Read(hmacKey[:])
@@ -25,10 +25,6 @@ func NewService(ctx context.Context, db *sqlx.DB) (*service, error) {
 	}
 
 	s := &service{db: db, hmacKey: hmacKey}
-
-	if err := s.migrateDB(ctx); err != nil {
-		return nil, err
-	}
 
 	http.Handle("/legacyapi/hello", httputil.Route(s.hello))
 	http.Handle("/legacyapi/login", httputil.Route(s.login))

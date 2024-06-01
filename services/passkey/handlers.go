@@ -1,8 +1,10 @@
 package passkey
 
 import (
+	"encoding/json"
 	"net/http"
 
+	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/services/passkey/export"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -19,10 +21,7 @@ func (s *service) beginLoginPasskey(r *http.Request) httputil.ToResponse {
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	passkeys, err := s.GetPasskeysForUser(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
+	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
 	if len(passkeys) == 0 {
 		return httputil.BadRequest("You have no registered passkeys")
 	}
@@ -42,7 +41,7 @@ func (s *service) finishLoginPasskey(r *http.Request) httputil.ToResponse {
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	passkeys, err := s.GetPasskeysForUser(r.Context(), user.KTHID)
+	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
@@ -84,7 +83,12 @@ func (s *service) finishAddPasskey(r *http.Request) httputil.ToResponse {
 		return err
 	}
 	name := r.FormValue("name")
-	if err := s.AddPasskey(r.Context(), user.KTHID, name, *cred); err != nil {
+	credRaw, _ := json.Marshal(cred)
+	if err := s.db.AddPasskey(r.Context(), database.AddPasskeyParams{
+		Kthid: user.KTHID,
+		Name:  name,
+		Data:  string(credRaw),
+	}); err != nil {
 		return err
 	}
 	return ""
@@ -102,7 +106,10 @@ func (s *service) removePasskey(r *http.Request) httputil.ToResponse {
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	if err := s.RemovePasskey(r.Context(), user.KTHID, passkeyID); err != nil {
+	if err := s.db.RemovePasskey(r.Context(), database.RemovePasskeyParams{
+		Kthid: user.KTHID,
+		ID:    passkeyID,
+	}); err != nil {
 		return err
 	}
 	return http.RedirectHandler("/account", http.StatusSeeOther)

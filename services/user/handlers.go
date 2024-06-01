@@ -63,7 +63,7 @@ func (s *service) account(r *http.Request) httputil.ToResponse {
 	if user == nil {
 		return httputil.Unauthorized()
 	}
-	passkeys, err := s.passkey.GetPasskeysForUser(r.Context(), user.KTHID)
+	passkeys, err := s.passkey.ListPasskeysForUser(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (s *service) doRegister(r *http.Request) httputil.ToResponse {
 	if len(kthid) < 2 {
 		return httputil.BadRequest("Invalid kthid")
 	}
-	if err := s.createUser(r.Context(), kthid); err != nil {
+	if err := s.db.CreateUser(r.Context(), kthid); err != nil {
 		return err
 	}
 	slog.Info("User registrated", "kthid", kthid)
@@ -98,7 +98,7 @@ func (s *service) doLoginDev(r *http.Request) httputil.ToResponse {
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	sessionID, err := s.createSession(r.Context(), user.KTHID)
+	sessionID, err := s.db.CreateSession(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}

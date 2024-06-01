@@ -15,6 +15,13 @@ Download the correct version of [templ](https://templ.guide/) using:
 go install github.com/a-h/templ/cmd/templ@$(grep -oPm1 'github.com/a-h/templ \K[^ ]*' go.sum)
 ```
 
+Download [sqlc](https://sqlc.dev/). It's probably best to get the latest version, using:
+```sh
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+```
+
+But to see which version was last used, look at the top of any generated file, e.g. `pkg/database/models.go`.
+
 ### Database
 
 Start a postgresql database, using e.g.:

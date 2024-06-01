@@ -66,7 +66,7 @@ func (s *service) callback(r *http.Request) httputil.ToResponse {
 	if user == nil {
 		return httputil.BadRequest("You did not seem to get logged in")
 	}
-	token, err := s.createToken(r.Context(), user.KTHID)
+	token, err := s.db.CreateToken(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (s *service) verify(r *http.Request) httputil.ToResponse {
 	}
 	apiKey := r.FormValue("api_key")
 	_ = apiKey // TODO: verify dis boi
-	kthid, err := s.getToken(r.Context(), token)
+	kthid, err := s.db.GetToken(r.Context(), token)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (s *service) logout(r *http.Request) httputil.ToResponse {
 		return err
 	}
 	if user != nil {
-		if err := s.deleteToken(r.Context(), user.KTHID); err != nil {
+		if err := s.db.DeleteToken(r.Context(), user.KTHID); err != nil {
 			return err
 		}
 	}

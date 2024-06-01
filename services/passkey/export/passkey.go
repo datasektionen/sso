@@ -9,7 +9,7 @@ import (
 )
 
 type Service interface {
-	GetPasskeysForUser(ctx context.Context, kthid string) ([]Passkey, error)
+	ListPasskeysForUser(ctx context.Context, kthid string) ([]Passkey, error)
 }
 
 type Passkey struct {

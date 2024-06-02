@@ -4,6 +4,8 @@
     box-sizing: border-box;
     --off-white: #f7f7f7;
     --cerise-strong: #ee2a7b;
+    --cerise-regular: #e83d84;
+    --cerise-light: #ec5f99;
 }
 
 body {
@@ -39,7 +41,7 @@ main {
     padding-bottom: 1em;
 }
 
-.oidc-link {
+.wide-button {
     background-color: #3f4c66;
     padding: 0.4em;
     color: var(--off-white);
@@ -53,7 +55,7 @@ main {
     user-select: none;
 }
 
-form {
+.w-full {
     width: 100%;
 }
 
@@ -74,9 +76,12 @@ input[type="text"] {
     font-size: 0.9em;
 }
 
-button.round {
+.smaller {
+    font-size: 0.6em;
+}
+
+.round-button {
     background-color: #3f4c66;
-    border: 1px solid #666;
     flex-shrink: 0;
     height: 2em;
     width: 2em;
@@ -86,15 +91,23 @@ button.round {
     cursor: pointer;
 }
 
-form :focus, a:focus {
-    border: 1px solid var(--cerise-strong);
-    outline: none;
-}
-
-.white-icon {
+.round-button img {
     filter: invert(100%);
     width: 60%;
     height: 60%;
+}
+
+input, a, button {
+    border: 1px solid #666;
+    outline: none;
+}
+
+input:hover, a:hover, button:hover {
+    border-color: var(--cerise-light);
+}
+
+input:focus, a:focus, button:focus {
+    border-color: var(--cerise-strong);
 }
 
 .row {
@@ -102,7 +115,11 @@ form :focus, a:focus {
     gap: 0.5em;
 }
 
-.row input {
+.items-center {
+    align-items: center;
+}
+
+.basis-full {
     flex-basis: 100%;
 }
 
@@ -134,4 +151,12 @@ form .error {
     100% {
         transform: rotate(360deg);
     }
+}
+
+h2 {
+    font-size: 1.2em;
+}
+
+.pad {
+    padding: 0.4em;
 }

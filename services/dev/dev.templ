@@ -1,0 +1,21 @@
+package dev
+
+import "github.com/datasektionen/logout/pkg/templates"
+
+templ loginForm() {
+	@templates.Layout() {
+		<form class="w-full" method="post" action="/login/dev">
+			<label class="small" for="dev-kthid">Log In by username (dev)</label>
+			<div class="row">
+				<input
+					id="dev-kthid"
+					required
+					type="text"
+					name="kthid"
+					placeholder="KTH ID"
+				/>
+				<button class="round-button"><img src="/static/emergency-exit.svg"/></button>
+			</div>
+		</form>
+	}
+}

@@ -1,7 +1,6 @@
 package user
 
 import (
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -43,7 +42,7 @@ func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 			SameSite: http.SameSiteLaxMode,
 		})
 	}
-	return Index(s.passkey.LoginForm)
+	return Index(s.passkey.LoginForm, s.dev.LoginForm)
 }
 
 func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -54,42 +53,9 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 	if user == nil {
 		return httputil.Unauthorized()
 	}
-	passkeys, err := s.passkey.ListPasskeysForUser(r.Context(), user.KTHID)
+	passkeySettings, err := s.passkey.PasskeySettings(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
-	return Account(*user, passkeys)
-}
-
-func (s *service) doRegister(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	kthid := r.FormValue("kthid")
-	if len(kthid) < 2 {
-		return httputil.BadRequest("Invalid kthid")
-	}
-	if err := s.db.CreateUser(r.Context(), kthid); err != nil {
-		return err
-	}
-	slog.Info("User registrated", "kthid", kthid)
-	return http.RedirectHandler("/", http.StatusSeeOther)
-}
-
-func (s *service) doLoginDev(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.GetUser(r.Context(), r.FormValue("kthid"))
-	if err != nil {
-		return err
-	}
-	if user == nil {
-		return httputil.BadRequest("No such user")
-	}
-	sessionID, err := s.db.CreateSession(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
-	http.SetCookie(w, &http.Cookie{
-		Name:  "session",
-		Value: sessionID.String(),
-		Path:  "/",
-	})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-	return nil
+	return Account(*user, passkeySettings)
 }

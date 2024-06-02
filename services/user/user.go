@@ -6,6 +6,7 @@ import (
 
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
+	dev "github.com/datasektionen/logout/services/dev/export"
 	passkey "github.com/datasektionen/logout/services/passkey/export"
 	"github.com/datasektionen/logout/services/user/export"
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ import (
 type service struct {
 	db      *database.Queries
 	passkey passkey.Service
+	dev     dev.Service
 }
 
 var _ export.Service = &service{}
@@ -27,14 +29,13 @@ func NewService(db *database.Queries) (*service, error) {
 	http.Handle("GET /{$}", httputil.Route(s.index))
 	http.Handle("GET /logout", httputil.Route(s.Logout))
 	http.Handle("GET /account", httputil.Route(s.account))
-	http.Handle("POST /register", httputil.Route(s.doRegister))
-	http.Handle("POST /login/dev", httputil.Route(s.doLoginDev))
 
 	return s, nil
 }
 
-func (s *service) Assign(passkey passkey.Service) {
+func (s *service) Assign(passkey passkey.Service, dev dev.Service) {
 	s.passkey = passkey
+	s.dev = dev
 }
 
 func (s *service) GetUser(ctx context.Context, kthid string) (*export.User, error) {

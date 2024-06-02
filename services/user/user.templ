@@ -3,58 +3,33 @@ package user
 import (
 	"github.com/datasektionen/logout/pkg/templates"
 	"github.com/datasektionen/logout/services/user/export"
-	passkey "github.com/datasektionen/logout/services/passkey/export"
 )
 
-templ Index(passkeyLogin func() templ.Component) {
+templ Index(passkeyLogin, devLogin func() templ.Component) {
 	@templates.Layout() {
 		<div class="page-center-container">
 			<main>
 				<div class="col">
 					<img class="shield" src="/static/skold_vit.svg"/>
-					<a autofocus class="oidc-link" href="/login/oidc/kth">Log In with KTH</a>
+					<a autofocus class="wide-button" href="/login/oidc/kth">Log In with KTH</a>
 					@passkeyLogin()
-					<form method="post" action="/login/dev">
-						<label class="small" for="dev-kthid">Log In by username (dev)</label>
-						<div class="row">
-							<input
-								id="dev-kthid"
-								required
-								type="text"
-								name="kthid"
-								placeholder="KTH ID"
-							/>
-							<button class="round"><img class="white-icon" src="/static/emergency-exit.svg"/></button>
-						</div>
-					</form>
+					@devLogin()
 				</div>
 			</main>
 		</div>
 	}
 }
 
-templ Account(user export.User, passkeys []passkey.Passkey) {
+templ Account(user export.User, passkeySettings templ.Component) {
 	@templates.Layout() {
 		<div class="page-center-container">
 			<main>
 				<div class="col">
-					<p>Hello there, { user.KTHID }</p>
-					<a href="/logout">logout</a>
-					<section>
-						<h2>Passkeys:</h2>
-						<ul>
-							for _, passkey := range passkeys {
-								<li style="display: flex; gap: 0.5em">
-									<span>{ passkey.Name }</span>
-									<form method="post" action="/passkey/remove">
-										<input type="hidden" name="passkey-id" value={ passkey.ID.String() }/>
-										<button>x</button>
-									</form>
-								</li>
-							}
-						</ul>
-						<a href="/passkey/add">add passkey</a>
-					</section>
+					<div class="row w-full items-center">
+						<p class="basis-full">{ user.KTHID }</p>
+						<a class="round-button" href="/logout" title="Log out"><img src="/static/log-out.svg"/></a>
+					</div>
+					@passkeySettings
 				</div>
 			</main>
 		</div>

@@ -1,12 +1,11 @@
 package passkey
 
 import (
-	"github.com/go-webauthn/webauthn/protocol"
-	"github.com/datasektionen/logout/pkg/templates"
+	"github.com/datasektionen/logout/services/passkey/export"
 )
 
 templ LoginForm() {
-	<form id="passkey-login">
+	<form class="w-full" id="passkey-login">
 		<label class="small" for="pk-kthid">Log In using a Passkey</label>
 		<div class="row">
 			<input
@@ -16,7 +15,7 @@ templ LoginForm() {
 				name="kthid"
 				placeholder="KTH ID"
 			/>
-			<button class="round"><img class="white-icon" src="/static/key_icon.svg"/></button>
+			<button class="round-button"><img src="/static/key_icon.svg"/></button>
 		</div>
 	</form>
 	@base64Helpers()
@@ -35,7 +34,7 @@ templ LoginForm() {
 			form.remove();
 		}
 
-		form.onsubmit = (event) => (async function() {
+		form.onsubmit = (event) => (async function(event) {
 			event.preventDefault();
 			for (let e of form.querySelectorAll(".error")) {
 				e.remove();
@@ -83,7 +82,7 @@ templ LoginForm() {
 				}),
 			});
 			if (finishRes.status == 200) window.location = "/";
-		}().catch(err => {
+		}(event).catch(err => {
 			button.classList.remove("spinner");
 			if (err.message) err = err.message;
 			showError(err);
@@ -91,39 +90,91 @@ templ LoginForm() {
 	</script>
 }
 
-templ AddPasskey(cc *protocol.CredentialCreation) {
-	@templates.Layout() {
-		<form onsubmit="addPasskey(event)">
-			<input id="passkey-name" placeholder="passkey name" name="name" type="text"/>
-			<button>Add</button>
-		</form>
-		@templ.JSONScript("credential-creation", cc)
-		@base64Helpers()
-		<script>
-			async function addPasskey(event) {
-				event.preventDefault();
-				let name = document.querySelector("#passkey-name").value;
-				let cc = JSON.parse(document.querySelector("#credential-creation").textContent);
-				cc.publicKey.challenge = decodebase64url(cc.publicKey.challenge);
-				cc.publicKey.user.id = decodebase64url(cc.publicKey.user.id);
-				let cred = await navigator.credentials.create(cc);
-				let res = await fetch("/passkey/add?name=" + encodeURIComponent(name), {
-					method: "post",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						id: cred.id,
-						type: cred.type,
-						authenticatorAttachment: cred.authenticatorAttachment,
-						response: {
-							attestationObject: encodebase64url(cred.response.attestationObject),
-							clientDataJSON: encodebase64url(cred.response.clientDataJSON),
-						},
-					}),
-				});
-				if (res.status == 200) window.location = "/account";
+templ passkeySettings(passkeys []export.Passkey) {
+	<section class="w-full">
+		<h2>Passkeys:</h2>
+		<ul>
+			for _, passkey := range passkeys {
+				<li class="row pad">
+					<span>{ passkey.Name }</span>
+					<form method="post" action="/passkey/remove">
+						<input type="hidden" name="passkey-id" value={ passkey.ID.String() }/>
+						<button class="round-button smaller">
+							<img src="/static/x.svg"/>
+						</button>
+					</form>
+				</li>
 			}
-		</script>
-	}
+		</ul>
+		<button id="add-passkey-button" class="wide-button">Add passkey</button>
+		<form id="add-passkey-form" style="display: none">
+			<div class="row">
+				<input
+					placeholder="passkey name"
+					name="name"
+					type="text"
+				/>
+				<button class="round-button"><img src="/static/check.svg"/></button>
+			</div>
+		</form>
+	</section>
+	@base64Helpers()
+	<script>
+		let form = document.querySelector("#add-passkey-form");
+		let button = document.querySelector("#add-passkey-button");
+		let submitButton = form.querySelector("button");
+		let nameInput = form.querySelector('input[name="name"]');
+		let cc;
+
+		function showError(message) {
+			let el = document.createElement("p");
+			el.innerText = message;
+			el.classList.add("error");
+			form.appendChild(el);
+		}
+
+		button.onclick = async function(event) {
+			form.style.display = "";
+			button.style.display = "none";
+			submitButton.disabled = true;
+			nameInput.focus();
+			let res = await fetch("/passkey/add/begin", { method: "post" });
+			cc = await res.json();
+			cc.publicKey.challenge = decodebase64url(cc.publicKey.challenge);
+			cc.publicKey.user.id = decodebase64url(cc.publicKey.user.id);
+			submitButton.disabled = false;
+		};
+		form.onsubmit = (event) => (async function(event) {
+			event.preventDefault();
+			for (let e of form.querySelectorAll(".error")) {
+				e.remove();
+			}
+			submitButton.disabled = true;
+			let name = new FormData(form).get("name");
+			let cred = await navigator.credentials.create(cc);
+			let res = await fetch("/passkey/add/finish", {
+				method: "post",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					name,
+					id: cred.id,
+					type: cred.type,
+					authenticatorAttachment: cred.authenticatorAttachment,
+					response: {
+						attestationObject: encodebase64url(cred.response.attestationObject),
+						clientDataJSON: encodebase64url(cred.response.clientDataJSON),
+					},
+				}),
+			});
+			if (res.status == 200) window.location = "/account";
+		}(event).catch(err => {
+			button.classList.remove("spinner");
+			if (err.message) err = err.message;
+			showError(err);
+		}).finally(
+			() => submitButton.disabled = false,
+		));
+	</script>
 }
 
 templ base64Helpers() {

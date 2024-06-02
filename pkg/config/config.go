@@ -14,6 +14,7 @@ type Cfg struct {
 	Origin              *url.URL
 	Port                int
 	DatabaseURL         *url.URL
+	Dev                 bool
 }
 
 var Config Cfg
@@ -27,6 +28,7 @@ func init() {
 		Origin:              getOrigin("ORIGIN"),
 		Port:                getInt("PORT", 7000),
 		DatabaseURL:         getURL("DATABASE_URL"),
+		Dev:                 os.Getenv("DEV") == "true",
 	}
 }
 

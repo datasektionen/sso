@@ -10,8 +10,8 @@ import (
 )
 
 type Service interface {
-	ListPasskeysForUser(ctx context.Context, kthid string) ([]Passkey, error)
 	LoginForm() templ.Component
+	PasskeySettings(ctx context.Context, kthid string) (templ.Component, error)
 }
 
 type Passkey struct {

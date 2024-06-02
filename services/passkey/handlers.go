@@ -3,6 +3,7 @@ package passkey
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
@@ -22,7 +23,7 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
+	passkeys, err := s.listPasskeysForUser(r.Context(), user.KTHID)
 	if len(passkeys) == 0 {
 		return httputil.BadRequest("You have no registered passkeys")
 	}
@@ -54,7 +55,7 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
+	passkeys, err := s.listPasskeysForUser(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
@@ -80,7 +81,7 @@ func (s *service) beginAddPasskey(w http.ResponseWriter, r *http.Request) httput
 	}
 	hackSession = sessionData
 
-	return AddPasskey(creation)
+	return httputil.JSON(creation)
 }
 
 func (s *service) finishAddPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -91,12 +92,29 @@ func (s *service) finishAddPasskey(w http.ResponseWriter, r *http.Request) httpu
 	if user == nil {
 		return httputil.Unauthorized()
 	}
-	// passkeys aren't gotten from within this function
-	cred, err := s.webauthn.FinishRegistration(export.WebAuthnUser{User: user}, *hackSession, r)
+
+	var body struct {
+		Name string `json:"name"`
+		protocol.CredentialCreationResponse
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		return httputil.BadRequest("Invalid credential")
+	}
+	cc, err := body.CredentialCreationResponse.Parse()
+	if err != nil {
+		return httputil.BadRequest("Invalid credential")
+	}
+
+	// Passkeys aren't retrieved from within this function, so we don't need to
+	// populate that field on WebAuthnUser.
+	cred, err := s.webauthn.CreateCredential(export.WebAuthnUser{User: user}, *hackSession, cc)
 	if err != nil {
 		return err
 	}
-	name := r.FormValue("name")
+	name := body.Name
+	if name == "" {
+		name = time.Now().Format(time.DateOnly)
+	}
 	credRaw, _ := json.Marshal(cred)
 	if err := s.db.AddPasskey(r.Context(), database.AddPasskeyParams{
 		Kthid: user.KTHID,

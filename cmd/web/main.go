@@ -12,6 +12,7 @@ import (
 
 	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/database"
+	"github.com/datasektionen/logout/services/dev"
 	"github.com/datasektionen/logout/services/legacyapi"
 	"github.com/datasektionen/logout/services/oidcrp"
 	"github.com/datasektionen/logout/services/passkey"
@@ -30,12 +31,14 @@ func main() {
 	passkey := must(passkey.NewService(db))
 	oidcrp := must(oidcrp.NewService(ctx))
 	legacyapi := must(legacyapi.NewService(ctx, db))
+	dev := must(dev.NewService(db))
 	cancel()
 
-	user.Assign(passkey)
+	user.Assign(passkey, dev)
 	passkey.Assign(user)
 	oidcrp.Assign(user)
 	legacyapi.Assign(user)
+	dev.Assign(user)
 
 	static.Mount()
 

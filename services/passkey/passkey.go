@@ -38,8 +38,8 @@ func NewService(db *database.Queries) (*service, error) {
 
 	http.Handle("POST /login/passkey/begin", httputil.Route(s.beginLoginPasskey))
 	http.Handle("POST /login/passkey/finish", httputil.Route(s.finishLoginPasskey))
-	http.Handle("GET /passkey/add", httputil.Route(s.beginAddPasskey))
-	http.Handle("POST /passkey/add", httputil.Route(s.finishAddPasskey))
+	http.Handle("POST /passkey/add/begin", httputil.Route(s.beginAddPasskey))
+	http.Handle("POST /passkey/add/finish", httputil.Route(s.finishAddPasskey))
 	http.Handle("POST /passkey/remove", httputil.Route(s.removePasskey))
 
 	return s, nil
@@ -49,7 +49,19 @@ func (s *service) Assign(user user.Service) {
 	s.user = user
 }
 
-func (s *service) ListPasskeysForUser(ctx context.Context, kthid string) ([]export.Passkey, error) {
+func (s *service) LoginForm() templ.Component {
+	return LoginForm()
+}
+
+func (s *service) PasskeySettings(ctx context.Context, kthid string) (templ.Component, error) {
+	passkeys, err := s.listPasskeysForUser(ctx, kthid)
+	if err != nil {
+		return nil, err
+	}
+	return passkeySettings(passkeys), nil
+}
+
+func (s *service) listPasskeysForUser(ctx context.Context, kthid string) ([]export.Passkey, error) {
 	dbPasskeys, err := s.db.ListPasskeysByUser(ctx, kthid)
 	if err != nil {
 		return nil, err
@@ -67,8 +79,4 @@ func (s *service) ListPasskeysForUser(ctx context.Context, kthid string) ([]expo
 		}
 	}
 	return passkeys, nil
-}
-
-func (s *service) LoginForm() templ.Component {
-	return LoginForm()
 }

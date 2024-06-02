@@ -18,15 +18,18 @@ body {
     min-height: 100vh;
 }
 
-main {
-    background-color: #2a3344;
+.col {
+    width: 340px;
     padding: 2em;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1em;
+}
+
+main {
+    background-color: #2a3344;
     border-radius: 4px;
-    width: 340px;
 }
 
 .shield {
@@ -71,12 +74,7 @@ input[type="text"] {
     font-size: 0.9em;
 }
 
-form :focus, a:focus {
-    border: 1px solid var(--cerise-strong);
-    outline: none;
-}
-
-button {
+button.round {
     background-color: #3f4c66;
     border: 1px solid #666;
     flex-shrink: 0;
@@ -88,8 +86,15 @@ button {
     cursor: pointer;
 }
 
+form :focus, a:focus {
+    border: 1px solid var(--cerise-strong);
+    outline: none;
+}
+
 .white-icon {
     filter: invert(100%);
+    width: 60%;
+    height: 60%;
 }
 
 .row {
@@ -97,7 +102,7 @@ button {
     gap: 0.5em;
 }
 
-input#kthid {
+.row input {
     flex-basis: 100%;
 }
 

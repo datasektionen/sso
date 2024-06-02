@@ -61,10 +61,6 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 	return Account(*user, passkeys)
 }
 
-func (s *service) showRegister(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	return Register()
-}
-
 func (s *service) doRegister(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	kthid := r.FormValue("kthid")
 	if len(kthid) < 2 {
@@ -75,10 +71,6 @@ func (s *service) doRegister(w http.ResponseWriter, r *http.Request) httputil.To
 	}
 	slog.Info("User registrated", "kthid", kthid)
 	return http.RedirectHandler("/", http.StatusSeeOther)
-}
-
-func (s *service) showLoginDev(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	return LoginDev()
 }
 
 func (s *service) doLoginDev(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

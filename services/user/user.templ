@@ -10,14 +10,24 @@ templ Index(passkeyLogin func() templ.Component) {
 	@templates.Layout() {
 		<div class="page-center-container">
 			<main>
-				<img class="shield" src="/static/skold_vit.svg"/>
-				<!--section style="display: flex; gap: 1em; align-items: baseline">
-					<h2>Dev:</h2>
-					<a href="/register">register</a>
-					<a href="/login/dev">login by username</a>
-				</section-->
-				<a autofocus class="oidc-link" href="/login/oidc/kth">Log In with KTH</a>
-				@passkeyLogin()
+				<div class="col">
+					<img class="shield" src="/static/skold_vit.svg"/>
+					<a autofocus class="oidc-link" href="/login/oidc/kth">Log In with KTH</a>
+					@passkeyLogin()
+					<form method="post" action="/login/dev">
+						<label class="small" for="dev-kthid">Log In by username (dev)</label>
+						<div class="row">
+							<input
+								id="dev-kthid"
+								required
+								type="text"
+								name="kthid"
+								placeholder="KTH ID"
+							/>
+							<button class="round"><img class="white-icon" src="/static/emergency-exit.svg"/></button>
+						</div>
+					</form>
+				</div>
 			</main>
 		</div>
 	}
@@ -25,43 +35,28 @@ templ Index(passkeyLogin func() templ.Component) {
 
 templ Account(user export.User, passkeys []passkey.Passkey) {
 	@templates.Layout() {
-		<h1>Logout</h1>
-		<a href="/logout">logout</a>
-		<p>Hello there, { user.KTHID }</p>
-		<section>
-			<h2>Passkeys:</h2>
-			<ul>
-				for _, passkey := range passkeys {
-					<li style="display: flex; gap: 0.5em">
-						<span>{ passkey.Name }</span>
-						<form method="post" action="/passkey/remove">
-							<input type="hidden" name="passkey-id" value={ passkey.ID.String() }/>
-							<button>x</button>
-						</form>
-					</li>
-				}
-			</ul>
-			<a href="/passkey/add">add passkey</a>
-		</section>
-	}
-}
-
-templ Register() {
-	@templates.Layout() {
-		<form method="post" action="/register">
-			<label for="kthid">KTH-ID:</label>
-			<input id="kthid" name="kthid" type="text"/>
-			<button>Register</button>
-		</form>
-	}
-}
-
-templ LoginDev() {
-	@templates.Layout() {
-		<form method="post" action="/login/dev">
-			<label for="kthid">KTH-ID:</label>
-			<input id="kthid" name="kthid" type="text"/>
-			<button>Login</button>
-		</form>
+		<div class="page-center-container">
+			<main>
+				<div class="col">
+					<p>Hello there, { user.KTHID }</p>
+					<a href="/logout">logout</a>
+					<section>
+						<h2>Passkeys:</h2>
+						<ul>
+							for _, passkey := range passkeys {
+								<li style="display: flex; gap: 0.5em">
+									<span>{ passkey.Name }</span>
+									<form method="post" action="/passkey/remove">
+										<input type="hidden" name="passkey-id" value={ passkey.ID.String() }/>
+										<button>x</button>
+									</form>
+								</li>
+							}
+						</ul>
+						<a href="/passkey/add">add passkey</a>
+					</section>
+				</div>
+			</main>
+		</div>
 	}
 }

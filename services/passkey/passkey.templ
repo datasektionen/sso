@@ -7,16 +7,16 @@ import (
 
 templ LoginForm() {
 	<form id="passkey-login">
-		<label class="small" for="kthid">Log In using a Passkey</label>
+		<label class="small" for="pk-kthid">Log In using a Passkey</label>
 		<div class="row">
 			<input
-				id="kthid"
+				id="pk-kthid"
 				required
 				type="text"
 				name="kthid"
 				placeholder="KTH ID"
 			/>
-			<button><img class="white-icon" src="/static/key_icon.svg"/></button>
+			<button class="round"><img class="white-icon" src="/static/key_icon.svg"/></button>
 		</div>
 	</form>
 	@base64Helpers()
@@ -40,7 +40,7 @@ templ LoginForm() {
 			for (let e of form.querySelectorAll(".error")) {
 				e.remove();
 			}
-			let kthid = new FormData(form).get("kthid");
+			let kthid = new FormData(form).get("pk-kthid");
 			button.classList.add("spinner");
 			let beginRes = await fetch("/login/passkey/begin", {
 				method: "post",

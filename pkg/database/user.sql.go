@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createSession = `-- name: CreateSession :one
@@ -25,12 +26,38 @@ func (q *Queries) CreateSession(ctx context.Context, kthid string) (uuid.UUID, e
 }
 
 const createUser = `-- name: CreateUser :exec
-insert into users (kthid)
-values ($1)
+insert into users (
+    kthid,
+    ug_kthid,
+    email,
+    first_name,
+    surname,
+    year_tag,
+    member_to
+)
+values ($1, $2, $3, $4, $5, $6, $7)
 `
 
-func (q *Queries) CreateUser(ctx context.Context, kthid string) error {
-	_, err := q.db.Exec(ctx, createUser, kthid)
+type CreateUserParams struct {
+	Kthid     string
+	UgKthid   string
+	Email     string
+	FirstName string
+	Surname   string
+	YearTag   string
+	MemberTo  pgtype.Date
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
+	_, err := q.db.Exec(ctx, createUser,
+		arg.Kthid,
+		arg.UgKthid,
+		arg.Email,
+		arg.FirstName,
+		arg.Surname,
+		arg.YearTag,
+		arg.MemberTo,
+	)
 	return err
 }
 
@@ -50,7 +77,7 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (string, error) 
 }
 
 const getUser = `-- name: GetUser :one
-select kthid, webauthn_id
+select kthid, ug_kthid, email, first_name, surname, year_tag, member_to, webauthn_id
 from users
 where kthid = $1
 `
@@ -58,7 +85,16 @@ where kthid = $1
 func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 	row := q.db.QueryRow(ctx, getUser, kthid)
 	var i User
-	err := row.Scan(&i.Kthid, &i.WebauthnID)
+	err := row.Scan(
+		&i.Kthid,
+		&i.UgKthid,
+		&i.Email,
+		&i.FirstName,
+		&i.Surname,
+		&i.YearTag,
+		&i.MemberTo,
+		&i.WebauthnID,
+	)
 	return i, err
 }
 

@@ -4,6 +4,14 @@ create extension "pgcrypto"; -- needed for gen_random_bytes() (and for stonks of
 
 create table if not exists users (
     kthid text primary key,
+    ug_kthid text not null,
+    email text not null,
+    first_name text not null,
+    surname text not null,
+    year_tag text not null,
+
+    member_to date null,
+
     webauthn_id bytea not null default gen_random_bytes(64)
 );
 

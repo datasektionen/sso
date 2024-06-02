@@ -15,33 +15,42 @@ type Cfg struct {
 	Port                int
 	DatabaseURL         *url.URL
 	Dev                 bool
+	LDAPProxyURL        *url.URL
 }
 
 var Config Cfg
 
 func init() {
 	Config = Cfg{
-		KTHOIDCIssuerURL:    getURL("KTH_ISSUER_URL"),
+		KTHOIDCIssuerURL:    getURL("KTH_ISSUER_URL", false),
 		KTHOIDCClientID:     os.Getenv("KTH_CLIENT_ID"),
 		KTHOIDCClientSecret: os.Getenv("KTH_CLIENT_SECRET"),
-		KTHOIDCRPOrigin:     getOrigin("KTH_RP_ORIGIN"),
-		Origin:              getOrigin("ORIGIN"),
+		KTHOIDCRPOrigin:     getOrigin("KTH_RP_ORIGIN", false),
+		Origin:              getOrigin("ORIGIN", false),
 		Port:                getInt("PORT", 7000),
-		DatabaseURL:         getURL("DATABASE_URL"),
+		DatabaseURL:         getURL("DATABASE_URL", false),
 		Dev:                 os.Getenv("DEV") == "true",
+		LDAPProxyURL:        getURL("LDAP_PROXY_URL", true),
 	}
 }
 
-func getURL(envName string) *url.URL {
-	u, err := url.Parse(os.Getenv(envName))
+func getURL(envName string, optional bool) *url.URL {
+	envValue, ok := os.LookupEnv(envName)
+	if !ok {
+		if !optional {
+			panic("Missing $" + envName)
+		}
+		return nil
+	}
+	u, err := url.Parse(envValue)
 	if err != nil {
 		panic(err)
 	}
 	return u
 }
 
-func getOrigin(envName string) *url.URL {
-	u := getURL(envName)
+func getOrigin(envName string, optional bool) *url.URL {
+	u := getURL(envName, optional)
 	withoutSchemeHost := *u
 	withoutSchemeHost.Scheme = ""
 	withoutSchemeHost.Host = ""

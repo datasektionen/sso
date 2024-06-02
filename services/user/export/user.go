@@ -3,6 +3,7 @@ package export
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/datasektionen/logout/pkg/httputil"
 )
@@ -15,6 +16,12 @@ type Service interface {
 }
 
 type User struct {
-	KTHID      string `db:"kthid"`
-	WebAuthnID []byte `db:"webauthn_id"`
+	KTHID      string
+	UGKTHID    string
+	Email      string
+	FirstName  string
+	Surname    string
+	YearTag    string
+	MemberTo   time.Time
+	WebAuthnID []byte
 }

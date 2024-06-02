@@ -83,14 +83,16 @@ func (s *service) verify(w http.ResponseWriter, r *http.Request) httputil.ToResp
 	if err != nil {
 		return err
 	}
-	// TODO: get shid from hodis/ldab/db
-	fakeName := strings.ToUpper(kthid[:1]) + kthid[1:]
+	user, err := s.user.GetUser(r.Context(), kthid)
+	if err != nil {
+		return err
+	}
 	return httputil.JSON(map[string]any{
-		"first_name": fakeName,
-		"last_name":  fakeName + "sson",
+		"first_name": user.FirstName,
+		"last_name":  user.Surname,
 		"user":       kthid,
-		"emails":     kthid + "@kth.se",
-		"ugkthid":    "u1" + kthid,
+		"emails":     user.Email,
+		"ugkthid":    user.UGKTHID,
 	})
 }
 

@@ -15,8 +15,16 @@ delete from sessions
 where id = $1;
 
 -- name: CreateUser :exec
-insert into users (kthid)
-values ($1);
+insert into users (
+    kthid,
+    ug_kthid,
+    email,
+    first_name,
+    surname,
+    year_tag,
+    member_to
+)
+values ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: GetUser :one
 select *

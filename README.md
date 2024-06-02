@@ -44,7 +44,7 @@ The best way (objectively, of course) to load them is by installing
 ### Running with automatic recompiling & rerunning
 
 ```sh
-find -name '*.templ' | entr go generate ./...
+find -regex '.*\.\(templ\|sql\)' | entr go generate ./...
 ```
 
 ```sh

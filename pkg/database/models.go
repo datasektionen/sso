@@ -30,5 +30,11 @@ type Session struct {
 
 type User struct {
 	Kthid      string
+	UgKthid    string
+	Email      string
+	FirstName  string
+	Surname    string
+	YearTag    string
+	MemberTo   pgtype.Date
 	WebauthnID []byte
 }

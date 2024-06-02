@@ -27,7 +27,6 @@ func NewService(db *database.Queries) (*service, error) {
 
 	if config.Config.Dev {
 		http.Handle("POST /login/dev", httputil.Route(s.login))
-		http.Handle("POST /register", httputil.Route(s.register))
 	}
 
 	return s, nil

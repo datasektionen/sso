@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
@@ -46,7 +47,20 @@ func (s *service) GetUser(ctx context.Context, kthid string) (*export.User, erro
 	if err != nil {
 		return nil, err
 	}
-	return &export.User{KTHID: user.Kthid, WebAuthnID: user.WebauthnID}, nil
+	var memberTo time.Time
+	if user.MemberTo.Valid {
+		memberTo = user.MemberTo.Time
+	}
+	return &export.User{
+		KTHID:      user.Kthid,
+		UGKTHID:    user.UgKthid,
+		Email:      user.Email,
+		FirstName:  user.FirstName,
+		Surname:    user.Surname,
+		YearTag:    user.YearTag,
+		MemberTo:   memberTo,
+		WebAuthnID: user.WebauthnID,
+	}, nil
 }
 
 func (s *service) LoginUser(ctx context.Context, kthid string) httputil.ToResponse {
@@ -94,14 +108,7 @@ func (s *service) GetLoggedInUser(r *http.Request) (*export.User, error) {
 	if kthid == "" {
 		return nil, nil
 	}
-	user, err := s.db.GetUser(r.Context(), kthid)
-	if err == pgx.ErrNoRows {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &export.User{KTHID: user.Kthid, WebAuthnID: user.WebauthnID}, nil
+	return s.GetUser(r.Context(), kthid)
 }
 
 func (s *service) Logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

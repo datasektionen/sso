@@ -26,7 +26,7 @@ templ account(user export.User, passkeySettings templ.Component) {
 			<main>
 				<div class="col">
 					<div class="row w-full items-center">
-						<p class="basis-full">{ user.KTHID }</p>
+						<p class="basis-full">{ user.FirstName } { user.Surname } ({ user.KTHID })</p>
 						<a class="round-button" href="/logout" title="Log out"><img src="/static/log-out.svg"/></a>
 					</div>
 					@passkeySettings

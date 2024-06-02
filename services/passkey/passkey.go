@@ -50,7 +50,7 @@ func (s *service) Assign(user user.Service) {
 }
 
 func (s *service) LoginForm() templ.Component {
-	return LoginForm()
+	return loginForm()
 }
 
 func (s *service) PasskeySettings(ctx context.Context, kthid string) (templ.Component, error) {

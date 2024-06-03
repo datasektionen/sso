@@ -2,6 +2,7 @@ package passkey
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"time"
 
@@ -16,7 +17,11 @@ import (
 var hackSession *webauthn.SessionData
 
 func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.user.GetUser(r.Context(), r.FormValue("kthid"))
+	kthid, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	user, err := s.user.GetUser(r.Context(), string(kthid))
 	if err != nil {
 		return err
 	}
@@ -116,14 +121,16 @@ func (s *service) finishAddPasskey(w http.ResponseWriter, r *http.Request) httpu
 		name = time.Now().Format(time.DateOnly)
 	}
 	credRaw, _ := json.Marshal(cred)
-	if err := s.db.AddPasskey(r.Context(), database.AddPasskeyParams{
+	id, err := s.db.AddPasskey(r.Context(), database.AddPasskeyParams{
 		Kthid: user.KTHID,
 		Name:  name,
 		Data:  string(credRaw),
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
-	return ""
+	passkey := export.Passkey{ID: id, Name: name}
+	return httputil.JSON(passkey)
 }
 
 func (s *service) removePasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -134,8 +141,8 @@ func (s *service) removePasskey(w http.ResponseWriter, r *http.Request) httputil
 	if user == nil {
 		return httputil.Unauthorized()
 	}
-	passkeyID, err := uuid.Parse(r.FormValue("passkey-id"))
-	if err != nil {
+	var passkeyID uuid.UUID
+	if err := json.NewDecoder(r.Body).Decode(&passkeyID); err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
 	if err := s.db.RemovePasskey(r.Context(), database.RemovePasskeyParams{
@@ -144,5 +151,20 @@ func (s *service) removePasskey(w http.ResponseWriter, r *http.Request) httputil
 	}); err != nil {
 		return err
 	}
-	return http.RedirectHandler("/account", http.StatusSeeOther)
+	return nil
+}
+
+func (s *service) listPasskeys(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user, err := s.user.GetLoggedInUser(r)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return httputil.Unauthorized()
+	}
+	passkeys, err := s.listPasskeysForUser(r.Context(), user.KTHID)
+	if err != nil {
+		return err
+	}
+	return httputil.JSON(passkeys)
 }

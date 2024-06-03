@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/a-h/templ"
 	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
@@ -14,15 +13,11 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 
-//go:generate templ generate
-
 type service struct {
 	db       *database.Queries
 	webauthn *webauthn.WebAuthn
 	user     user.Service
 }
-
-var _ export.Service = &service{}
 
 func NewService(db *database.Queries) (*service, error) {
 	wa, err := webauthn.New(&webauthn.Config{
@@ -41,24 +36,13 @@ func NewService(db *database.Queries) (*service, error) {
 	http.Handle("POST /passkey/add/begin", httputil.Route(s.beginAddPasskey))
 	http.Handle("POST /passkey/add/finish", httputil.Route(s.finishAddPasskey))
 	http.Handle("POST /passkey/remove", httputil.Route(s.removePasskey))
+	http.Handle("GET /passkey/list", httputil.Route(s.listPasskeys))
 
 	return s, nil
 }
 
 func (s *service) Assign(user user.Service) {
 	s.user = user
-}
-
-func (s *service) LoginForm() templ.Component {
-	return loginForm()
-}
-
-func (s *service) PasskeySettings(ctx context.Context, kthid string) (templ.Component, error) {
-	passkeys, err := s.listPasskeysForUser(ctx, kthid)
-	if err != nil {
-		return nil, err
-	}
-	return passkeySettings(passkeys), nil
 }
 
 func (s *service) listPasskeysForUser(ctx context.Context, kthid string) ([]export.Passkey, error) {

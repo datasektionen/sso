@@ -11,9 +11,10 @@ import (
 	"github.com/google/uuid"
 )
 
-const addPasskey = `-- name: AddPasskey :exec
+const addPasskey = `-- name: AddPasskey :one
 insert into passkeys (kthid, name, data)
 values ($1, $2, $3)
+returning id
 `
 
 type AddPasskeyParams struct {
@@ -22,9 +23,11 @@ type AddPasskeyParams struct {
 	Data  string
 }
 
-func (q *Queries) AddPasskey(ctx context.Context, arg AddPasskeyParams) error {
-	_, err := q.db.Exec(ctx, addPasskey, arg.Kthid, arg.Name, arg.Data)
-	return err
+func (q *Queries) AddPasskey(ctx context.Context, arg AddPasskeyParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, addPasskey, arg.Kthid, arg.Name, arg.Data)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const listPasskeysByUser = `-- name: ListPasskeysByUser :many

@@ -8,6 +8,10 @@ trim_trailing_whitespace = true
 [*.{go,templ}]
 indent_style = tab
 
-[*.yaml]
+[*.{yaml,json}]
 indent_style = space
 indent_size = 2
+
+[*.{js,ts,tsx,mjs}]
+indent_style = space
+indent_size = 4

@@ -2,17 +2,15 @@ package static
 
 import (
 	"embed"
-	"io/fs"
 	"net/http"
+
+	"github.com/datasektionen/logout/pkg/config"
 )
 
-//go:embed files/*
-var files embed.FS
+//go:embed public/*
+var public embed.FS
 
 func Mount() {
-	fs, err := fs.Sub(files, "files")
-	if err != nil {
-		panic(err)
-	}
-	http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(fs)))
+	http.Handle("GET /public/", http.FileServerFS(public))
+	http.Handle("GET /dist/", http.StripPrefix("/dist/", http.FileServer(http.Dir(config.Config.DistDir))))
 }

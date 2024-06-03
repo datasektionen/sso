@@ -42,7 +42,7 @@ func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 			SameSite: http.SameSiteLaxMode,
 		})
 	}
-	return index(s.passkey.LoginForm, s.dev.LoginForm)
+	return index(s.dev.LoginForm)
 }
 
 func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -53,9 +53,5 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 	if user == nil {
 		return httputil.Unauthorized()
 	}
-	passkeySettings, err := s.passkey.PasskeySettings(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
-	return account(*user, passkeySettings)
+	return account(*user)
 }

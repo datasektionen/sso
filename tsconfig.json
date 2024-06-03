@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "lib": ["es2022", "dom", "dom.iterable"]
+  }
+}

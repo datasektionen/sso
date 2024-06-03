@@ -1,23 +1,15 @@
 package export
 
 import (
-	"context"
-
-	"github.com/a-h/templ"
 	user "github.com/datasektionen/logout/services/user/export"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 )
 
-type Service interface {
-	LoginForm() templ.Component
-	PasskeySettings(ctx context.Context, kthid string) (templ.Component, error)
-}
-
 type Passkey struct {
-	ID   uuid.UUID
-	Name string
-	Cred webauthn.Credential
+	ID   uuid.UUID           `json:"id"`
+	Name string              `json:"name"`
+	Cred webauthn.Credential `json:"-"`
 }
 
 type WebAuthnUser struct {

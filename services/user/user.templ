@@ -5,14 +5,15 @@ import (
 	"github.com/datasektionen/logout/services/user/export"
 )
 
-templ index(passkeyLogin, devLogin func() templ.Component) {
+templ index(devLogin func() templ.Component) {
 	@templates.Layout() {
 		<div class="page-center-container">
 			<main>
 				<div class="col">
-					<img class="shield" src="/static/skold_vit.svg"/>
+					<img class="shield" src="/public/skold_vit.svg"/>
 					<a autofocus class="wide-button" href="/login/oidc/kth">Log In with KTH</a>
-					@passkeyLogin()
+					<div id="passkey-login" class="w-full" style="min-height: 51px"></div>
+					<script type="module" src="/dist/passkeyLogin.island.js"></script>
 					@devLogin()
 				</div>
 			</main>
@@ -20,16 +21,17 @@ templ index(passkeyLogin, devLogin func() templ.Component) {
 	}
 }
 
-templ account(user export.User, passkeySettings templ.Component) {
+templ account(user export.User) {
 	@templates.Layout() {
 		<div class="page-center-container">
 			<main>
 				<div class="col">
 					<div class="row w-full items-center">
 						<p class="basis-full">{ user.FirstName } { user.Surname } ({ user.KTHID })</p>
-						<a class="round-button" href="/logout" title="Log out"><img src="/static/log-out.svg"/></a>
+						<a class="round-button" href="/logout" title="Log out"><img src="/public/log-out.svg"/></a>
 					</div>
-					@passkeySettings
+					<div id="passkey-settings" class="w-full"></div>
+					<script type="module" src="/dist/passkeySettings.island.js"></script>
 				</div>
 			</main>
 		</div>

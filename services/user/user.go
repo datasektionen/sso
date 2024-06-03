@@ -8,7 +8,6 @@ import (
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	dev "github.com/datasektionen/logout/services/dev/export"
-	passkey "github.com/datasektionen/logout/services/passkey/export"
 	"github.com/datasektionen/logout/services/user/export"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -17,9 +16,8 @@ import (
 //go:generate templ generate
 
 type service struct {
-	db      *database.Queries
-	passkey passkey.Service
-	dev     dev.Service
+	db  *database.Queries
+	dev dev.Service
 }
 
 var _ export.Service = &service{}
@@ -34,8 +32,7 @@ func NewService(db *database.Queries) (*service, error) {
 	return s, nil
 }
 
-func (s *service) Assign(passkey passkey.Service, dev dev.Service) {
-	s.passkey = passkey
+func (s *service) Assign(dev dev.Service) {
 	s.dev = dev
 }
 

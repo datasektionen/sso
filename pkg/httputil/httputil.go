@@ -55,8 +55,8 @@ func JSON(val any) jsonValue {
 }
 
 type HttpError struct {
-	Message    string `json:"message"`
-	StatusCode int    `json:"status"`
+	Message    string
+	StatusCode int
 }
 
 func (h HttpError) Error() string {
@@ -69,11 +69,7 @@ func (h HttpError) Error() string {
 
 func (h HttpError) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(h.StatusCode)
-	if r.Header.Get("Accept") == "application/json" {
-		json.NewEncoder(w).Encode(h)
-	} else {
-		w.Write([]byte(h.Error()))
-	}
+	w.Write([]byte(h.Message))
 }
 
 func BadRequest(message string) error {

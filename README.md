@@ -1,3 +1,29 @@
+## Repository structure
+
+This repository contains two main parts: a Go web server and some solid
+components written in typescript. The web server in Go does most of the job, it
+has a few API:s returning JSON but mostly server-rendered routes that the
+browser interacts with directly (so it's not just a backend). Some parts of the
+page however require a bit more interactivity; these are made with
+[solid](https://www.solidjs.com/) (which is like react but less cringe™). This
+is sometimes called _interactive islands_.
+
+### Solid
+
+These are build with [rollup](https://rollupjs.org/) for bundling,
+[babel](https://babeljs.io/) for building towers or whatever (the solid
+compiler is a babel plugin), typescript (to not loose sanity) and solid
+(through babel-preset-solid). They are configured with `rollup.config.mjs` and
+`tsconfig.json`.
+
+For each file ending with `.island.tsx` in the `islands/` directory a
+corresponding file ending in `.island.js` will be placed in `dist/` which the
+Go server will serve at `/dist`. These can be loaded using a script tag with
+`type="module"`.
+
+Also note that `pnpm` is used, not `npm`. You can install `pnpm` by enabling
+[corepack](https://nodejs.org/api/corepack.html).
+
 ## Routes
 
 ```sh
@@ -49,6 +75,10 @@ find -regex '.*\.\(templ\|sql\)' | entr go generate ./...
 
 ```sh
 find -name '*.go' | entr -r go run ./cmd/web
+```
+
+```sh
+pnpm build --watch
 ```
 
 ### Mocking an OIDC provider

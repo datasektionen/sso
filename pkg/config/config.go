@@ -16,6 +16,7 @@ type Cfg struct {
 	DatabaseURL         *url.URL
 	Dev                 bool
 	LDAPProxyURL        *url.URL
+	DistDir             string
 }
 
 var Config Cfg
@@ -31,6 +32,7 @@ func init() {
 		DatabaseURL:         getURL("DATABASE_URL", false),
 		Dev:                 os.Getenv("DEV") == "true",
 		LDAPProxyURL:        getURL("LDAP_PROXY_URL", true),
+		DistDir:             os.Getenv("DIST_DIR"),
 	}
 }
 

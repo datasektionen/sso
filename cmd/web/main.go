@@ -34,7 +34,7 @@ func main() {
 	dev := must(dev.NewService(db))
 	cancel()
 
-	user.Assign(passkey, dev)
+	user.Assign(dev)
 	passkey.Assign(user)
 	oidcrp.Assign(user)
 	legacyapi.Assign(user)

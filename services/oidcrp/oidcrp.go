@@ -3,6 +3,7 @@ package oidcrp
 import (
 	"context"
 	"crypto/rand"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -42,7 +43,8 @@ func NewService(ctx context.Context) (*service, error) {
 		)),
 	)
 	if err != nil {
-		return nil, err
+		slog.Error("Error initializing relying party for KTH's OIDC provider", "error", err)
+		rp = nil // Should already be the case but doesn't hurt to make sure
 	}
 
 	s := &service{relyingParty: rp}

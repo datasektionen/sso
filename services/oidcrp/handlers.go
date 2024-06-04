@@ -1,6 +1,7 @@
 package oidcrp
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -11,10 +12,18 @@ import (
 )
 
 func (s *service) kthLogin(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	if s.relyingParty == nil {
+		return errors.New("KTH OIDC is not reachable at the moment")
+	}
+
 	return rp.AuthURLHandler(uuid.NewString, s.relyingParty)
 }
 
 func (s *service) kthCallback(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	if s.relyingParty == nil {
+		return errors.New("KTH OIDC is not reachable at the moment")
+	}
+
 	return rp.CodeExchangeHandler(func(
 		w http.ResponseWriter,
 		r *http.Request,

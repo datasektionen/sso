@@ -1,17 +1,29 @@
 package dev
 
 templ loginForm() {
-	<form class="w-full" method="post" action="/login/dev">
-		<label class="small" for="dev-kthid">Log In by username (dev)</label>
-		<div class="row">
+	<form method="post" action="/login/dev">
+		<label class="text-sm" for="dev-kthid">Log In by username (dev)</label>
+		<div class="flex gap-2">
 			<input
 				id="dev-kthid"
 				required
 				type="text"
 				name="kthid"
 				placeholder="KTH ID"
+				class="
+					border border-neutral-500 grow
+					outline-none focus:border-cerise-strong hover:border-cerise-light
+					bg-slate-800 p-1.5 rounded h-8
+				"
 			/>
-			<button class="round-button"><img src="/public/emergency-exit.svg"/></button>
+			<button class="
+				bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+				grid place-items-center pointer
+				border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light
+			"><img
+				src="/public/emergency-exit.svg"
+				class="w-3/5 h-3/5 invert"
+			/></button>
 		</div>
 	</form>
 }

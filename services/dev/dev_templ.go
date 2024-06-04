@@ -23,7 +23,7 @@ func loginForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form class=\"w-full\" method=\"post\" action=\"/login/dev\"><label class=\"small\" for=\"dev-kthid\">Log In by username (dev)</label><div class=\"row\"><input id=\"dev-kthid\" required type=\"text\" name=\"kthid\" placeholder=\"KTH ID\"> <button class=\"round-button\"><img src=\"/public/emergency-exit.svg\"></button></div></form>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form method=\"post\" action=\"/login/dev\"><label class=\"text-sm\" for=\"dev-kthid\">Log In by username (dev)</label><div class=\"flex gap-2\"><input id=\"dev-kthid\" required type=\"text\" name=\"kthid\" placeholder=\"KTH ID\" class=\"\n\t\t\t\t\tborder border-neutral-500 grow\n\t\t\t\t\toutline-none focus:border-cerise-strong hover:border-cerise-light\n\t\t\t\t\tbg-slate-800 p-1.5 rounded h-8\n\t\t\t\t\"> <button class=\"\n\t\t\t\tbg-[#3f4c66] shrink-0 h-8 w-8 rounded-full\n\t\t\t\tgrid place-items-center pointer\n\t\t\t\tborder border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light\n\t\t\t\"><img src=\"/public/emergency-exit.svg\" class=\"w-3/5 h-3/5 invert\"></button></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

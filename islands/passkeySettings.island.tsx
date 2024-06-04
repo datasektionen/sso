@@ -38,18 +38,22 @@ function PasskeySettings() {
         setPasskeys([...p.slice(0, index), ...p.slice(index + 1)]);
     }
 
-    return <section class="w-full">
-        <h2>Passkeys:</h2>
+    return <section class="flex flex-col">
+        <h2 class="text-lg">Passkeys:</h2>
         <ul>
             <Show when={loading()}>...</Show>
             <For each={passkeys()}>{(passkey, i) =>
-                <li class="row pad">
+                <li class="flex p-2 gap-2 items-center">
                     <span>{passkey.name}</span>
                     <button
-                        class="round-button smaller"
+                        class="
+                            bg-[#3f4c66] shrink-0 h-5 w-5 rounded-full
+                            grid place-items-center pointer
+                            border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+                        "
                         onClick={() => remove(passkey.id, i())}
                     >
-                        <img src="/public/x.svg" />
+                        <img class="w-3/5 h-3/5 invert" src="/public/x.svg" />
                     </button>
                 </li>
             }</For>
@@ -58,7 +62,11 @@ function PasskeySettings() {
             when={adding()}
             fallback={<button
                 onClick={() => setAdding(true)}
-                class="wide-button"
+                class="
+					bg-[#3f4c66] p-1.5 block rounded border text-center
+					select-none border-transparent outline-none
+					focus:border-cerise-strong hover:border-cerise-light
+                "
             >Add passkey</button>}
         >
             <AddPasskey onAdded={passkey => {
@@ -122,15 +130,24 @@ function AddPasskey({ onAdded }: { onAdded: (passkey: Passkey) => void }) {
     }
 
     return <form onSubmit={submit}>
-        <div class="row">
+        <div class="flex gap-2">
             <input
                 placeholder="passkey name"
                 type="text"
                 value={name()}
                 onInput={e => setName(e.target.value)}
                 autofocus
+                class="
+					border border-neutral-500 grow
+					outline-none focus:border-cerise-strong hover:border-cerise-light
+					bg-slate-800 p-1.5 rounded h-8
+                "
             />
-            <button class="round-button"><img src="/public/check.svg" /></button>
+            <button class="
+				bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+				grid place-items-center pointer
+				border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light
+            "><img class="w-3/5 h-3/5 invert" src="/public/check.svg" /></button>
         </div>
         <For each={errors()}>{error => <p class="error">{error}</p>}</For>
     </form>;

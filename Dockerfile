@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/root/.cache/go-build/ \
     CGO_ENABLED=0 go build -o /bin/server ./cmd/web
 
-FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS build-islands
+FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS npm-packages
 
 WORKDIR /src
 
@@ -30,10 +30,21 @@ COPY package.json pnpm-lock.yaml ./
 
 RUN pnpm i
 
+FROM npm-packages AS build-islands
+
 COPY rollup.config.mjs tsconfig.json ./
-COPY islands/ islands/
+COPY islands islands
 
 RUN pnpm build
+
+FROM npm-packages AS build-tailwind
+
+COPY tailwind.config.js style.css ./
+COPY pkg pkg
+COPY services services
+COPY islands islands
+
+RUN pnpm tailwind
 
 FROM alpine:${ALPINE_VERSION}
 
@@ -44,6 +55,7 @@ USER user
 
 COPY --from=build-server /bin/server /bin/
 COPY --from=build-islands /src/dist /dist/
+COPY --from=build-tailwind /src/dist/style.css /dist/
 
 ENV DIST_DIR=/dist
 

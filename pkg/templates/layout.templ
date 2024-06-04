@@ -1,16 +1,26 @@
 package templates
 
-templ Layout() {
+templ Page() {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>Logout</title>
-			<link rel="stylesheet" href="/public/style.css"/>
+			<link rel="stylesheet" href="/dist/style.css"/>
 		</head>
-		<body>
+		<body class="bg-gray-900 text-neutral-100">
 			{ children... }
 		</body>
 	</html>
+}
+
+templ Modal() {
+	@Page() {
+		<div class="grid place-items-center min-h-screen">
+			<main class="bg-gray-800 rounded w-[22rem] max-w-[calc(100vw-2rem)]">
+				{ children... }
+			</main>
+		</div>
+	}
 }

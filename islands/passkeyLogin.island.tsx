@@ -61,26 +61,36 @@ function PasskeyLogin() {
 
     if (!("credentials" in navigator)) return;
 
-    return <form onSubmit={submit} class="w-full">
-        <label class="small" for="pk-kthid">Log In using a Passkey</label>
-        <div class="row">
+    return <form onSubmit={submit}>
+        <label class="text-sm" for="pk-kthid">Log In using a Passkey</label>
+        <div class="flex gap-2">
             <input
                 id="pk-kthid"
                 type="text"
                 required
                 placeholder="KTH ID"
                 onInput={e => setKthid(e.target.value)}
+                class="
+					border border-neutral-500 grow
+					outline-none focus:border-cerise-strong hover:border-cerise-light
+					bg-slate-800 p-1.5 rounded h-8
+                "
             />
             <button
                 disabled={loading()}
-                class={"round-button " + (loading() ? "spinner" : "")}
+                class={`
+                    bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+                    grid place-items-center pointer
+                    border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+                    ${loading() ? "spinner" : ""}
+                `}
             >
-                <img src="/public/key_icon.svg" />
+                <img src="/public/key_icon.svg" class="w-3/5 h-3/5 invert" />
             </button>
         </div>
-        <For each={errors()}>{(err) =>
-            <p class="error">{err}</p>
-        }</For>
+        <div class="flex flex-col gap-1.5 pt-1.5"><For each={errors()}>{(err) =>
+            <p class="bg-red-600/50 p-2 rounded">{err}</p>
+        }</For></div>
     </form>;
 }
 

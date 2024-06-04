@@ -2,8 +2,8 @@
   "name": "islands",
   "version": "1.0.0",
   "scripts": {
-    "lint": "tsc",
     "build": "rollup -c rollup.config.mjs",
+    "tailwind": "BROWSERSLIST_IGNORE_OLD_DATA=1 tailwind -i style.css -o dist/style.css",
     "clean": "rm -rf dist/"
   },
   "license": "MIT",
@@ -17,6 +17,7 @@
     "babel-preset-solid": "^1.8.17",
     "rollup": "^4.18.0",
     "solid-js": "^1.8.17",
+    "tailwindcss": "^3.4.3",
     "tslib": "^2.6.2",
     "typescript": "^5.4.5",
     "zod": "^3.23.8"

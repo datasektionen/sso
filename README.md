@@ -81,6 +81,10 @@ find -name '*.go' | entr -r go run ./cmd/web
 pnpm build --watch
 ```
 
+```sh
+pnpm tailwind --watch
+```
+
 ### Mocking an OIDC provider
 
 Only needed if you want to test the "Login with KTH" button.

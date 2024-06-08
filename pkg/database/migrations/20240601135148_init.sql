@@ -43,9 +43,9 @@ create table if not exists legacyapi_tokens (
 
 -- +goose Down
 -- +goose StatementBegin
-drop extension "pgcrypto";
 drop table users;
 drop table sessions;
 drop table passkeys;
 drop table legacyapi_tokens;
+drop extension "pgcrypto";
 -- +goose StatementEnd

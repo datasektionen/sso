@@ -18,6 +18,7 @@ import (
 	"github.com/datasektionen/logout/services/passkey"
 	"github.com/datasektionen/logout/services/static"
 	"github.com/datasektionen/logout/services/user"
+	"github.com/datasektionen/logout/services/oidcprovider"
 )
 
 func main() {
@@ -32,6 +33,7 @@ func main() {
 	oidcrp := must(oidcrp.NewService(ctx))
 	legacyapi := must(legacyapi.NewService(ctx, db))
 	dev := must(dev.NewService(db))
+	oidcprovider := must(oidcprovider.NewService(db))
 	cancel()
 
 	user.Assign(dev)
@@ -39,6 +41,7 @@ func main() {
 	oidcrp.Assign(user)
 	legacyapi.Assign(user)
 	dev.Assign(user)
+	oidcprovider.Assign(user)
 
 	static.Mount()
 

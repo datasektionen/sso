@@ -2,7 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/json"
+	"fmt"
 	"log/slog"
+	"math/big"
 	"os"
 	"time"
 
@@ -28,10 +34,7 @@ func main() {
 	case "add-user":
 		db, _ := must2(database.Connect(ctx))
 		kthid := shift()
-		p, err := kthldap.Lookup(ctx, kthid)
-		if err != nil {
-			panic(err)
-		}
+		p := must1(kthldap.Lookup(ctx, kthid))
 		if p == nil {
 			panic("No such user")
 		}
@@ -48,14 +51,30 @@ func main() {
 	case "goose":
 		_, db := must2(database.Connect(ctx))
 		gooseCMD := shift()
-		err := goose.RunContext(context.Background(), gooseCMD, db(), "pkg/database/migrations", args...)
-		if err != nil {
-			panic(err)
+		must0(goose.RunContext(context.Background(), gooseCMD, db(), "pkg/database/migrations", args...))
+	case "gen-oidc-provider-key":
+		key := must1(ecdsa.GenerateKey(elliptic.P256(), rand.Reader))
+		var j struct {
+			X *big.Int `json:"X"`
+			Y *big.Int `json:"Y"`
+			D *big.Int `json:"D"`
 		}
+		j.X = key.X
+		j.Y = key.Y
+		j.D = key.D
+		fmt.Println("OIDC_PROVIDER_KEY="+string(must1(json.Marshal(j))))
+	default:
+		panic("No such subcommand")
 	}
 }
 
-func must[T any](t T, err error) T {
+func must0(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func must1[T any](t T, err error) T {
 	if err != nil {
 		panic(err)
 	}

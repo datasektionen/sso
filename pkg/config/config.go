@@ -7,32 +7,36 @@ import (
 )
 
 type Cfg struct {
-	KTHOIDCIssuerURL    *url.URL
-	KTHOIDCClientID     string
-	KTHOIDCClientSecret string
-	KTHOIDCRPOrigin     *url.URL
-	Origin              *url.URL
-	Port                int
-	DatabaseURL         *url.URL
-	Dev                 bool
-	LDAPProxyURL        *url.URL
-	DistDir             string
+	KTHOIDCIssuerURL      *url.URL
+	KTHOIDCClientID       string
+	KTHOIDCClientSecret   string
+	KTHOIDCRPOrigin       *url.URL
+	Origin                *url.URL
+	Port                  int
+	DatabaseURL           *url.URL
+	Dev                   bool
+	LDAPProxyURL          *url.URL
+	DistDir               string
+	OIDCProviderIssuerURL *url.URL
+	OIDCProviderKey       string
 }
 
 var Config Cfg
 
 func init() {
 	Config = Cfg{
-		KTHOIDCIssuerURL:    getURL("KTH_ISSUER_URL", false),
-		KTHOIDCClientID:     os.Getenv("KTH_CLIENT_ID"),
-		KTHOIDCClientSecret: os.Getenv("KTH_CLIENT_SECRET"),
-		KTHOIDCRPOrigin:     getOrigin("KTH_RP_ORIGIN", false),
-		Origin:              getOrigin("ORIGIN", false),
-		Port:                getInt("PORT", 7000),
-		DatabaseURL:         getURL("DATABASE_URL", false),
-		Dev:                 os.Getenv("DEV") == "true",
-		LDAPProxyURL:        getURL("LDAP_PROXY_URL", true),
-		DistDir:             os.Getenv("DIST_DIR"),
+		KTHOIDCIssuerURL:      getURL("KTH_ISSUER_URL", false),
+		KTHOIDCClientID:       os.Getenv("KTH_CLIENT_ID"),
+		KTHOIDCClientSecret:   os.Getenv("KTH_CLIENT_SECRET"),
+		KTHOIDCRPOrigin:       getOrigin("KTH_RP_ORIGIN", false),
+		Origin:                getOrigin("ORIGIN", false),
+		Port:                  getInt("PORT", 7000),
+		DatabaseURL:           getURL("DATABASE_URL", false),
+		Dev:                   os.Getenv("DEV") == "true",
+		LDAPProxyURL:          getURL("LDAP_PROXY_URL", true),
+		DistDir:               os.Getenv("DIST_DIR"),
+		OIDCProviderIssuerURL: getURL("OIDC_PROVIDER_ISSUER_URL", false),
+		OIDCProviderKey:       os.Getenv("OIDC_PROVIDER_KEY"),
 	}
 }
 

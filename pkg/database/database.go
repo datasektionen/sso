@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 
 	"github.com/datasektionen/logout/pkg/config"
@@ -15,17 +16,17 @@ import (
 //go:embed migrations/*.sql
 var migrations embed.FS
 
-func Connect(ctx context.Context) (*Queries, error) {
+func Connect(ctx context.Context) (*Queries, func() *sql.DB, error) {
 	pool, err := pgxpool.New(ctx, config.Config.DatabaseURL.String())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return New(pool), nil
+	return New(pool), func() *sql.DB { return stdlib.OpenDBFromPool(pool) }, nil
 }
 
 func ConnectAndMigrate(ctx context.Context) (*Queries, error) {
-	pool, err := pgxpool.New(ctx, config.Config.DatabaseURL.String())
+	q, db, err := Connect(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,9 +35,9 @@ func ConnectAndMigrate(ctx context.Context) (*Queries, error) {
 	if err := goose.SetDialect("postgres"); err != nil {
 		return nil, err
 	}
-	if err := goose.UpContext(ctx, stdlib.OpenDBFromPool(pool), "migrations"); err != nil {
+	if err := goose.UpContext(ctx, db(), "migrations"); err != nil {
 		return nil, err
 	}
 
-	return New(pool), nil
+	return q, nil
 }

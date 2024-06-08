@@ -11,6 +11,7 @@ import (
 type Service interface {
 	GetUser(ctx context.Context, kthid string) (*User, error)
 	LoginUser(ctx context.Context, kthid string) httputil.ToResponse
+	GetLoggedInKTHID(r *http.Request) (string, error)
 	GetLoggedInUser(r *http.Request) (*User, error)
 	Logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse
 }

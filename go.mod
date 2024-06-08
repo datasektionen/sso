@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	github.com/a-h/templ v0.2.707
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-webauthn/webauthn v0.10.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.6.0

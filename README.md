@@ -70,19 +70,7 @@ The best way (objectively, of course) to load them is by installing
 ### Running with automatic recompiling & rerunning
 
 ```sh
-find -regex '.*\.\(templ\|sql\)' | entr go generate ./...
-```
-
-```sh
-find -name '*.go' | entr -r go run ./cmd/web
-```
-
-```sh
-pnpm build --watch
-```
-
-```sh
-pnpm tailwind --watch
+go run ./cmd/dev
 ```
 
 ### Mocking an OIDC provider

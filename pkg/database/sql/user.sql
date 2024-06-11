@@ -20,7 +20,7 @@ insert into users (
     ug_kthid,
     email,
     first_name,
-    surname,
+    family_name,
     year_tag,
     member_to
 )

@@ -53,7 +53,7 @@ func (s *service) GetUser(ctx context.Context, kthid string) (*export.User, erro
 		UGKTHID:    user.UgKthid,
 		Email:      user.Email,
 		FirstName:  user.FirstName,
-		Surname:    user.Surname,
+		FamilyName: user.FamilyName,
 		YearTag:    user.YearTag,
 		MemberTo:   memberTo,
 		WebAuthnID: user.WebauthnID,

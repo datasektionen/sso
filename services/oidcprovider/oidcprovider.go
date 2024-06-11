@@ -300,7 +300,7 @@ func (s *service) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.User
 			userinfo.Subject = kthid
 		case oidc.ScopeProfile:
 			userinfo.GivenName = user.FirstName
-			userinfo.FamilyName = user.Surname
+			userinfo.FamilyName = user.FamilyName
 		case oidc.ScopeEmail:
 			userinfo.Email = user.Email
 			userinfo.EmailVerified = true

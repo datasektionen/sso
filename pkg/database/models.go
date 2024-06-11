@@ -15,11 +15,6 @@ type LegacyapiToken struct {
 	LastUsedAt pgtype.Timestamp
 }
 
-type OidcproviderAuthRequst struct {
-	ID       uuid.UUID
-	AuthCode []byte
-}
-
 type Passkey struct {
 	ID    uuid.UUID
 	Name  string
@@ -38,7 +33,7 @@ type User struct {
 	UgKthid    string
 	Email      string
 	FirstName  string
-	Surname    string
+	FamilyName string
 	YearTag    string
 	MemberTo   pgtype.Date
 	WebauthnID []byte

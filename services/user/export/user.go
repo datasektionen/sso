@@ -21,7 +21,7 @@ type User struct {
 	UGKTHID    string
 	Email      string
 	FirstName  string
-	Surname    string
+	FamilyName string
 	YearTag    string
 	MemberTo   time.Time
 	WebAuthnID []byte

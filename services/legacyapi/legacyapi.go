@@ -10,8 +10,8 @@ import (
 )
 
 type service struct {
-	db      *database.Queries
-	user    user.Service
+	db   *database.Queries
+	user user.Service
 }
 
 func NewService(ctx context.Context, db *database.Queries) (*service, error) {

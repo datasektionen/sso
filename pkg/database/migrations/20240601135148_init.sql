@@ -7,7 +7,7 @@ create table if not exists users (
     ug_kthid text not null,
     email text not null,
     first_name text not null,
-    surname text not null,
+    family_name text not null,
     year_tag text not null,
 
     member_to date null,
@@ -43,9 +43,9 @@ create table if not exists legacyapi_tokens (
 
 -- +goose Down
 -- +goose StatementBegin
-drop table users;
-drop table sessions;
-drop table passkeys;
 drop table legacyapi_tokens;
+drop table passkeys;
+drop table sessions;
+drop table users;
 drop extension "pgcrypto";
 -- +goose StatementEnd

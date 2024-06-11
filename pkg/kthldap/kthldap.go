@@ -12,20 +12,20 @@ import (
 )
 
 type Person struct {
-	KTHID     string `json:"kthid"`
-	UGKTHID   string `json:"ug_kthid"`
-	FirstName string `json:"first_name"`
-	Surname   string `json:"surname"`
+	KTHID      string `json:"kthid"`
+	UGKTHID    string `json:"ug_kthid"`
+	FirstName  string `json:"first_name"`
+	FamilyName string `json:"family_name"`
 }
 
 func Lookup(ctx context.Context, kthid string) (*Person, error) {
 	if config.Config.LDAPProxyURL == nil {
 		fakeName := strings.ToUpper(kthid[:1]) + kthid[1:]
 		return &Person{
-			KTHID:     kthid,
-			UGKTHID:   "u1" + kthid,
-			FirstName: fakeName,
-			Surname:   fakeName + "sson",
+			KTHID:      kthid,
+			UGKTHID:    "u1" + kthid,
+			FirstName:  fakeName,
+			FamilyName: fakeName + "sson",
 		}, nil
 	}
 

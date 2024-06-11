@@ -38,13 +38,13 @@ func main() {
 		}
 		slog.Info("Adding user", "user", *p)
 		assert(db.CreateUser(ctx, database.CreateUserParams{
-			Kthid:     p.KTHID,
-			UgKthid:   p.UGKTHID,
-			Email:     p.KTHID + "@kth.se",
-			FirstName: p.FirstName,
-			Surname:   p.Surname,
-			YearTag:   "D" + time.Now().Format("06"),
-			MemberTo:  pgtype.Date{Time: time.Now().AddDate(1, 0, 0), Valid: true},
+			Kthid:      p.KTHID,
+			UgKthid:    p.UGKTHID,
+			Email:      p.KTHID + "@kth.se",
+			FirstName:  p.FirstName,
+			FamilyName: p.FamilyName,
+			YearTag:    "D" + time.Now().Format("06"),
+			MemberTo:   pgtype.Date{Time: time.Now().AddDate(1, 0, 0), Valid: true},
 		}))
 	case "goose":
 		_, db := must2(database.Connect(ctx))

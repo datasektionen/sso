@@ -31,7 +31,7 @@ insert into users (
     ug_kthid,
     email,
     first_name,
-    surname,
+    family_name,
     year_tag,
     member_to
 )
@@ -39,13 +39,13 @@ values ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateUserParams struct {
-	Kthid     string
-	UgKthid   string
-	Email     string
-	FirstName string
-	Surname   string
-	YearTag   string
-	MemberTo  pgtype.Date
+	Kthid      string
+	UgKthid    string
+	Email      string
+	FirstName  string
+	FamilyName string
+	YearTag    string
+	MemberTo   pgtype.Date
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -54,7 +54,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.UgKthid,
 		arg.Email,
 		arg.FirstName,
-		arg.Surname,
+		arg.FamilyName,
 		arg.YearTag,
 		arg.MemberTo,
 	)
@@ -77,7 +77,7 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (string, error) 
 }
 
 const getUser = `-- name: GetUser :one
-select kthid, ug_kthid, email, first_name, surname, year_tag, member_to, webauthn_id
+select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id
 from users
 where kthid = $1
 `
@@ -90,7 +90,7 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 		&i.UgKthid,
 		&i.Email,
 		&i.FirstName,
-		&i.Surname,
+		&i.FamilyName,
 		&i.YearTag,
 		&i.MemberTo,
 		&i.WebauthnID,

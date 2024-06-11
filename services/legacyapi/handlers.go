@@ -89,7 +89,7 @@ func (s *service) verify(w http.ResponseWriter, r *http.Request) httputil.ToResp
 	}
 	return httputil.JSON(map[string]any{
 		"first_name": user.FirstName,
-		"last_name":  user.Surname,
+		"last_name":  user.FamilyName,
 		"user":       kthid,
 		"emails":     user.Email,
 		"ugkthid":    user.UGKTHID,

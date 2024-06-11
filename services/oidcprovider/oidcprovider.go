@@ -5,10 +5,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"encoding/json"
 	"errors"
 	"log/slog"
+	"math/big"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -42,11 +43,25 @@ type dotabase struct {
 var _ op.Storage = &service{}
 
 func NewService(db *database.Queries) (*service, error) {
-	var privateKey ecdsa.PrivateKey
-	if err := json.Unmarshal([]byte(config.Config.OIDCProviderKey), &privateKey); err != nil {
-		return nil, err
+	privateKey := ecdsa.PrivateKey{
+		PublicKey: ecdsa.PublicKey{
+			Curve: elliptic.P256(),
+			X:     new(big.Int),
+			Y:     new(big.Int),
+		},
+		D: new(big.Int),
 	}
-	privateKey.Curve = elliptic.P256()
+	parts := strings.SplitN(config.Config.OIDCProviderKey, ",", 3)
+	if _, ok := privateKey.X.SetString(parts[0], 62); !ok {
+		return nil, errors.New("Invalid x in $OIDC_PROVIDER_KEY")
+	}
+	if _, ok := privateKey.Y.SetString(parts[1], 62); !ok {
+		return nil, errors.New("Invalid y in $OIDC_PROVIDER_KEY")
+	}
+	if _, ok := privateKey.D.SetString(parts[2], 62); !ok {
+		return nil, errors.New("Invalid d in $OIDC_PROVIDER_KEY")
+	}
+
 	s := &service{
 		db: db,
 		dotabase: dotabase{

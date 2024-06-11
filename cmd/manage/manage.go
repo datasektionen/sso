@@ -5,10 +5,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/big"
 	"os"
 	"time"
 
@@ -54,15 +52,12 @@ func main() {
 		must0(goose.RunContext(context.Background(), gooseCMD, db(), "pkg/database/migrations", args...))
 	case "gen-oidc-provider-key":
 		key := must1(ecdsa.GenerateKey(elliptic.P256(), rand.Reader))
-		var j struct {
-			X *big.Int `json:"X"`
-			Y *big.Int `json:"Y"`
-			D *big.Int `json:"D"`
-		}
-		j.X = key.X
-		j.Y = key.Y
-		j.D = key.D
-		fmt.Println("OIDC_PROVIDER_KEY="+string(must1(json.Marshal(j))))
+		fmt.Printf(
+			"OIDC_PROVIDER_KEY=%s,%s,%s\n",
+			key.X.Text(62),
+			key.Y.Text(62),
+			key.D.Text(62),
+		)
 	default:
 		panic("No such subcommand")
 	}

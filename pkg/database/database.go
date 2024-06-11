@@ -41,3 +41,16 @@ func ConnectAndMigrate(ctx context.Context) (*Queries, error) {
 
 	return q, nil
 }
+
+func (q *Queries) Tx(ctx context.Context, f func(db *Queries) error) error {
+	pool := q.db.(*pgxpool.Pool)
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	if err := f(q.WithTx(tx)); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}

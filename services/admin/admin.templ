@@ -1,0 +1,10 @@
+package admin
+
+import "github.com/datasektionen/logout/pkg/templates"
+
+templ admin() {
+	@templates.Modal() {
+		<div id="membership-upload"></div>
+		<script type="module" src="/dist/membershipUpload.island.js"></script>
+	}
+}

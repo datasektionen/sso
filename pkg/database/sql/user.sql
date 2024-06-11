@@ -30,3 +30,8 @@ values ($1, $2, $3, $4, $5, $6, $7);
 select *
 from users
 where kthid = $1;
+
+-- name: UserSetMemberTo :exec
+update users
+set member_to = $2
+where kthid = $1;

@@ -107,3 +107,19 @@ func (q *Queries) RemoveSession(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, removeSession, id)
 	return err
 }
+
+const userSetMemberTo = `-- name: UserSetMemberTo :exec
+update users
+set member_to = $2
+where kthid = $1
+`
+
+type UserSetMemberToParams struct {
+	Kthid    string
+	MemberTo pgtype.Date
+}
+
+func (q *Queries) UserSetMemberTo(ctx context.Context, arg UserSetMemberToParams) error {
+	_, err := q.db.Exec(ctx, userSetMemberTo, arg.Kthid, arg.MemberTo)
+	return err
+}

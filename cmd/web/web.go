@@ -12,13 +12,14 @@ import (
 
 	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/database"
+	"github.com/datasektionen/logout/services/admin"
 	"github.com/datasektionen/logout/services/dev"
 	"github.com/datasektionen/logout/services/legacyapi"
+	"github.com/datasektionen/logout/services/oidcprovider"
 	"github.com/datasektionen/logout/services/oidcrp"
 	"github.com/datasektionen/logout/services/passkey"
 	"github.com/datasektionen/logout/services/static"
 	"github.com/datasektionen/logout/services/user"
-	"github.com/datasektionen/logout/services/oidcprovider"
 )
 
 func main() {
@@ -34,6 +35,7 @@ func main() {
 	legacyapi := must(legacyapi.NewService(ctx, db))
 	dev := must(dev.NewService(db))
 	oidcprovider := must(oidcprovider.NewService(db))
+	admin := must(admin.NewService(db))
 	cancel()
 
 	user.Assign(dev)
@@ -42,6 +44,7 @@ func main() {
 	legacyapi.Assign(user)
 	dev.Assign(user)
 	oidcprovider.Assign(user)
+	admin.Assign()
 
 	static.Mount()
 

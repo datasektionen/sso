@@ -2,7 +2,6 @@ package legacyapi
 
 import (
 	"context"
-	"crypto/rand"
 	"net/http"
 
 	"github.com/datasektionen/logout/pkg/database"
@@ -13,18 +12,10 @@ import (
 type service struct {
 	db      *database.Queries
 	user    user.Service
-	hmacKey [64]byte
 }
 
 func NewService(ctx context.Context, db *database.Queries) (*service, error) {
-	// TODO: persist?
-	var hmacKey [64]byte
-	_, err := rand.Read(hmacKey[:])
-	if err != nil {
-		return nil, err
-	}
-
-	s := &service{db: db, hmacKey: hmacKey}
+	s := &service{db: db}
 
 	http.Handle("/legacyapi/hello", httputil.Route(s.hello))
 	http.Handle("/legacyapi/login", httputil.Route(s.login))

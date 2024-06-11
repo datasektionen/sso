@@ -80,6 +80,6 @@ func Unauthorized() error {
 	return HttpError{StatusCode: http.StatusUnauthorized}
 }
 
-func Forbidden() error {
-	return HttpError{StatusCode: http.StatusForbidden}
+func Forbidden(message string) error {
+	return HttpError{Message: message, StatusCode: http.StatusForbidden}
 }

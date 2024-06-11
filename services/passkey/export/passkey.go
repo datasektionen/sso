@@ -26,8 +26,7 @@ func (u WebAuthnUser) WebAuthnCredentials() []webauthn.Credential {
 }
 
 func (u WebAuthnUser) WebAuthnDisplayName() string {
-	// TODO: use full name
-	return u.User.KTHID
+	return u.User.FirstName + " " + u.User.Surname
 }
 
 func (u WebAuthnUser) WebAuthnID() []byte {

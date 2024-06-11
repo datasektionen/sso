@@ -45,8 +45,8 @@ func (s *service) kthCallback(w http.ResponseWriter, r *http.Request) httputil.T
 			return
 		}
 		if user == nil {
-			// TODO: show user creation request note/thingie
-			httputil.Forbidden().(httputil.HttpError).ServeHTTP(w, r)
+			// TODO: show a better user creation request note/thingie
+			httputil.Forbidden("Your KTH account is not connected to a Datasektionen account. This should happen automatically if you are a chapter member. If you believe this is a mistake, please contact head of IT at d-sys@datasektionen.se").(httputil.HttpError).ServeHTTP(w, r)
 			return
 		}
 		httputil.Route(func(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

@@ -51,7 +51,8 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 		return err
 	}
 	if user == nil {
-		return httputil.Unauthorized()
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return nil
 	}
 	return account(*user)
 }

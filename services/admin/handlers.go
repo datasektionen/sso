@@ -2,6 +2,10 @@ package admin
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,19 +21,26 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+func (s *service) auth(h http.Handler) http.Handler {
+	return httputil.Route(func(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+		kthid, err := s.user.GetLoggedInKTHID(r)
+		if err != nil {
+			return err
+		}
+		if kthid == "" {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return nil
+		}
+		// TODO: check user has admin permissions in pls
+		return h
+	})
+}
+
 func (s *service) admin(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return admin()
 }
 
 func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	// TODO:
-
-	// admin := c.MustGet("admin").(bool)
-	// if !admin {
-	// 	c.JSON(401, gin.H{"error": "Permission denied."})
-	// 	return
-	// }
-
 	s.memberSheet.mu.Lock()
 	defer s.memberSheet.mu.Unlock()
 	if s.memberSheet.inProgress {
@@ -45,14 +56,6 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 
 func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	ctx := r.Context()
-	// TODO:
-
-	// admin := c.MustGet("admin").(bool)
-	// if !admin {
-	// 	c.JSON(401, gin.H{"error": "Permission denied."})
-	// 	return
-	// }
-
 	s.memberSheet.mu.Lock()
 	if s.memberSheet.inProgress {
 		return httputil.BadRequest("Membership sheet upload already in progress")
@@ -226,5 +229,64 @@ func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.
 	}
 	event("progress", fmt.Sprintf("%f", 1.0))
 
+	return nil
+}
+
+func (s *service) oidcClients(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	clients, err := s.db.ListClients(r.Context())
+	if err != nil {
+		return err
+	}
+	resp := make([]struct {
+		ID           string   `json:"id"`
+		RedirectURIs []string `json:"redirect_uris"`
+	}, len(clients))
+	for i, client := range clients {
+		resp[i].ID = base64.URLEncoding.EncodeToString(client.ID)
+		resp[i].RedirectURIs = client.RedirectUris
+	}
+	return httputil.JSON(resp)
+}
+
+func (s *service) createOIDCClient(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	var body struct {
+		RedirectURIs []string `json:"redirect_uris"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		return httputil.BadRequest("Invalid json in body")
+	}
+
+	var secret [32]byte
+	if _, err := rand.Read(secret[:]); err != nil {
+		return err
+	}
+
+	h := sha256.New()
+	h.Write(secret[:])
+	id := h.Sum(nil)
+
+	if err := s.db.CreateClient(r.Context(), database.CreateClientParams{
+		ID:           id,
+		RedirectUris: body.RedirectURIs,
+	}); err != nil {
+		return err
+	}
+	return httputil.JSON(map[string]any{
+		"id":     base64.URLEncoding.EncodeToString(id),
+		"secret": base64.URLEncoding.EncodeToString(secret[:]),
+	})
+}
+
+func (s *service) deleteOIDCClient(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid id")
+	}
+
+	if err := s.db.DeleteClient(r.Context(), id); err == pgx.ErrNoRows {
+		return httputil.BadRequest("No such client")
+	} else if err != nil {
+		return err
+	}
 	return nil
 }

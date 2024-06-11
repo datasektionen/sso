@@ -5,12 +5,14 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/datasektionen/logout/pkg/config"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
 type client struct {
-	id string
+	id           string
+	redirectURIs []string
 }
 
 var _ op.Client = client{}
@@ -38,8 +40,7 @@ func (c client) ClockSkew() time.Duration {
 
 // DevMode implements op.Client.
 func (c client) DevMode() bool {
-	slog.Warn("oidcprovider.client.DevMode")
-	return true
+	return config.Config.Dev
 }
 
 // GetID implements op.Client.
@@ -83,8 +84,7 @@ func (c client) PostLogoutRedirectURIs() []string {
 
 // RedirectURIs implements op.Client.
 func (c client) RedirectURIs() []string {
-	slog.Warn("oidcprovider.client.RedirectURIs")
-	return []string{"http://localhost:3000/oidc/callback"}
+	return c.redirectURIs
 }
 
 // ResponseTypes implements op.Client.

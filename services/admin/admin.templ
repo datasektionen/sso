@@ -3,8 +3,18 @@ package admin
 import "github.com/datasektionen/logout/pkg/templates"
 
 templ admin() {
-	@templates.Modal() {
-		<div id="membership-upload"></div>
-		<script type="module" src="/dist/membershipUpload.island.js"></script>
+	@templates.Page() {
+		<div class="grid place-items-center min-h-screen">
+			<main class="bg-gray-800 rounded w-[1000px] max-w-[calc(100vw-2rem)] flex">
+				<div class="p-8 flex flex-col gap-4">
+					<div id="membership-upload"></div>
+					<script type="module" src="/dist/membershipUpload.island.js"></script>
+				</div>
+				<div class="p-8 flex flex-col gap-4">
+					<div id="oidc-clients"></div>
+					<script type="module" src="/dist/oidcClients.island.js"></script>
+				</div>
+			</main>
+		</div>
 	}
 }

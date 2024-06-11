@@ -15,6 +15,11 @@ type LegacyapiToken struct {
 	LastUsedAt pgtype.Timestamp
 }
 
+type OidcClient struct {
+	ID           []byte
+	RedirectUris []string
+}
+
 type Passkey struct {
 	ID    uuid.UUID
 	Name  string

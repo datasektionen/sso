@@ -31,7 +31,7 @@ func admin() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"membership-upload\"></div><script type=\"module\" src=\"/dist/membershipUpload.island.js\"></script>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"grid place-items-center min-h-screen\"><main class=\"bg-gray-800 rounded w-[1000px] max-w-[calc(100vw-2rem)] flex\"><div class=\"p-8 flex flex-col gap-4\"><div id=\"membership-upload\"></div><script type=\"module\" src=\"/dist/membershipUpload.island.js\"></script></div><div class=\"p-8 flex flex-col gap-4\"><div id=\"oidc-clients\"></div><script type=\"module\" src=\"/dist/oidcClients.island.js\"></script></div></main></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -40,7 +40,7 @@ func admin() templ.Component {
 			}
 			return templ_7745c5c3_Err
 		})
-		templ_7745c5c3_Err = templates.Modal().Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templates.Page().Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

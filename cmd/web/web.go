@@ -44,7 +44,7 @@ func main() {
 	legacyapi.Assign(user)
 	dev.Assign(user)
 	oidcprovider.Assign(user)
-	admin.Assign()
+	admin.Assign(user)
 
 	static.Mount()
 

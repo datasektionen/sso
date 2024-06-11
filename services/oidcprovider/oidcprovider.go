@@ -5,6 +5,9 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/base64"
 	"errors"
 	"log/slog"
 	"math/big"
@@ -19,6 +22,7 @@ import (
 	user "github.com/datasektionen/logout/services/user/export"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 	"golang.org/x/text/language"
@@ -168,15 +172,6 @@ func (s *service) AuthRequestByID(ctx context.Context, authRequestID string) (op
 	return req, nil
 }
 
-// AuthorizeClientIDSecret implements op.Storage.
-func (s *service) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
-	slog.Warn("oidcprovider.*service.AuthorizeClientIDSecret", "clientID", clientID, "clientSecret", clientSecret)
-	if clientID != "todo" || clientSecret != "secrettodo" {
-		return httputil.BadRequest("Invalid client id or secret")
-	}
-	return nil
-}
-
 // CreateAccessAndRefreshTokens implements op.Storage.
 func (s *service) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, currentRefreshToken string) (accessTokenID string, newRefreshTokenID string, expiration time.Time, err error) {
 	slog.Warn("oidcprovider.*service.CreateAccessAndRefreshTokens", "request", request, "currentRefreshToken", currentRefreshToken)
@@ -222,10 +217,49 @@ func (s *service) DeleteAuthRequest(ctx context.Context, authRequestID string) e
 	return nil
 }
 
+// AuthorizeClientIDSecret implements op.Storage.
+func (s *service) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
+	id, err := base64.URLEncoding.DecodeString(clientID)
+	if err != nil {
+		return httputil.BadRequest("Invalid id format")
+	}
+	_, err = s.db.GetClient(ctx, id)
+	if err == pgx.ErrNoRows {
+		return httputil.BadRequest("No such client")
+	}
+	if err != nil {
+		return err
+	}
+	secret, err := base64.URLEncoding.DecodeString(clientSecret)
+	if err != nil {
+		return httputil.BadRequest("Invalid secret format")
+	}
+	h := sha256.New()
+	h.Write(secret)
+	if subtle.ConstantTimeCompare(id, h.Sum(nil)) != 1 {
+		return httputil.BadRequest("Invalid client secret")
+	}
+	return nil
+}
+
 // GetClientByClientID implements op.Storage.
 func (s *service) GetClientByClientID(ctx context.Context, clientID string) (op.Client, error) {
-	slog.Warn("oidcprovider.*service.GetClientByClientID", "clientID", clientID)
-	return client{id: "todo"}, nil
+	id, err := base64.URLEncoding.DecodeString(clientID)
+	if err != nil {
+		return nil, httputil.BadRequest("Invalid id format")
+	}
+	c, err := s.db.GetClient(ctx, id)
+	if err == pgx.ErrNoRows {
+		return nil, httputil.BadRequest("No such client")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return client{
+		id:           base64.URLEncoding.EncodeToString(c.ID),
+		redirectURIs: c.RedirectUris,
+	}, nil
 }
 
 // GetKeyByIDAndClientID implements op.Storage.

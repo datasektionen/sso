@@ -181,7 +181,7 @@ func (s *service) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 // CreateAccessToken implements op.Storage.
 func (s *service) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
 	slog.Warn("oidcprovider.*service.CreateAccessToken", "request", request)
-	return "", time.Now().Add(time.Minute), nil
+	return strings.Join(request.GetScopes(), " "), time.Now().Add(time.Minute), nil
 }
 
 // CreateAuthRequest implements op.Storage.
@@ -319,14 +319,13 @@ func (s *service) SetIntrospectionFromToken(ctx context.Context, userinfo *oidc.
 
 // SetUserinfoFromScopes implements op.Storage.
 func (s *service) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.UserInfo, kthid string, clientID string, scopes []string) error {
-	slog.Error("oidcprovider.*service.SetUserinfoFromScopes", "kthid", kthid, "clientID", clientID, "scopes", scopes)
 	user, err := s.user.GetUser(ctx, kthid)
 	if err != nil {
 		return err
 	}
 	if user == nil {
 		slog.Error("SetUserinfoFromScopes: user not found", "kthid", kthid, "clientID", clientID, "scopes", scopes)
-		panic("SetUserinfoFromScopes, no user but pretty sure that should have been handled in this request???")
+		return errors.New("SetUserinfoFromScopes, no user but pretty sure that should have been handled in this request???")
 	}
 	for _, scope := range scopes {
 		switch scope {
@@ -340,13 +339,36 @@ func (s *service) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.User
 			userinfo.EmailVerified = true
 		}
 	}
+	slog.Info("oidcprovider.*service.SetUserinfoFromScopes", "userinfo", userinfo)
 	return nil
 }
 
 // SetUserinfoFromToken implements op.Storage.
 func (s *service) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID string, kthid string, origin string) error {
 	slog.Warn("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo, "tokenID", tokenID, "subject", kthid, "origin", origin)
-	userinfo.Subject = kthid
+	user, err := s.user.GetUser(ctx, kthid)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		slog.Error("SetUserinfoFromToken: user not found", "kthid", kthid)
+		return errors.New("SetUserinfoFromToken, no user but pretty sure that should have been handled in this request???")
+	}
+	// TODO: Putting scopes in tokenID feels cursed
+	scopes := strings.Split(tokenID, " ")
+	for _, scope := range scopes {
+		switch scope {
+		case oidc.ScopeOpenID:
+			userinfo.Subject = kthid
+		case oidc.ScopeProfile:
+			userinfo.GivenName = user.FirstName
+			userinfo.FamilyName = user.FamilyName
+		case oidc.ScopeEmail:
+			userinfo.Email = user.Email
+			userinfo.EmailVerified = true
+		}
+	}
+	slog.Info("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo)
 	return nil
 }
 

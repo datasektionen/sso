@@ -49,8 +49,7 @@ func (a authRequest) GetAuthTime() time.Time {
 
 // GetClientID implements op.AuthRequest.
 func (a authRequest) GetClientID() string {
-	slog.Warn("oidcprovider.authRequest.GetClientID")
-	return "todo"
+	return a.inner.ClientID
 }
 
 // GetCodeChallenge implements op.AuthRequest.
@@ -71,8 +70,7 @@ func (a authRequest) GetNonce() string {
 
 // GetRedirectURI implements op.AuthRequest.
 func (a authRequest) GetRedirectURI() string {
-	slog.Warn("oidcprovider.authRequest.GetRedirectURI")
-	return "http://localhost:3000/oidc/callback"
+	return a.inner.RedirectURI
 }
 
 // GetResponseMode implements op.AuthRequest.

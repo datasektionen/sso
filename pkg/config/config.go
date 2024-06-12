@@ -19,6 +19,7 @@ type Cfg struct {
 	DistDir               string
 	OIDCProviderIssuerURL *url.URL
 	OIDCProviderKey       string
+	PlsURL                *url.URL
 }
 
 var Config Cfg
@@ -37,6 +38,7 @@ func init() {
 		DistDir:               os.Getenv("DIST_DIR"),
 		OIDCProviderIssuerURL: getURL("OIDC_PROVIDER_ISSUER_URL", false),
 		OIDCProviderKey:       os.Getenv("OIDC_PROVIDER_KEY"),
+		PlsURL:                getURL("PLS_URL", true),
 	}
 }
 

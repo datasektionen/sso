@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/datasektionen/logout/pkg/httputil"
+	"github.com/datasektionen/logout/pkg/pls"
 	"github.com/google/uuid"
 )
 
@@ -78,7 +79,13 @@ func (s *service) verify(w http.ResponseWriter, r *http.Request) httputil.ToResp
 		return httputil.BadRequest("Invalid token")
 	}
 	apiKey := r.FormValue("api_key")
-	_ = apiKey // TODO: verify dis boi
+	allowed, err := pls.CheckToken(r.Context(), apiKey, "login.login")
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return httputil.Forbidden("API Key invalid or has incorrect permissions")
+	}
 	kthid, err := s.db.GetToken(r.Context(), token)
 	if err != nil {
 		return err

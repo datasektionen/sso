@@ -15,6 +15,7 @@ import (
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/kthldap"
+	"github.com/datasektionen/logout/pkg/pls"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -31,7 +32,17 @@ func (s *service) auth(h http.Handler) http.Handler {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return nil
 		}
-		// TODO: check user has admin permissions in pls
+		perm := "admin-write"
+		if r.Method == http.MethodGet {
+			perm = "admin-read"
+		}
+		allowed, err := pls.CheckUser(r.Context(), kthid, perm)
+		if err != nil {
+			return err
+		}
+		if !allowed {
+			return httputil.Forbidden("Missing admin permission in pls")
+		}
 		return h
 	})
 }

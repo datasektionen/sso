@@ -12,17 +12,15 @@ job "logout" {
       port     = "http"
       provider = "nomad"
       tags = [
-        "traefik-external.enable=true",
-        "traefik-external.http.routers.logout.rule=Host(`logout.datasektionen.se`)",
-        "traefik-external.http.routers.logout.entrypoints=websecure",
-        "traefik-external.http.routers.logout.tls.certresolver=default",
+        "traefik.enable=true",
+        "traefik.http.routers.logout.rule=Host(`logout.datasektionen.se`)",
+        "traefik.http.routers.logout.tls.certresolver=default",
 
-        "traefik-external.http.routers.logout-login2.rule=Host(`login2.datasektionen.se`)",
-        "traefik-external.http.routers.logout-login2.entrypoints=websecure",
-        "traefik-external.http.routers.logout-login2.tls.certresolver=default",
-        "traefik-external.http.routers.logout-login2.middlewares=redirect-to-logout",
-        "traefik-external.http.middlewares.redirect-to-logout.redirectregex.regex=^https://login2.datasektionen.se/(.*)$",
-        "traefik-external.http.middlewares.redirect-to-logout.redirectregex.replacement=https://logout.datasektionen.se/$${1}",
+        "traefik.http.routers.logout-login2.rule=Host(`login2.datasektionen.se`)",
+        "traefik.http.routers.logout-login2.tls.certresolver=default",
+        "traefik.http.routers.logout-login2.middlewares=redirect-to-logout",
+        "traefik.http.middlewares.redirect-to-logout.redirectregex.regex=^https://login2.datasektionen.se/(.*)$",
+        "traefik.http.middlewares.redirect-to-logout.redirectregex.replacement=https://logout.datasektionen.se/$${1}",
 
         "traefik-internal.enable=true",
         "traefik-internal.http.routers.logout.rule=Host(`logout.nomad.dsekt.internal`)",

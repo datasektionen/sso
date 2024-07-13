@@ -17,7 +17,7 @@ function OidcClients() {
     let [secret, setSecret] = createSignal<string | null>(null);
 
     onMount(async () => {
-        let res = await fetch("/admin/oidc-clients");
+        let res = await fetch("/admin/list-oidc-clients");
         if (res.status != 200) {
             setError(await res.text());
             return;

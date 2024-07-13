@@ -45,3 +45,24 @@ templ account(user export.User) {
 		</div>
 	}
 }
+
+templ acceptInvite() {
+	@templates.Modal() {
+		<div class="p-8 flex flex-col gap-4">
+			<img class="h-40 pb-4 block" src="/public/skold_vit.svg"/>
+			<a
+				autofocus
+				href="/login/oidc/kth"
+				class="
+					bg-[#3f4c66] p-1.5 block rounded border text-center
+					select-none border-transparent outline-none
+					focus:border-cerise-strong hover:border-cerise-light
+				"
+			>Continue with KTH</a>
+			<p>Pressing the button above will create a Datasektionen account using your KTH account.</p>
+		</div>
+		<script>
+			history.replaceState(null, "", "/invite/-");
+		</script>
+	}
+}

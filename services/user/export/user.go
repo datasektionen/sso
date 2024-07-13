@@ -14,6 +14,7 @@ type Service interface {
 	GetLoggedInKTHID(r *http.Request) (string, error)
 	GetLoggedInUser(r *http.Request) (*User, error)
 	Logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse
+	FinishInvite(w http.ResponseWriter, r *http.Request, kthid string) (bool, httputil.ToResponse)
 }
 
 type User struct {

@@ -153,3 +153,8 @@ to `/oidc/kth/callback` that redirects the user further within this system and
 then cookies must be sent, but from some local testing it seems they're not
 since the user was (indirectly) redirected from KTH. Therefore they're set to
 `Lax`.
+
+## Database schema
+
+The schema is defined by the migrations in `./pkg/database/migrations/`. A new
+one can be created using `go run ./cmd/manage goose create $NAME sql`.

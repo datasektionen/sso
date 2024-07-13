@@ -9,6 +9,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Invite struct {
+	ID          uuid.UUID
+	Name        string
+	CreatedAt   pgtype.Timestamp
+	ExpiresAt   pgtype.Timestamp
+	MaxUses     pgtype.Int4
+	CurrentUses int32
+}
+
 type LegacyapiToken struct {
 	ID         uuid.UUID
 	Kthid      string

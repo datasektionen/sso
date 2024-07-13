@@ -11,7 +11,7 @@ function MembershipUpload() {
 
         setMessages([]);
 
-        let res = await fetch("/admin/upload-sheet", {
+        let res = await fetch("/admin/members/upload-sheet", {
             method: "post",
             headers: { "Content-Type": "application/octet-stream; charset=binary" },
             body: fileInput.files?.[0],
@@ -20,7 +20,7 @@ function MembershipUpload() {
             setMessages([{ msg: await res.text(), error: true }]);
             return
         }
-        let events = new EventSource("/admin/upload-sheet");
+        let events = new EventSource("/admin/members/upload-sheet");
         events.addEventListener("error", () => {
             events.close();
             setProgress(null);

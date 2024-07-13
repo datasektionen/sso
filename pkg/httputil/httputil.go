@@ -11,40 +11,43 @@ import (
 
 type ToResponse any
 
+func Respond(resp ToResponse, w http.ResponseWriter, r *http.Request) {
+	if resp == nil {
+		return
+	}
+	switch resp.(type) {
+	case templ.Component:
+		resp.(templ.Component).Render(r.Context(), w)
+	case error:
+		err := resp.(error)
+		var httpErr HttpError
+		if errors.As(err, &httpErr) {
+			httpErr.ServeHTTP(w, r)
+		} else {
+			slog.Error("Error serving request", "path", r.URL.Path, "error", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal server error"))
+		}
+	case string:
+		s := resp.(string)
+		w.Write([]byte(s))
+	case http.Handler:
+		h := resp.(http.Handler)
+		h.ServeHTTP(w, r)
+	case jsonValue:
+		j := resp.(jsonValue).any
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(j); err != nil {
+			slog.Error("Error writing json", "value", j)
+		}
+	default:
+		slog.Error("Got invalid response type when serving request", "url", r.URL.String(), "response", resp)
+	}
+}
+
 func Route(f func(w http.ResponseWriter, r *http.Request) ToResponse) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := f(w, r)
-		if resp == nil {
-			return
-		}
-		switch resp.(type) {
-		case templ.Component:
-			resp.(templ.Component).Render(r.Context(), w)
-		case error:
-			err := resp.(error)
-			var httpErr HttpError
-			if errors.As(err, &httpErr) {
-				httpErr.ServeHTTP(w, r)
-			} else {
-				slog.Error("Error serving request", "path", r.URL.Path, "error", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte("Internal server error"))
-			}
-		case string:
-			s := resp.(string)
-			w.Write([]byte(s))
-		case http.Handler:
-			h := resp.(http.Handler)
-			h.ServeHTTP(w, r)
-		case jsonValue:
-			j := resp.(jsonValue).any
-			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(j); err != nil {
-				slog.Error("Error writing json", "value", j)
-			}
-		default:
-			slog.Error("Got invalid response type when serving request", "url", r.URL.String(), "response", resp)
-		}
+		Respond(f(w, r), w, r)
 	})
 }
 

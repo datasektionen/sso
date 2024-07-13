@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/kthldap"
 	"github.com/datasektionen/logout/pkg/pls"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -49,6 +51,57 @@ func (s *service) auth(h http.Handler) http.Handler {
 
 func (s *service) admin(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return admin()
+}
+
+func (s *service) members(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	return members()
+}
+
+func (s *service) oidcClients(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	return oidcClients()
+}
+
+func (s *service) invites(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	invs, err := s.db.ListInvites(r.Context())
+	if err != nil {
+		return err
+	}
+	return invites(invs)
+}
+
+func (s *service) createInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	name := r.FormValue("name")
+	expiresAt, err := time.Parse(time.DateOnly, r.FormValue("expires-at"))
+	if err != nil {
+		return httputil.BadRequest("Invalid date for expires at")
+	}
+	maxUsesStr := r.FormValue("max-uses")
+	maxUses, err := strconv.Atoi(maxUsesStr)
+	if err != nil && maxUsesStr != "" {
+		return httputil.BadRequest("Invalid int for max uses")
+	}
+	inv, err := s.db.CreateInvite(r.Context(), database.CreateInviteParams{
+		Name:      name,
+		ExpiresAt: pgtype.Timestamp{Time: expiresAt, Valid: true},
+		MaxUses:   pgtype.Int4{Int32: int32(maxUses), Valid: maxUsesStr != ""},
+	})
+	if err != nil {
+		return err
+	}
+	return invite(inv)
+}
+
+func (s *service) deleteInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid id")
+	}
+	if err := s.db.DeleteInvite(r.Context(), id); err == pgx.ErrNoRows {
+		return httputil.BadRequest("No such invite")
+	} else if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -243,7 +296,7 @@ func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.
 	return nil
 }
 
-func (s *service) oidcClients(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func (s *service) listOIDCClients(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	clients, err := s.db.ListClients(r.Context())
 	if err != nil {
 		return err

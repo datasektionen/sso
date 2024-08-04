@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/a-h/templ"
 	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
@@ -13,11 +14,15 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 
+//go:generate templ generate
+
 type service struct {
 	db       *database.Queries
 	webauthn *webauthn.WebAuthn
 	user     user.Service
 }
+
+var _ export.Service = &service{}
 
 func NewService(db *database.Queries) (*service, error) {
 	wa, err := webauthn.New(&webauthn.Config{
@@ -33,10 +38,10 @@ func NewService(db *database.Queries) (*service, error) {
 
 	http.Handle("POST /login/passkey/begin", httputil.Route(s.beginLoginPasskey))
 	http.Handle("POST /login/passkey/finish", httputil.Route(s.finishLoginPasskey))
-	http.Handle("POST /passkey/add/begin", httputil.Route(s.beginAddPasskey))
-	http.Handle("POST /passkey/add/finish", httputil.Route(s.finishAddPasskey))
-	http.Handle("POST /passkey/remove", httputil.Route(s.removePasskey))
-	http.Handle("GET /passkey/list", httputil.Route(s.listPasskeys))
+
+	http.Handle("GET /passkey/add-form", httputil.Route(s.addPasskeyForm))
+	http.Handle("POST /passkey", httputil.Route(s.addPasskey))
+	http.Handle("DELETE /passkey/{id}", httputil.Route(s.removePasskey))
 
 	return s, nil
 }
@@ -63,4 +68,12 @@ func (s *service) listPasskeysForUser(ctx context.Context, kthid string) ([]expo
 		}
 	}
 	return passkeys, nil
+}
+
+func (s *service) PasskeySettings(ctx context.Context, kthid string) (func() templ.Component, error) {
+	passkeys, err := s.listPasskeysForUser(ctx, kthid)
+	if err != nil {
+		return nil, err
+	}
+	return func() templ.Component { return passkeySettings(passkeys) }, nil
 }

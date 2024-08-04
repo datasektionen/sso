@@ -60,7 +60,11 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return nil
 	}
-	return account(*user)
+	passkeySettings, err := s.passkey.PasskeySettings(r.Context(), user.KTHID)
+	if err != nil {
+		return err
+	}
+	return account(*user, passkeySettings)
 }
 
 func (s *service) acceptInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

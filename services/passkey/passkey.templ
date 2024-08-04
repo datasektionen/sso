@@ -1,0 +1,116 @@
+package passkey
+
+import (
+	"github.com/datasektionen/logout/services/passkey/export"
+	"github.com/go-webauthn/webauthn/protocol"
+)
+
+templ showPasskey(passkey export.Passkey) {
+	<li class="flex p-2 gap-2 items-center">
+		<span>{ passkey.Name }</span>
+		<button
+			class="
+				bg-[#3f4c66] shrink-0 h-5 w-5 rounded-full
+				grid place-items-center pointer
+				border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+			"
+			hx-delete={ "/passkey/" + passkey.ID.String() }
+			hx-target="closest li"
+			hx-swap="outerHTML"
+		>
+			<img class="w-3/5 h-3/5 invert" src="/public/x.svg"/>
+		</button>
+	</li>
+}
+
+templ passkeySettings(passkeys []export.Passkey) {
+	<section class="flex flex-col">
+		<h2 class="text-lg">Passkeys:</h2>
+		<ul id="passkey-list">
+			for _, passkey := range passkeys {
+				@showPasskey(passkey)
+			}
+		</ul>
+		<button
+			hx-get="/passkey/add-form"
+			hx-swap="afterend"
+			hx-on:htmx:after-swap="this.style.display = 'none'"
+			id="add-passkey-button"
+			class="
+				bg-[#3f4c66] p-1.5 block rounded border text-center
+				select-none border-transparent outline-none
+				focus:border-cerise-strong hover:border-cerise-light
+			"
+		>Add passkey</button>
+	</section>
+}
+
+templ addPasskeyForm(cc *protocol.CredentialCreation) {
+	<form
+		data-credential-creation={ templ.JSONString(cc) }
+		onsubmit="addPasskey(this, event)"
+	>
+		<script>
+			async function addPasskey(form, event) {
+				event.preventDefault();
+				let cc = JSON.parse(form.dataset.credentialCreation);
+				cc.publicKey.challenge = decodebase64url(cc.publicKey.challenge);
+				cc.publicKey.user.id = decodebase64url(cc.publicKey.user.id);
+				for (let err of form.querySelectorAll(".error"))
+					err.remove();
+
+				try {
+					let cred = await navigator.credentials.create(await cc);
+					let res = await fetch("/passkey", {
+						method: "post",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							name: new FormData(form).get("name"),
+							id: cred.id,
+							type: cred.type,
+							authenticatorAttachment: cred.authenticatorAttachment,
+							response: {
+								attestationObject: encodebase64url(cred.response.attestationObject),
+								clientDataJSON: encodebase64url(cred.response.clientDataJSON),
+							},
+						}),
+					});
+					if (res.status != 200)
+						throw new Error(await res.text());
+					let key = await res.text();
+					form.remove();
+					htmx.swap("#passkey-list", key, { swapStyle: "beforeend" });
+					document.querySelector("#add-passkey-button").style.display = "";
+				} catch (err) {
+					let text = (err.name === "NotAllowedError")
+						? "Missing permission or request was cancelled"
+						: err.message;
+					let el = document.createElement("p");
+					el.classList.add("error");
+					el.textContent = text;
+					form.appendChild(el);
+				}
+			}
+		</script>
+		<div class="flex gap-2">
+			<input
+				placeholder="passkey name"
+				type="text"
+				autofocus
+				name="name"
+				class="
+					border border-neutral-500 grow
+					outline-none focus:border-cerise-strong hover:border-cerise-light
+					bg-slate-800 p-1.5 rounded h-8
+				"
+			/>
+			<button
+				class="
+				bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+				grid place-items-center pointer
+				border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light
+			"
+			><img class="w-3/5 h-3/5 invert" src="/public/check.svg"/></button>
+		</div>
+	</form>
+}

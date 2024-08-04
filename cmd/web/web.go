@@ -28,17 +28,17 @@ func main() {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	serviceCreationContext, cancel := context.WithTimeout(context.Background(), time.Minute)
 	user := must(user.NewService(db))
 	passkey := must(passkey.NewService(db))
-	oidcrp := must(oidcrp.NewService(ctx))
-	legacyapi := must(legacyapi.NewService(ctx, db))
+	oidcrp := must(oidcrp.NewService(serviceCreationContext))
+	legacyapi := must(legacyapi.NewService(serviceCreationContext, db))
 	dev := must(dev.NewService(db))
 	oidcprovider := must(oidcprovider.NewService(db))
 	admin := must(admin.NewService(db))
 	cancel()
 
-	user.Assign(dev)
+	user.Assign(dev, passkey)
 	passkey.Assign(user)
 	oidcrp.Assign(user)
 	legacyapi.Assign(user)

@@ -25,7 +25,7 @@ templ index(devLogin func() templ.Component) {
 	}
 }
 
-templ account(user export.User) {
+templ account(user export.User, passkeySettings func() templ.Component) {
 	@templates.Modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<div class="flex gap-2 items-center">
@@ -40,8 +40,7 @@ templ account(user export.User) {
 					"
 				><img class="w-3/5 h-3/5 invert" src="/public/log-out.svg"/></a>
 			</div>
-			<div id="passkey-settings" class="w-full"></div>
-			<script type="module" src="/dist/passkeySettings.island.js"></script>
+			@passkeySettings()
 		</div>
 	}
 }

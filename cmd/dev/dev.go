@@ -54,7 +54,10 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	for _, cmd := range [][]string{{"pnpm", "build", "--watch", "--no-watch.clearScreen"}, {"pnpm", "tailwind", "--watch"}} {
+	for _, cmd := range [][]string{
+		{"pnpm", "build", "--watch", "--no-watch.clearScreen"},
+		{"pnpm", "tailwind", "--watch"},
+	} {
 		go run(ctx, cmd)
 	}
 	watcher, err := fsnotify.NewWatcher()

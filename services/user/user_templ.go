@@ -65,7 +65,7 @@ func index(devLogin func() templ.Component) templ.Component {
 	})
 }
 
-func account(user export.User) templ.Component {
+func account(user export.User, passkeySettings func() templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -134,7 +134,15 @@ func account(user export.User) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(")</p><a href=\"/logout\" title=\"Log out\" class=\"\n\t\t\t\t\t\tbg-[#3f4c66] shrink-0 h-8 w-8 rounded-full\n\t\t\t\t\t\tgrid place-items-center pointer\n\t\t\t\t\t\tborder border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative\n\t\t\t\t\t\"><img class=\"w-3/5 h-3/5 invert\" src=\"/public/log-out.svg\"></a></div><div id=\"passkey-settings\" class=\"w-full\"></div><script type=\"module\" src=\"/dist/passkeySettings.island.js\"></script></div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(")</p><a href=\"/logout\" title=\"Log out\" class=\"\n\t\t\t\t\t\tbg-[#3f4c66] shrink-0 h-8 w-8 rounded-full\n\t\t\t\t\t\tgrid place-items-center pointer\n\t\t\t\t\t\tborder border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative\n\t\t\t\t\t\"><img class=\"w-3/5 h-3/5 invert\" src=\"/public/log-out.svg\"></a></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = passkeySettings().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

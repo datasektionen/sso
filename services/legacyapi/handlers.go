@@ -50,7 +50,7 @@ func (s *service) login(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
-	http.Redirect(w, r, "/?return-path="+url.QueryEscape("/legacyapi/callback"), http.StatusSeeOther)
+	s.user.RedirectToLogin(w, r, "/legacyapi/callback")
 	return nil
 }
 

@@ -123,3 +123,7 @@ func (s *service) Logout(w http.ResponseWriter, r *http.Request) httputil.ToResp
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
 }
+
+func (s *service) RedirectToLogin(w http.ResponseWriter, r *http.Request, nextURL string) {
+	http.Redirect(w, r, export.LoginPath(nextURL), http.StatusSeeOther)
+}

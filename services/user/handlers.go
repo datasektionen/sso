@@ -14,34 +14,34 @@ import (
 )
 
 func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	returnPath := r.FormValue("return-path")
-	if returnPath != "" && returnPath[0] != '/' {
-		return httputil.BadRequest("Invalid return path")
+	returnURL := r.FormValue("next-url")
+	if returnURL != "" && returnURL[0] != '/' {
+		return httputil.BadRequest("Invalid return url")
 	}
 	hasCookie := false
-	if returnPath == "" {
-		c, _ := r.Cookie("return-path")
+	if returnURL == "" {
+		c, _ := r.Cookie("next-url")
 		if c != nil {
-			returnPath = c.Value
+			returnURL = c.Value
 			hasCookie = true
 		}
 	}
-	if returnPath == "" {
-		returnPath = "/account"
+	if returnURL == "" {
+		returnURL = "/account"
 	}
 	if kthid, err := s.GetLoggedInKTHID(r); err != nil {
 		return err
 	} else if kthid != "" {
 		if hasCookie {
-			http.SetCookie(w, &http.Cookie{Name: "return-path", MaxAge: -1})
+			http.SetCookie(w, &http.Cookie{Name: "next-url", MaxAge: -1})
 		}
-		http.Redirect(w, r, returnPath, http.StatusSeeOther)
+		http.Redirect(w, r, returnURL, http.StatusSeeOther)
 		return nil
 	}
-	if returnPath != "" {
+	if returnURL != "" {
 		http.SetCookie(w, &http.Cookie{
-			Name:     "return-path",
-			Value:    returnPath,
+			Name:     "next-url",
+			Value:    returnURL,
 			MaxAge:   int((time.Minute * 10).Seconds()),
 			Secure:   true,
 			HttpOnly: true,

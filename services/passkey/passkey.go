@@ -70,6 +70,10 @@ func (s *service) listPasskeysForUser(ctx context.Context, kthid string) ([]expo
 	return passkeys, nil
 }
 
+func (s *service) PasskeyLogin() func() templ.Component {
+	return func() templ.Component { return passkeyLogin("", nil) }
+}
+
 func (s *service) PasskeySettings(ctx context.Context, kthid string) (func() templ.Component, error) {
 	passkeys, err := s.listPasskeysForUser(ctx, kthid)
 	if err != nil {

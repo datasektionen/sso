@@ -10,6 +10,7 @@ import (
 )
 
 type Service interface {
+	PasskeyLogin() func() templ.Component
 	PasskeySettings(ctx context.Context, kthid string) (func() templ.Component, error)
 }
 

@@ -13,7 +13,7 @@ import (
 	"github.com/datasektionen/logout/services/user/export"
 )
 
-func index(devLogin func() templ.Component) templ.Component {
+func index(passkeyLogin func() templ.Component, devLogin func() templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -43,7 +43,11 @@ func index(devLogin func() templ.Component) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/login/oidc/kth\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-cerise-strong hover:border-cerise-light\n\t\t\t\t\">Log In with KTH</a><div id=\"passkey-login\" style=\"min-height: 62px\"></div><script type=\"module\" src=\"/dist/passkeyLogin.island.js\"></script>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/login/oidc/kth\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-cerise-strong hover:border-cerise-light\n\t\t\t\t\">Log In with KTH</a>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = passkeyLogin().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -102,7 +106,7 @@ func account(user export.User, passkeySettings func() templ.Component) templ.Com
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(user.FirstName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 32, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 31, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -115,7 +119,7 @@ func account(user export.User, passkeySettings func() templ.Component) templ.Com
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(user.FamilyName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 32, Col: 62}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 31, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -128,7 +132,7 @@ func account(user export.User, passkeySettings func() templ.Component) templ.Com
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(user.KTHID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 32, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 31, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {

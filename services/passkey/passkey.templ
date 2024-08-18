@@ -5,6 +5,101 @@ import (
 	"github.com/go-webauthn/webauthn/protocol"
 )
 
+func bigIfTrue[T any](cond bool, thenVal, elseVal T) T {
+	if cond {
+		return thenVal
+	} else {
+		return elseVal
+	}
+}
+
+templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
+	<form
+		id="passkey-login-form"
+		hx-post="/login/passkey/begin"
+		hx-on::before-request="this.querySelectorAll('.error').forEach(e => e.remove())"
+		if credAss != nil {
+			data-cred-ass={templ.JSONString(credAss)}
+		}
+		hx-swap="outerHTML"
+		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"
+	>
+		if credAss != nil {
+			<script type="module">
+				let form = document.querySelector("#passkey-login-form");
+				let credAss = JSON.parse(form.dataset.credAss);
+				credAss.publicKey.challenge = decodebase64url(credAss.publicKey.challenge);
+				for (let ac of credAss.publicKey.allowCredentials) {
+					ac.id = decodebase64url(ac.id);
+				}
+				console.log(credAss);
+				event.preventDefault();
+				try {
+					let cred = await navigator.credentials.get(credAss);
+					let res = await fetch("/login/passkey/finish", {
+						method: "post",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							kthid: new FormData(form).get("kthid"),
+							cred: {
+								id: cred.id,
+								rawId: encodebase64url(cred.rawId),
+								type: cred.type,
+								authenticatorAttachment: cred.authenticatorAttachment,
+								response: {
+									authenticatorData: encodebase64url(cred.response.authenticatorData),
+									clientDataJSON: encodebase64url(cred.response.clientDataJSON),
+									signature: encodebase64url(cred.response.signature),
+									userHandle: encodebase64url(cred.response.userHandle),
+								},
+							},
+						}),
+					});
+					if (res.status == 200)
+						window.location.replace("/");
+					else
+						throw new Error(await res.text());
+				} catch (err) {
+					let text = (err.name === "NotAllowedError")
+						? "Missing permission or request was cancelled"
+						: err.message;
+					let el = document.createElement("p");
+					el.classList.add("error");
+					el.textContent = text;
+					form.appendChild(el);
+				} finally {
+					form.querySelector("button").classList.remove("spinner");
+				}
+			</script>
+		}
+		<label class="text-sm" for="pk-kthid">Log In using a Passkey</label>
+		<div class="flex gap-2">
+			<input
+				id="pk-kthid"
+				name="kthid"
+				type="text"
+				required
+				placeholder="KTH ID"
+				value={ kthid }
+				class="
+					border border-neutral-500 grow
+					outline-none focus:border-cerise-strong hover:border-cerise-light
+					bg-slate-800 p-1.5 rounded h-8
+				"
+			/>
+			<button
+				class={ `
+					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+					grid place-items-center pointer
+					border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+				`+bigIfTrue(credAss != nil, "spinner", "") }
+			>
+				<img src="/public/key_icon.svg" class="w-3/5 h-3/5 invert"/>
+			</button>
+		</div>
+	</form>
+}
+
 templ showPasskey(passkey export.Passkey) {
 	<li class="flex p-2 gap-2 items-center">
 		<span>{ passkey.Name }</span>
@@ -49,6 +144,7 @@ templ addPasskeyForm(cc *protocol.CredentialCreation) {
 	<form
 		data-credential-creation={ templ.JSONString(cc) }
 		onsubmit="addPasskey(this, event)"
+		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"
 	>
 		<script>
 			async function addPasskey(form, event) {

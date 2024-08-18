@@ -48,7 +48,7 @@ func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 			SameSite: http.SameSiteLaxMode,
 		})
 	}
-	return index(s.dev.LoginForm)
+	return index(s.passkey.PasskeyLogin(), s.dev.LoginForm)
 }
 
 func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

@@ -2,7 +2,6 @@ package passkey
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 	"time"
 
@@ -17,16 +16,14 @@ import (
 var hackSession *webauthn.SessionData
 
 func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	kthid, err := io.ReadAll(r.Body)
-	if err != nil {
-		return err
-	}
-	user, err := s.user.GetUser(r.Context(), string(kthid))
+	kthid := r.FormValue("kthid")
+	user, err := s.user.GetUser(r.Context(), kthid)
 	if err != nil {
 		return err
 	}
 	if user == nil {
-		return httputil.BadRequest("No such user")
+		w.Header().Add("HX-Reswap", "beforeend")
+		return `<p class="error">No such user</p>`
 	}
 	passkeys, err := s.listPasskeysForUser(r.Context(), user.KTHID)
 	if len(passkeys) == 0 {
@@ -37,18 +34,18 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 	if err != nil {
 		return err
 	}
-	return httputil.JSON(credAss)
+	return passkeyLogin(kthid, credAss)
 }
 
 func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	var body struct {
 		KTHID string `json:"kthid"`
-		protocol.CredentialAssertionResponse
+		Cred protocol.CredentialAssertionResponse `json:"cred"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		return httputil.BadRequest("Invalid credential")
 	}
-	credAss, err := body.CredentialAssertionResponse.Parse()
+	credAss, err := body.Cred.Parse()
 	if err != nil {
 		return httputil.BadRequest("Invalid credential")
 	}

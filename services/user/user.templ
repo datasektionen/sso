@@ -5,7 +5,7 @@ import (
 	"github.com/datasektionen/logout/services/user/export"
 )
 
-templ index(devLogin func() templ.Component) {
+templ index(passkeyLogin func() templ.Component, devLogin func() templ.Component) {
 	@templates.Modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<img class="h-40 pb-4 block" src="/public/skold_vit.svg"/>
@@ -18,8 +18,7 @@ templ index(devLogin func() templ.Component) {
 					focus:border-cerise-strong hover:border-cerise-light
 				"
 			>Log In with KTH</a>
-			<div id="passkey-login" style="min-height: 62px"></div>
-			<script type="module" src="/dist/passkeyLogin.island.js"></script>
+			@passkeyLogin()
 			@devLogin()
 		</div>
 	}

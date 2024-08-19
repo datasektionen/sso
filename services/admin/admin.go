@@ -19,12 +19,18 @@ type service struct {
 
 type memberSheet struct {
 	mu         sync.Mutex
-	data       []byte
+	reader     chan chan<- sheetEvent
 	inProgress bool
 }
 
+type sheetEvent struct {
+	name, data string
+}
+
 func NewService(db *database.Queries) (*service, error) {
-	s := &service{db: db}
+	s := &service{db: db, memberSheet: memberSheet{
+		reader: make(chan chan<- sheetEvent),
+	}}
 
 	http.Handle("GET /admin", s.auth(httputil.Route(s.admin)))
 

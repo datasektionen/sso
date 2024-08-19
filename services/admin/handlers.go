@@ -2,6 +2,7 @@ package admin
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -162,35 +163,184 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 	if s.memberSheet.inProgress {
 		return httputil.BadRequest("Membership sheet upload currently in progress")
 	}
-	var err error
-	s.memberSheet.data, err = io.ReadAll(r.Body)
+	s.memberSheet.inProgress = true
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
+	ctx := context.WithoutCancel(r.Context())
+	go func() {
+		defer func() {
+			s.memberSheet.mu.Lock()
+			s.memberSheet.inProgress = false
+			s.memberSheet.mu.Unlock()
+		}()
+
+		reader := <-s.memberSheet.reader
+
+		defer func() {
+			reader <- sheetEvent{"done", ""}
+		}()
+
+		const (
+			sheetDateCol    = "Giltig till"
+			sheetEmailCol   = "E-postadress"
+			sheetChapterCol = "Grupp"
+		)
+
+		sheet, err := excelize.OpenReader(bytes.NewBuffer(data))
+		if err != nil {
+			reader <- sheetEvent{"err", "Could not parse sheet: " + err.Error()}
+			return
+		}
+		if sheet.SheetCount < 1 {
+			reader <- sheetEvent{"err", "No sheets found in the provided file"}
+			return
+		}
+		rows, err := sheet.GetRows(sheet.GetSheetName(0))
+		if err != nil {
+			reader <- sheetEvent{"err", "No sheets found in the provided file: " + err.Error()}
+			return
+		}
+		if len(rows) == 0 {
+			reader <- sheetEvent{"err", "Header (first) row not found"}
+			return
+		}
+		var dateCol, emailCol, chapterCol int = -1, -1, -1
+		for i, title := range rows[0] {
+			title = strings.TrimSpace(title)
+			if title == sheetDateCol {
+				dateCol = i
+			} else if title == sheetEmailCol {
+				emailCol = i
+			} else if title == sheetChapterCol {
+				chapterCol = i
+			}
+		}
+		if dateCol == -1 {
+			reader <- sheetEvent{"err", "Could not find a column for dates"}
+			return
+		}
+		if emailCol == -1 {
+			reader <- sheetEvent{"err", "Could not find a column for emails"}
+			return
+		}
+		if chapterCol == -1 {
+			reader <- sheetEvent{"err", "Could not find a column for chapters"}
+			return
+		}
+
+		for i, columns := range rows[1:] {
+			if len(columns) == 0 {
+				continue
+			}
+			if dateCol >= len(columns) || emailCol >= len(columns) || chapterCol >= len(columns) {
+				reader <- sheetEvent{"err", fmt.Sprintf(
+					"Some column (with index %d, %d or %d) not found on row '%s' with length %d",
+					dateCol,
+					emailCol,
+					chapterCol,
+					strings.Join(columns, ","),
+					len(columns),
+				)}
+				continue
+			}
+			date := columns[dateCol]
+			email := columns[emailCol]
+			chapter := columns[chapterCol]
+
+			kthid, found := strings.CutSuffix(email, "@kth.se")
+			if !found {
+				reader <- sheetEvent{"err", fmt.Sprintf(
+					"Cannot get kth id from row '%s'. Complain to THS that they should have kth-ids in their membership sheet :)",
+					strings.Join(columns, ","),
+				)}
+				continue
+			}
+
+			if !strings.Contains(chapter, "Datasektionen") {
+				if err := s.db.UserSetMemberTo(ctx, database.UserSetMemberToParams{
+					Kthid:    kthid,
+					MemberTo: pgtype.Date{Time: time.Now(), Valid: true},
+				}); err != nil {
+					reader <- sheetEvent{"err", fmt.Sprintf(
+						"Could not end membership for user '%s': %v",
+						kthid,
+						err,
+					)}
+				}
+				continue
+			}
+
+			memberTo, err := time.Parse(time.DateOnly, date)
+			if err != nil {
+				reader <- sheetEvent{"err", fmt.Sprintf(
+					"Invalid date '%s' for user '%s': %v",
+					date,
+					kthid,
+					err,
+				)}
+			}
+
+			if err := s.db.Tx(ctx, func(db *database.Queries) error {
+				_, err := db.GetUser(ctx, kthid)
+				if err == pgx.ErrNoRows {
+					person, err := kthldap.Lookup(ctx, kthid)
+					if err != nil {
+						return err
+					}
+					if person == nil {
+						reader <- sheetEvent{"err", fmt.Sprintf(
+							"Could not find user with kthid '%s' in KTH's ldap",
+							kthid,
+						)}
+						return nil
+					}
+					if err := db.CreateUser(ctx, database.CreateUserParams{
+						Kthid:      kthid,
+						UgKthid:    person.UGKTHID,
+						Email:      email,
+						FirstName:  person.FirstName,
+						FamilyName: person.FamilyName,
+						MemberTo:   pgtype.Date{Valid: true, Time: memberTo},
+					}); err != nil {
+						return err
+					}
+					return nil
+				}
+				if err != nil {
+					return err
+				}
+				return db.UserSetMemberTo(ctx, database.UserSetMemberToParams{
+					Kthid:    kthid,
+					MemberTo: pgtype.Date{Valid: true, Time: memberTo},
+				})
+			}); err != nil {
+				reader <- sheetEvent{"err", fmt.Sprintf(
+					"Could not update user '%s' in database: %v",
+					kthid,
+					err,
+				)}
+			}
+			reader <- sheetEvent{"progress", fmt.Sprintf("%f", float64(i)/float64(len(rows)-1))}
+		}
+		reader <- sheetEvent{"progress", fmt.Sprintf("%f", 1.0)}
+
+		return
+	}()
 	return nil
 }
 
 func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	ctx := r.Context()
-	s.memberSheet.mu.Lock()
-	if s.memberSheet.inProgress {
-		return httputil.BadRequest("Membership sheet upload already in progress")
-	}
-	s.memberSheet.inProgress = true
-	s.memberSheet.mu.Unlock()
-	defer func() {
-		s.memberSheet.mu.Lock()
-		s.memberSheet.inProgress = false
-		s.memberSheet.data = nil
-		s.memberSheet.mu.Unlock()
-	}()
+	ch := make(chan sheetEvent)
+	s.memberSheet.reader <- ch
 
 	// Yes, server-sent events actually are that easy
 	w.Header().Set("Content-Type", "text/event-stream")
 	flusher, canFlush := w.(interface{ Flush() })
-	event := func(event, data string) {
-		w.Write([]byte("event: " + event + "\n"))
-		for _, line := range strings.Split(data, "\n") {
+	for event := range ch {
+		w.Write([]byte("event: " + event.name + "\n"))
+		for _, line := range strings.Split(event.data, "\n") {
 			w.Write([]byte("data: " + line + "\n"))
 		}
 		w.Write([]byte("\n"))
@@ -198,152 +348,6 @@ func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.
 			flusher.Flush()
 		}
 	}
-
-	defer event("done", "")
-
-	const (
-		sheetDateCol    = "Giltig till"
-		sheetEmailCol   = "E-postadress"
-		sheetChapterCol = "Grupp"
-	)
-
-	sheet, err := excelize.OpenReader(bytes.NewBuffer(s.memberSheet.data))
-	if err != nil {
-		event("err", "Could not parse sheet: "+err.Error())
-		return nil
-	}
-	if sheet.SheetCount < 1 {
-		event("err", "No sheets found in the provided file")
-		return nil
-	}
-	rows, err := sheet.GetRows(sheet.GetSheetName(0))
-	if err != nil {
-		event("err", "No sheets found in the provided file: "+err.Error())
-		return nil
-	}
-	if len(rows) == 0 {
-		event("err", "Header (first) row not found")
-		return nil
-	}
-	var dateCol, emailCol, chapterCol int = -1, -1, -1
-	for i, title := range rows[0] {
-		title = strings.TrimSpace(title)
-		if title == sheetDateCol {
-			dateCol = i
-		} else if title == sheetEmailCol {
-			emailCol = i
-		} else if title == sheetChapterCol {
-			chapterCol = i
-		}
-	}
-	if dateCol == -1 {
-		event("err", "Could not find a column for dates")
-		return nil
-	}
-	if emailCol == -1 {
-		event("err", "Could not find a column for emails")
-		return nil
-	}
-	if chapterCol == -1 {
-		event("err", "Could not find a column for chapters")
-		return nil
-	}
-
-	for i, columns := range rows[1:] {
-		if len(columns) == 0 {
-			continue
-		}
-		if dateCol >= len(columns) || emailCol >= len(columns) || chapterCol >= len(columns) {
-			event("err", fmt.Sprintf(
-				"Some column (with index %d, %d or %d) not found on row '%s' with length %d",
-				dateCol,
-				emailCol,
-				chapterCol,
-				strings.Join(columns, ","),
-				len(columns),
-			))
-			continue
-		}
-		date := columns[dateCol]
-		email := columns[emailCol]
-		chapter := columns[chapterCol]
-
-		kthid, found := strings.CutSuffix(email, "@kth.se")
-		if !found {
-			event("err", fmt.Sprintf(
-				"Cannot get kth id from row '%s'. Complain to THS that they should have kth-ids in their membership sheet :)",
-				strings.Join(columns, ","),
-			))
-			continue
-		}
-
-		if !strings.Contains(chapter, "Datasektionen") {
-			if err := s.db.UserSetMemberTo(ctx, database.UserSetMemberToParams{
-				Kthid:    kthid,
-				MemberTo: pgtype.Date{Time: time.Now(), Valid: true},
-			}); err != nil {
-				event("err", fmt.Sprintf(
-					"Could not end membership for user '%s': %v",
-					kthid,
-					err,
-				))
-			}
-			continue
-		}
-
-		memberTo, err := time.Parse(time.DateOnly, date)
-		if err != nil {
-			event("err", fmt.Sprintf(
-				"Invalid date '%s' for user '%s': %v",
-				date,
-				kthid,
-				err,
-			))
-		}
-
-		if err := s.db.Tx(ctx, func(db *database.Queries) error {
-			_, err := db.GetUser(ctx, kthid)
-			if err == pgx.ErrNoRows {
-				person, err := kthldap.Lookup(ctx, kthid)
-				if err != nil {
-					return err
-				}
-				if person == nil {
-					event("err", fmt.Sprintf(
-						"Could not find user with kthid '%s' in KTH's ldap",
-						kthid,
-					))
-					return nil
-				}
-				if err := db.CreateUser(ctx, database.CreateUserParams{
-					Kthid:      kthid,
-					UgKthid:    person.UGKTHID,
-					Email:      email,
-					FirstName:  person.FirstName,
-					FamilyName: person.FamilyName,
-					MemberTo:   pgtype.Date{Valid: true, Time: memberTo},
-				}); err != nil {
-					return err
-				}
-				return nil
-			}
-			if err != nil {
-				return err
-			}
-			return db.UserSetMemberTo(ctx, database.UserSetMemberToParams{
-				Kthid:    kthid,
-				MemberTo: pgtype.Date{Valid: true, Time: memberTo},
-			})
-		}); err != nil {
-			event("err", fmt.Sprintf(
-				"Could not update user '%s' in database: %v",
-				kthid,
-				err,
-			))
-		}
-		event("progress", fmt.Sprintf("%f", float64(i)/float64(len(rows)-1)))
-	}
-	event("progress", fmt.Sprintf("%f", 1.0))
 
 	return nil
 }

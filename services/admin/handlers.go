@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"slices"
 	"strconv"
@@ -44,6 +45,9 @@ func (s *service) auth(h http.Handler) http.Handler {
 		}
 		if !allowed {
 			return httputil.Forbidden("Missing admin permission in pls")
+		}
+		if r.Method != http.MethodGet {
+			slog.InfoContext(r.Context(), "Admin action taken", "kthid", kthid, "method", r.Method, "path", r.URL.Path)
 		}
 		return h
 	})

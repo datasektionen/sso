@@ -16,7 +16,6 @@ type Cfg struct {
 	DatabaseURL           *url.URL
 	Dev                   bool
 	LDAPProxyURL          *url.URL
-	DistDir               string
 	OIDCProviderIssuerURL *url.URL
 	OIDCProviderKey       string
 	PlsURL                *url.URL
@@ -35,7 +34,6 @@ func init() {
 		DatabaseURL:           getURL("DATABASE_URL", false),
 		Dev:                   os.Getenv("DEV") == "true",
 		LDAPProxyURL:          getURL("LDAP_PROXY_URL", true),
-		DistDir:               os.Getenv("DIST_DIR"),
 		OIDCProviderIssuerURL: getURL("OIDC_PROVIDER_ISSUER_URL", false),
 		OIDCProviderKey:       os.Getenv("OIDC_PROVIDER_KEY"),
 		PlsURL:                getURL("PLS_URL", true),

@@ -1,29 +1,3 @@
-## Repository structure
-
-This repository contains two main parts: a Go web server and some solid
-components written in typescript. The web server in Go does most of the job, it
-has a few API:s returning JSON but mostly server-rendered routes that the
-browser interacts with directly (so it's not just a backend). Some parts of the
-page however require a bit more interactivity; these are made with
-[solid](https://www.solidjs.com/) (which is like react but less cringe™). This
-is sometimes called _interactive islands_.
-
-### Solid
-
-These are build with [rollup](https://rollupjs.org/) for bundling,
-[babel](https://babeljs.io/) for building towers or whatever (the solid
-compiler is a babel plugin), typescript (to not loose sanity) and solid
-(through babel-preset-solid). They are configured with `rollup.config.mjs` and
-`tsconfig.json`.
-
-For each file ending with `.island.tsx` in the `islands/` directory a
-corresponding file ending in `.island.js` will be placed in `dist/` which the
-Go server will serve at `/dist`. These can be loaded using a script tag with
-`type="module"`.
-
-Also note that `pnpm` is used, not `npm`. You can install `pnpm` by enabling
-[corepack](https://nodejs.org/api/corepack.html).
-
 ## Routes
 
 ```sh
@@ -36,17 +10,30 @@ grep -r 'http.Handle(' --no-filename services/ | sed 's/\s\+//'
 
 Download a go compiler, at least version 1.22
 
-Download the correct version of [templ](https://templ.guide/) using:
-```sh
-go install github.com/a-h/templ/cmd/templ@$(grep -oPm1 'github.com/a-h/templ \K[^ ]*' go.sum)
-```
-
-Download [sqlc](https://sqlc.dev/). It's probably best to get the latest version, using:
+If you will modify any `.sql` files, download [sqlc](https://sqlc.dev/). It's
+probably best to get the latest version, using:
 ```sh
 go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 ```
 
 But to see which version was last used, look at the top of any generated file, e.g. `pkg/database/models.go`.
+
+If you will modify `style.css` or any `.templ` files you need to download [templ](https://templ.guide/) and [tailwind](https://tailwindcss.com/).
+
+Download the correct version of templ using:
+```sh
+go install github.com/a-h/templ/cmd/templ@$(grep -oPm1 'github.com/a-h/templ \K[^ ]*' go.sum)
+```
+
+(It should be the same version as is imported by the then generated go code)
+
+Download tailwind, using your favourite or second-favourite package manager or:
+```sh
+TAILWIND_VERSION=$(head -n2 services/static/public/style.dist.css | grep -oP 'v\K\S+') # or use latest, it probably won't hurt.
+curl -Lo tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/download/v$TAILWIND_VERSION/tailwindcss-linux-x64
+chmod +x tailwindcss
+```
+and then move it to a directory in your `$PATH` or set `$TAILWIND_PATH` to it's location.
 
 ### Database
 
@@ -67,11 +54,16 @@ Copy `example.env` to `.env` and change anything if needed.
 The best way (objectively, of course) to load them is by installing
 [direnv](https://direnv.net/).
 
+If you don't want to do that, you'll have to figure it out on your own. The
+application will not load the file `.env`.
+
 ### Running with automatic recompiling & rerunning
 
 ```sh
 go run ./cmd/dev
 ```
+
+This also updates generated files and they're tracked by the git repository so you better.
 
 ### Mocking an OIDC provider
 
@@ -157,4 +149,4 @@ since the user was (indirectly) redirected from KTH. Therefore they're set to
 ## Database schema
 
 The schema is defined by the migrations in `./pkg/database/migrations/`. A new
-one can be created using `go run ./cmd/manage goose create $NAME sql`.
+one can be created using `go run ./cmd/manage goose create some_fancy_name sql`.

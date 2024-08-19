@@ -54,8 +54,12 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
+	tailwind := "tailwindcss"
+	if t, ok := os.LookupEnv("TAILWIND_PATH"); ok {
+		tailwind = t
+	}
 	for _, cmd := range [][]string{
-		{"pnpm", "tailwind", "--watch"},
+		{tailwind, "-i", "style.css", "-o", "./services/static/public/style.dist.css"},
 	} {
 		go run(ctx, cmd)
 	}
@@ -105,7 +109,7 @@ func main() {
 				switch ending {
 				case "templ", "sql":
 					run(ctx, []string{"go", "generate", "./..."})
-				case "go":
+				case "go", "css":
 					restartMain <- struct{}{}
 				}
 			case err, ok := <-watcher.Errors:

@@ -55,7 +55,6 @@ func main() {
 	defer cancel()
 
 	for _, cmd := range [][]string{
-		{"pnpm", "build", "--watch", "--no-watch.clearScreen"},
 		{"pnpm", "tailwind", "--watch"},
 	} {
 		go run(ctx, cmd)

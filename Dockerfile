@@ -30,13 +30,6 @@ COPY package.json pnpm-lock.yaml ./
 
 RUN pnpm i
 
-FROM npm-packages AS build-islands
-
-COPY rollup.config.mjs tsconfig.json ./
-COPY islands islands
-
-RUN pnpm build
-
 FROM npm-packages AS build-tailwind
 
 COPY tailwind.config.js style.css ./
@@ -54,8 +47,7 @@ RUN adduser --disabled-password --gecos "" --home /nonexistent --shell "/sbin/no
 USER user
 
 COPY --from=build-server /bin/server /bin/
-COPY --from=build-islands /src/dist /dist/
-COPY --from=build-tailwind /src/dist/style.css /dist/
+COPY --from=build-tailwind /src/dist/style.css /dist/style.css
 
 ENV DIST_DIR=/dist
 

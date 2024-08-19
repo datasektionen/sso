@@ -19,7 +19,7 @@ templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
 		hx-post="/login/passkey/begin"
 		hx-on::before-request="this.querySelectorAll('.error').forEach(e => e.remove())"
 		if credAss != nil {
-			data-cred-ass={templ.JSONString(credAss)}
+			data-cred-ass={ templ.JSONString(credAss) }
 		}
 		hx-swap="outerHTML"
 		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"

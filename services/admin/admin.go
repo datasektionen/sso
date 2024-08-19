@@ -38,8 +38,11 @@ func NewService(db *database.Queries) (*service, error) {
 	http.Handle("DELETE /admin/oidc-clients/{id}", s.auth(httputil.Route(s.deleteOIDCClient)))
 
 	http.Handle("GET /admin/invites", s.auth(httputil.Route(s.invites)))
+	http.Handle("GET /admin/invites/{id}", s.auth(httputil.Route(s.invite)))
 	http.Handle("POST /admin/invites", s.auth(httputil.Route(s.createInvite)))
 	http.Handle("DELETE /admin/invites/{id}", s.auth(httputil.Route(s.deleteInvite)))
+	http.Handle("GET /admin/invites/{id}/edit", s.auth(httputil.Route(s.editInviteForm)))
+	http.Handle("PUT /admin/invites/{id}", s.auth(httputil.Route(s.updateInvite)))
 
 	return s, nil
 }

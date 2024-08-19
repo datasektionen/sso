@@ -1,0 +1,135 @@
+package admin
+
+import (
+	"fmt"
+	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/logout/pkg/database"
+	"strconv"
+	"time"
+)
+
+templ invite(invite database.Invite) {
+	<li class="grid grid-cols-subgrid col-span-full odd:bg-white/5 p-1">
+		<p>{ invite.Name }</p>
+		<p>{ strconv.Itoa(int(invite.CurrentUses)) }</p>
+		<p>
+			if invite.MaxUses.Valid {
+				{ strconv.Itoa(int(invite.MaxUses.Int32)) }
+			}
+		</p>
+		<p>{ invite.CreatedAt.Time.Format(time.DateOnly) }</p>
+		<p>{ invite.ExpiresAt.Time.Format(time.DateOnly) }</p>
+		<div class="flex items-center gap-1">
+			<button
+				class={ roundButton }
+				hx-delete={ "/admin/invites/" + invite.ID.String() }
+				hx-target="closest li"
+				hx-swap="outerHTML"
+			><img src="/public/x.svg"/></button>
+			<button
+				class={ roundButton }
+				onclick={ templ.ComponentScript{Call: templ.SafeScript(
+					"navigator.clipboard.writeText",
+					config.Config.Origin.String()+"/invite/"+invite.ID.String(),
+				)} }
+			><img src="/public/clipboard.svg"/></button>
+			<button
+				class={ roundButton }
+				hx-get={ "/admin/invites/" + invite.ID.String() + "/edit" }
+				hx-target="closest li"
+				hx-swap="outerHTML"
+			><p>✎</p></button>
+		</div>
+	</li>
+}
+
+templ editInvite(invite database.Invite) {
+	<li class="grid col-span-full bg-white/10 p-1">
+		@inviteForm(&invite)
+	</li>
+}
+
+templ inviteForm(invite *database.Invite) {
+	<form
+		class="flex justify-center items-center gap-2 flex-wrap"
+		if invite != nil {
+			hx-put={ "/admin/invites/" + invite.ID.String() }
+			hx-target="closest li"
+			hx-swap="outerHTML"
+		} else {
+			hx-post="/admin/invites"
+			hx-target="previous ul"
+			hx-swap="beforeend"
+		}
+	>
+		<div>
+			<label for="invite-name">Name:</label>
+			<input
+				id="invite-name"
+				required
+				type="text"
+				name="name"
+				class={ input }
+				if invite != nil {
+					value={ invite.Name }
+				}
+			/>
+		</div>
+		<div>
+			<label for="invite-max-uses">Max uses:</label>
+			<input
+				id="invite-max-uses"
+				type="number"
+				name="max-uses"
+				class={ input }
+				if invite != nil {
+					value={ fmt.Sprint(invite.MaxUses.Int32) }
+				}
+			/>
+		</div>
+		<div>
+			<label for="invite-expires-at">Expires at:</label>
+			<input
+				id="invite-expires-at"
+				required
+				type="date"
+				name="expires-at"
+				class={ input }
+				if invite != nil {
+					value={ invite.ExpiresAt.Time.Format(time.DateOnly) }
+				}
+			/>
+		</div>
+		<button class={ button }>
+			if invite != nil {
+				Save
+			} else {
+				Create
+			}
+		</button>
+		if invite != nil {
+			<button class={ button } hx-get={ "/admin/invites/" + invite.ID.String() }>Cancel</button>
+		}
+	</form>
+}
+
+templ invites(invites []database.Invite) {
+	@page() {
+		<div class="p-8">
+			<ul class="grid grid-cols-6 p-2">
+				<li class="grid grid-cols-subgrid col-span-full border-b">
+					<p>Name</p>
+					<p>Uses</p>
+					<p>Max uses</p>
+					<p>Created at</p>
+					<p>Expires at</p>
+					<p></p>
+				</li>
+				for _, inv := range invites {
+					@invite(inv)
+				}
+			</ul>
+			@inviteForm(nil)
+		</div>
+	}
+}

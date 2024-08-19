@@ -111,3 +111,36 @@ func (q *Queries) ListInvites(ctx context.Context) ([]Invite, error) {
 	}
 	return items, nil
 }
+
+const updateInvite = `-- name: UpdateInvite :one
+update invites
+set name = $2, expires_at = $3, max_uses = $4
+where id = $1
+returning id, name, created_at, expires_at, max_uses, current_uses
+`
+
+type UpdateInviteParams struct {
+	ID        uuid.UUID
+	Name      string
+	ExpiresAt pgtype.Timestamp
+	MaxUses   pgtype.Int4
+}
+
+func (q *Queries) UpdateInvite(ctx context.Context, arg UpdateInviteParams) (Invite, error) {
+	row := q.db.QueryRow(ctx, updateInvite,
+		arg.ID,
+		arg.Name,
+		arg.ExpiresAt,
+		arg.MaxUses,
+	)
+	var i Invite
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.MaxUses,
+		&i.CurrentUses,
+	)
+	return i, err
+}

@@ -69,6 +69,18 @@ func (s *service) invites(w http.ResponseWriter, r *http.Request) httputil.ToRes
 	return invites(invs)
 }
 
+func (s *service) invite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid uuid")
+	}
+	inv, err := s.db.GetInvite(r.Context(), id)
+	if err != nil {
+		return httputil.BadRequest("No such invite")
+	}
+	return invite(inv)
+}
+
 func (s *service) createInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	name := r.FormValue("name")
 	expiresAt, err := time.Parse(time.DateOnly, r.FormValue("expires-at"))
@@ -102,6 +114,46 @@ func (s *service) deleteInvite(w http.ResponseWriter, r *http.Request) httputil.
 		return err
 	}
 	return nil
+}
+
+func (s *service) editInviteForm(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid id")
+	}
+	invite, err := s.db.GetInvite(r.Context(), id)
+	if err == pgx.ErrNoRows {
+		return httputil.BadRequest("No such invite")
+	}
+	return editInvite(invite)
+}
+
+func (s *service) updateInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid id")
+	}
+
+	name := r.FormValue("name")
+	expiresAt, err := time.Parse(time.DateOnly, r.FormValue("expires-at"))
+	if err != nil {
+		return httputil.BadRequest("Invalid date for expires at")
+	}
+	maxUsesStr := r.FormValue("max-uses")
+	maxUses, err := strconv.Atoi(maxUsesStr)
+	if err != nil && maxUsesStr != "" {
+		return httputil.BadRequest("Invalid int for max uses")
+	}
+	inv, err := s.db.UpdateInvite(r.Context(), database.UpdateInviteParams{
+		ID:        id,
+		Name:      name,
+		ExpiresAt: pgtype.Timestamp{Time: expiresAt, Valid: true},
+		MaxUses:   pgtype.Int4{Int32: int32(maxUses), Valid: maxUsesStr != ""},
+	})
+	if err != nil {
+		return err
+	}
+	return invite(inv)
 }
 
 func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

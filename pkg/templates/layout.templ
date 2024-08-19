@@ -1,5 +1,13 @@
 package templates
 
+func BigIfTrue[T any](cond bool, thenVal, elseVal T) T {
+	if cond {
+		return thenVal
+	} else {
+		return elseVal
+	}
+}
+
 templ Page() {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -9,6 +17,7 @@ templ Page() {
 			<title>Logout</title>
 			<link rel="stylesheet" href="/dist/style.css"/>
 			<script src="https://unpkg.com/htmx.org@2.0.1" integrity="sha384-QWGpdj554B4ETpJJC9z+ZHJcA/i59TyjxEPXiiUgN2WmTyV5OEZWCD6gQhgkdpB/" crossorigin="anonymous"></script>
+			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js" integrity="sha384-fw+eTlCc7suMV/1w/7fr2/PmwElUIt5i82bi+qTiLXvjRXZ2/FkiTNA/w0MhXnGI" crossorigin="anonymous"></script>
 			<script src="/public/hx-clone.js"></script>
 			@base64Helpers()
 		</head>

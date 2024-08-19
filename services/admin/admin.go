@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/a-h/templ"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	user "github.com/datasektionen/logout/services/user/export"
@@ -18,19 +19,26 @@ type service struct {
 }
 
 type memberSheet struct {
-	mu         sync.Mutex
-	reader     chan chan<- sheetEvent
-	inProgress bool
+	// This is locked when retrieving or assigning the reader channel.
+	mu sync.Mutex
+	// The post handler will instantiate this channel and finish the response.
+	// It will then wait for an "event channel" to be sent on this channel
+	// until it begins processing the uploaded sheet and then continuously send
+	// events from the sheet handling on the "event channel". After processing,
+	// this channel will be closed and reassigned to nil.
+	//
+	// The get handler will send an "event channel" on this channel, read
+	// events from that and send them along to the client with SSE.
+	reader chan<- chan<- sheetEvent
 }
 
 type sheetEvent struct {
-	name, data string
+	name string
+	component templ.Component
 }
 
 func NewService(db *database.Queries) (*service, error) {
-	s := &service{db: db, memberSheet: memberSheet{
-		reader: make(chan chan<- sheetEvent),
-	}}
+	s := &service{db: db}
 
 	http.Handle("GET /admin", s.auth(httputil.Route(s.admin)))
 

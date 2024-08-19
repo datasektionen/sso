@@ -3,15 +3,8 @@ package passkey
 import (
 	"github.com/datasektionen/logout/services/passkey/export"
 	"github.com/go-webauthn/webauthn/protocol"
+	"github.com/datasektionen/logout/pkg/templates"
 )
-
-func bigIfTrue[T any](cond bool, thenVal, elseVal T) T {
-	if cond {
-		return thenVal
-	} else {
-		return elseVal
-	}
-}
 
 templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
 	<form
@@ -92,7 +85,7 @@ templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
 					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
 					grid place-items-center pointer
 					border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
-				`+bigIfTrue(credAss != nil, "spinner", "") }
+				`+templates.BigIfTrue(credAss != nil, "spinner", "") }
 			>
 				<img src="/public/key_icon.svg" class="w-3/5 h-3/5 invert"/>
 			</button>

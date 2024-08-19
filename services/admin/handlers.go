@@ -160,26 +160,40 @@ func (s *service) updateInvite(w http.ResponseWriter, r *http.Request) httputil.
 func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	s.memberSheet.mu.Lock()
 	defer s.memberSheet.mu.Unlock()
-	if s.memberSheet.inProgress {
+	if s.memberSheet.reader != nil {
 		return httputil.BadRequest("Membership sheet upload currently in progress")
 	}
-	s.memberSheet.inProgress = true
-	data, err := io.ReadAll(r.Body)
+	reader := make(chan chan<- sheetEvent)
+	s.memberSheet.reader = reader
+	sheet, _, err := r.FormFile("sheet")
+	if err != nil {
+		return httputil.BadRequest("")
+	}
+	data, err := io.ReadAll(sheet)
 	if err != nil {
 		return err
 	}
 	ctx := context.WithoutCancel(r.Context())
 	go func() {
 		defer func() {
+			close(reader)
 			s.memberSheet.mu.Lock()
-			s.memberSheet.inProgress = false
+			s.memberSheet.reader = nil
 			s.memberSheet.mu.Unlock()
 		}()
 
-		reader := <-s.memberSheet.reader
+		var events chan<- sheetEvent
+		t := time.NewTimer(time.Second * 10)
+		select {
+		case e := <-reader:
+			events = e
+			t.Stop()
+		case <-t.C:
+			return
+		}
 
 		defer func() {
-			reader <- sheetEvent{"done", ""}
+			events <- sheetEvent{"message", uploadMessage("Done!", false)}
 		}()
 
 		const (
@@ -190,20 +204,20 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 
 		sheet, err := excelize.OpenReader(bytes.NewBuffer(data))
 		if err != nil {
-			reader <- sheetEvent{"err", "Could not parse sheet: " + err.Error()}
+			events <- sheetEvent{"message", uploadMessage("Could not parse sheet: "+err.Error(), true)}
 			return
 		}
 		if sheet.SheetCount < 1 {
-			reader <- sheetEvent{"err", "No sheets found in the provided file"}
+			events <- sheetEvent{"message", uploadMessage("No sheets found in the provided file", true)}
 			return
 		}
 		rows, err := sheet.GetRows(sheet.GetSheetName(0))
 		if err != nil {
-			reader <- sheetEvent{"err", "No sheets found in the provided file: " + err.Error()}
+			events <- sheetEvent{"message", uploadMessage("No sheets found in the provided file: "+err.Error(), true)}
 			return
 		}
 		if len(rows) == 0 {
-			reader <- sheetEvent{"err", "Header (first) row not found"}
+			events <- sheetEvent{"message", uploadMessage("Header (first) row not found", true)}
 			return
 		}
 		var dateCol, emailCol, chapterCol int = -1, -1, -1
@@ -218,15 +232,15 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 			}
 		}
 		if dateCol == -1 {
-			reader <- sheetEvent{"err", "Could not find a column for dates"}
+			events <- sheetEvent{"message", uploadMessage("Could not find a column for dates", true)}
 			return
 		}
 		if emailCol == -1 {
-			reader <- sheetEvent{"err", "Could not find a column for emails"}
+			events <- sheetEvent{"message", uploadMessage("Could not find a column for emails", true)}
 			return
 		}
 		if chapterCol == -1 {
-			reader <- sheetEvent{"err", "Could not find a column for chapters"}
+			events <- sheetEvent{"message", uploadMessage("Could not find a column for chapters", true)}
 			return
 		}
 
@@ -235,14 +249,14 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 				continue
 			}
 			if dateCol >= len(columns) || emailCol >= len(columns) || chapterCol >= len(columns) {
-				reader <- sheetEvent{"err", fmt.Sprintf(
+				events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
 					"Some column (with index %d, %d or %d) not found on row '%s' with length %d",
 					dateCol,
 					emailCol,
 					chapterCol,
 					strings.Join(columns, ","),
 					len(columns),
-				)}
+				), true)}
 				continue
 			}
 			date := columns[dateCol]
@@ -251,10 +265,10 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 
 			kthid, found := strings.CutSuffix(email, "@kth.se")
 			if !found {
-				reader <- sheetEvent{"err", fmt.Sprintf(
+				events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
 					"Cannot get kth id from row '%s'. Complain to THS that they should have kth-ids in their membership sheet :)",
 					strings.Join(columns, ","),
-				)}
+				), true)}
 				continue
 			}
 
@@ -263,23 +277,23 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 					Kthid:    kthid,
 					MemberTo: pgtype.Date{Time: time.Now(), Valid: true},
 				}); err != nil {
-					reader <- sheetEvent{"err", fmt.Sprintf(
+					events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
 						"Could not end membership for user '%s': %v",
 						kthid,
 						err,
-					)}
+					), true)}
 				}
 				continue
 			}
 
 			memberTo, err := time.Parse(time.DateOnly, date)
 			if err != nil {
-				reader <- sheetEvent{"err", fmt.Sprintf(
+				events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
 					"Invalid date '%s' for user '%s': %v",
 					date,
 					kthid,
 					err,
-				)}
+				), true)}
 			}
 
 			if err := s.db.Tx(ctx, func(db *database.Queries) error {
@@ -290,10 +304,10 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 						return err
 					}
 					if person == nil {
-						reader <- sheetEvent{"err", fmt.Sprintf(
+						events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
 							"Could not find user with kthid '%s' in KTH's ldap",
 							kthid,
-						)}
+						), true)}
 						return nil
 					}
 					if err := db.CreateUser(ctx, database.CreateUserParams{
@@ -316,31 +330,42 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 					MemberTo: pgtype.Date{Valid: true, Time: memberTo},
 				})
 			}); err != nil {
-				reader <- sheetEvent{"err", fmt.Sprintf(
+				events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
 					"Could not update user '%s' in database: %v",
 					kthid,
 					err,
-				)}
+				), true)}
 			}
-			reader <- sheetEvent{"progress", fmt.Sprintf("%f", float64(i)/float64(len(rows)-1))}
+			events <- sheetEvent{"progress", uploadProgress(float64(i) / float64(len(rows)-1))}
 		}
-		reader <- sheetEvent{"progress", fmt.Sprintf("%f", 1.0)}
+		events <- sheetEvent{"progress", uploadProgress(1)}
 
 		return
 	}()
-	return nil
+	return uploadStatus(true)
 }
 
 func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	s.memberSheet.mu.Lock()
+	reader := s.memberSheet.reader
+	s.memberSheet.mu.Unlock()
+	if r == nil {
+		return httputil.BadRequest("No membership sheet upload waiting to get started")
+	}
+
 	ch := make(chan sheetEvent)
-	s.memberSheet.reader <- ch
+	reader <- ch
 
 	// Yes, server-sent events actually are that easy
 	w.Header().Set("Content-Type", "text/event-stream")
 	flusher, canFlush := w.(interface{ Flush() })
 	for event := range ch {
 		w.Write([]byte("event: " + event.name + "\n"))
-		for _, line := range strings.Split(event.data, "\n") {
+		var buf bytes.Buffer
+		if event.component != nil {
+			event.component.Render(r.Context(), &buf)
+		}
+		for _, line := range strings.Split(buf.String(), "\n") {
 			w.Write([]byte("data: " + line + "\n"))
 		}
 		w.Write([]byte("\n"))

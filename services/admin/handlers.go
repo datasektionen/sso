@@ -5,10 +5,10 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -55,10 +55,6 @@ func (s *service) admin(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 
 func (s *service) members(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return members()
-}
-
-func (s *service) oidcClients(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	return oidcClients()
 }
 
 func (s *service) invites(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -348,28 +344,17 @@ func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.
 	return nil
 }
 
-func (s *service) listOIDCClients(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func (s *service) oidcClients(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	clients, err := s.db.ListClients(r.Context())
 	if err != nil {
 		return err
 	}
-	resp := make([]struct {
-		ID           string   `json:"id"`
-		RedirectURIs []string `json:"redirect_uris"`
-	}, len(clients))
-	for i, client := range clients {
-		resp[i].ID = base64.URLEncoding.EncodeToString(client.ID)
-		resp[i].RedirectURIs = client.RedirectUris
-	}
-	return httputil.JSON(resp)
+	return oidcClients(clients)
 }
 
 func (s *service) createOIDCClient(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	var body struct {
-		RedirectURIs []string `json:"redirect_uris"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		return httputil.BadRequest("Invalid json in body")
+	if err := r.ParseForm(); err != nil {
+		return httputil.BadRequest("Body must be valid application/x-www-form-urlencoded")
 	}
 
 	var secret [32]byte
@@ -381,16 +366,11 @@ func (s *service) createOIDCClient(w http.ResponseWriter, r *http.Request) httpu
 	h.Write(secret[:])
 	id := h.Sum(nil)
 
-	if err := s.db.CreateClient(r.Context(), database.CreateClientParams{
-		ID:           id,
-		RedirectUris: body.RedirectURIs,
-	}); err != nil {
+	client, err := s.db.CreateClient(r.Context(), id)
+	if err != nil {
 		return err
 	}
-	return httputil.JSON(map[string]any{
-		"id":     base64.URLEncoding.EncodeToString(id),
-		"secret": base64.URLEncoding.EncodeToString(secret[:]),
-	})
+	return oidcClient(client, secret[:])
 }
 
 func (s *service) deleteOIDCClient(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -404,5 +384,63 @@ func (s *service) deleteOIDCClient(w http.ResponseWriter, r *http.Request) httpu
 	} else if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *service) addRedirectURI(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid id")
+	}
+	newURI := r.FormValue("redirect-uri")
+
+	client, err := s.db.GetClient(r.Context(), id)
+	if err == pgx.ErrNoRows {
+		return httputil.BadRequest("No such client")
+	} else if err != nil {
+		return err
+	}
+
+	client.RedirectUris = append(client.RedirectUris, newURI)
+
+	if _, err := s.db.UpdateClient(
+		r.Context(),
+		database.UpdateClientParams{
+			ID:           client.ID,
+			RedirectUris: client.RedirectUris,
+		},
+	); err != nil {
+		return err
+	}
+
+	return redirectURI(id, newURI)
+}
+
+func (s *service) removeRedirectURI(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid id")
+	}
+	uri := r.PathValue("uri")
+
+	client, err := s.db.GetClient(r.Context(), id)
+	if err == pgx.ErrNoRows {
+		return httputil.BadRequest("No such client")
+	} else if err != nil {
+		return err
+	}
+
+	client.RedirectUris = slices.DeleteFunc(client.RedirectUris, func(u string) bool { return u == uri })
+
+	if _, err := s.db.UpdateClient(
+		r.Context(),
+		database.UpdateClientParams{
+			ID:           client.ID,
+			RedirectUris: client.RedirectUris,
+		},
+	); err != nil {
+		return err
+	}
+
 	return nil
 }

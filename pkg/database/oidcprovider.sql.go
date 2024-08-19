@@ -9,19 +9,17 @@ import (
 	"context"
 )
 
-const createClient = `-- name: CreateClient :exec
+const createClient = `-- name: CreateClient :one
 insert into oidc_clients (id, redirect_uris)
-values ($1, $2)
+values ($1, '{}')
+returning id, redirect_uris
 `
 
-type CreateClientParams struct {
-	ID           []byte
-	RedirectUris []string
-}
-
-func (q *Queries) CreateClient(ctx context.Context, arg CreateClientParams) error {
-	_, err := q.db.Exec(ctx, createClient, arg.ID, arg.RedirectUris)
-	return err
+func (q *Queries) CreateClient(ctx context.Context, id []byte) (OidcClient, error) {
+	row := q.db.QueryRow(ctx, createClient, id)
+	var i OidcClient
+	err := row.Scan(&i.ID, &i.RedirectUris)
+	return i, err
 }
 
 const deleteClient = `-- name: DeleteClient :exec
@@ -70,4 +68,23 @@ func (q *Queries) ListClients(ctx context.Context) ([]OidcClient, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateClient = `-- name: UpdateClient :one
+update oidc_clients
+set redirect_uris = $2
+where id = $1
+returning id, redirect_uris
+`
+
+type UpdateClientParams struct {
+	ID           []byte
+	RedirectUris []string
+}
+
+func (q *Queries) UpdateClient(ctx context.Context, arg UpdateClientParams) (OidcClient, error) {
+	row := q.db.QueryRow(ctx, updateClient, arg.ID, arg.RedirectUris)
+	var i OidcClient
+	err := row.Scan(&i.ID, &i.RedirectUris)
+	return i, err
 }

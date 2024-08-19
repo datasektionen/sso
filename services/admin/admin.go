@@ -33,9 +33,10 @@ func NewService(db *database.Queries) (*service, error) {
 	http.Handle("GET /admin/members/upload-sheet", s.auth(httputil.Route(s.processSheet)))
 
 	http.Handle("GET /admin/oidc-clients", s.auth(httputil.Route(s.oidcClients)))
-	http.Handle("GET /admin/list-oidc-clients", s.auth(httputil.Route(s.listOIDCClients)))
 	http.Handle("POST /admin/oidc-clients", s.auth(httputil.Route(s.createOIDCClient)))
 	http.Handle("DELETE /admin/oidc-clients/{id}", s.auth(httputil.Route(s.deleteOIDCClient)))
+	http.Handle("POST /admin/oidc-clients/{id}", s.auth(httputil.Route(s.addRedirectURI)))
+	http.Handle("DELETE /admin/oidc-clients/{id}/{uri}", s.auth(httputil.Route(s.removeRedirectURI)))
 
 	http.Handle("GET /admin/invites", s.auth(httputil.Route(s.invites)))
 	http.Handle("GET /admin/invites/{id}", s.auth(httputil.Route(s.invite)))

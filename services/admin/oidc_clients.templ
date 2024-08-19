@@ -1,0 +1,107 @@
+package admin
+
+import (
+	"encoding/base64"
+	"encoding/hex"
+	"github.com/datasektionen/logout/pkg/database"
+	"net/url"
+)
+
+func b64(bytes []byte) string {
+	return base64.URLEncoding.EncodeToString(bytes)
+}
+
+templ oidcClient(client database.OidcClient, secret []byte) {
+	<li class="p-2">
+		<p class="flex gap-2 items-center">
+			ID: <code>{ b64(client.ID) }</code>
+			<button
+				class={ roundButton }
+				hx-delete={ "/admin/oidc-clients/" + b64(client.ID) }
+				hx-target="closest li"
+				hx-swap="outerHTML"
+				hx-confirm="Want to delete OIDC client? This action is irreversible!"
+			>
+				<img class="w-3/5 h-3/5 invert" src="/public/x.svg"/>
+			</button>
+		</p>
+		if secret != nil {
+			<p>
+				Secret:
+				<code>{ b64(secret) }</code>
+			</p>
+		}
+		<ul class="pl-3">
+			for _, uri := range client.RedirectUris {
+				@redirectURI(client.ID, uri)
+			}
+		</ul>
+		<button
+			class={ button }
+			hx-get={ "clone-template##add-uri-" + hex.EncodeToString(client.ID) }
+			hx-swap="beforeend"
+			hx-target="previous ul"
+		>Add redirect URI</button>
+		<template id={ "add-uri-" + hex.EncodeToString(client.ID) }>
+			<li>
+				<form
+					hx-post={ "/admin/oidc-clients/" + b64(client.ID) }
+					class="flex gap-2 items-center"
+				>
+					<input
+						type="text"
+						name="redirect-uri"
+						class={ input }
+						autofocus
+					/>
+					<button class={ roundButton }>
+						<img src="/public/check.svg"/>
+					</button>
+					<button
+						class={ roundButton }
+						hx-on:click="htmx.remove(htmx.closest(this, 'li'))"
+					>
+						<img src="/public/x.svg"/>
+					</button>
+				</form>
+			</li>
+		</template>
+	</li>
+}
+
+templ redirectURI(clientID []byte, uri string) {
+	<li class="flex gap-2 items-center">
+		{ uri }
+		<button
+			class={ roundButton }
+			hx-delete={ "/admin/oidc-clients/" + b64(clientID) + "/" + url.PathEscape(uri) }
+			hx-target="closest li"
+			hx-swap="outerHTML"
+		>
+			<img src="/public/x.svg"/>
+		</button>
+	</li>
+}
+
+templ oidcClients(clients []database.OidcClient) {
+	@page() {
+		<section class="flex flex-col p-8">
+			<h2 class="text-lg">OIDC Clients:</h2>
+			<ul id="oidc-client-list">
+				for _, client := range clients {
+					@oidcClient(client, nil)
+				}
+			</ul>
+			<button
+				class="
+					bg-[#3f4c66] p-1.5 block rounded border text-center
+					select-none border-transparent outline-none
+					focus:border-cerise-strong hover:border-cerise-light
+				 "
+				hx-post="/admin/oidc-clients"
+				hx-swap="beforeend"
+				hx-target="#oidc-client-list"
+			>New client</button>
+		</section>
+	}
+}

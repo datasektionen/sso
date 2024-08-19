@@ -426,6 +426,9 @@ func (s *service) addRedirectURI(w http.ResponseWriter, r *http.Request) httputi
 		return httputil.BadRequest("Invalid id")
 	}
 	newURI := r.FormValue("redirect-uri")
+	if newURI == "" {
+		return httputil.BadRequest("Missing uri")
+	}
 
 	client, err := s.db.GetClient(r.Context(), id)
 	if err == pgx.ErrNoRows {

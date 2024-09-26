@@ -9,27 +9,43 @@ import (
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/kthldap"
+	"github.com/datasektionen/logout/pkg/pls"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 const nextUrlCookie string = "_logout_next-url"
 
+func validNextURL(url string) bool {
+	if url == "" {
+		return true
+	}
+	// The "url" must be a path (and possibly params)
+	if len(url) > 0 && url[0] != '/' {
+		return false
+	}
+	// If it starts with two slashes there will be an implicit `https:` in front, so then it's not a path
+	if len(url) > 1 && url[1] == '/' {
+		return false
+	}
+	return true
+}
+
 func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	returnURL := r.FormValue("next-url")
-	if returnURL != "" && returnURL[0] != '/' {
+	nextURL := r.FormValue("next-url")
+	if !validNextURL(nextURL) {
 		return httputil.BadRequest("Invalid return url")
 	}
 	hasCookie := false
-	if returnURL == "" {
+	if nextURL == "" {
 		c, _ := r.Cookie(nextUrlCookie)
 		if c != nil {
-			returnURL = c.Value
+			nextURL = c.Value
 			hasCookie = true
 		}
 	}
-	if returnURL == "" {
-		returnURL = "/account"
+	if nextURL == "" {
+		nextURL = "/account"
 	}
 	if kthid, err := s.GetLoggedInKTHID(r); err != nil {
 		return err
@@ -37,13 +53,13 @@ func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 		if hasCookie {
 			http.SetCookie(w, &http.Cookie{Name: nextUrlCookie, MaxAge: -1})
 		}
-		http.Redirect(w, r, returnURL, http.StatusSeeOther)
+		http.Redirect(w, r, nextURL, http.StatusSeeOther)
 		return nil
 	}
-	if returnURL != "" {
+	if nextURL != "" {
 		http.SetCookie(w, &http.Cookie{
 			Name:     nextUrlCookie,
-			Value:    returnURL,
+			Value:    nextURL,
 			MaxAge:   int((time.Minute * 10).Seconds()),
 			Secure:   true,
 			HttpOnly: true,
@@ -66,6 +82,7 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 	if err != nil {
 		return err
 	}
+	isAdmin, err := pls.CheckUser(r.Context(), user.KTHID, "admin-read")
 	return account(*user, passkeySettings)
 }
 

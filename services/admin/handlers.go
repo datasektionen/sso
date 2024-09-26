@@ -33,7 +33,7 @@ func (s *service) auth(h http.Handler) http.Handler {
 			return err
 		}
 		if kthid == "" {
-			s.user.RedirectToLogin(w, r, "/admin")
+			s.user.RedirectToLogin(w, r, r.URL.Path)
 			return nil
 		}
 		perm := "admin-write"

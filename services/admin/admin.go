@@ -33,7 +33,7 @@ type memberSheet struct {
 }
 
 type sheetEvent struct {
-	name string
+	name      string
 	component templ.Component
 }
 

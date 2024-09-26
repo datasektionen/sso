@@ -24,11 +24,22 @@ templ index(passkeyLogin func() templ.Component, devLogin func() templ.Component
 	}
 }
 
-templ account(user export.User, passkeySettings func() templ.Component) {
+templ account(user export.User, passkeySettings func() templ.Component, isAdmin bool) {
 	@templates.Modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<div class="flex gap-2 items-center">
 				<p class="basis-full">{ user.FirstName } { user.FamilyName } ({ user.KTHID })</p>
+				if isAdmin {
+					<a
+						href="/admin"
+						title="Administration"
+						class="
+							bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+							grid place-items-center pointer
+							border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+						"
+					><img class="w-3/5 h-3/5 invert" src="/public/delta.svg"/></a>
+				}
 				<a
 					href="/logout"
 					title="Log out"

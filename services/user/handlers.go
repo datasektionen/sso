@@ -83,7 +83,7 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 		return err
 	}
 	isAdmin, err := pls.CheckUser(r.Context(), user.KTHID, "admin-read")
-	return account(*user, passkeySettings)
+	return account(*user, passkeySettings, isAdmin)
 }
 
 func (s *service) acceptInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

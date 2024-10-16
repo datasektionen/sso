@@ -22,8 +22,8 @@ job "logout" {
         "traefik.http.middlewares.redirect-to-logout.redirectregex.regex=^https://login2.datasektionen.se/(.*)$",
         "traefik.http.middlewares.redirect-to-logout.redirectregex.replacement=https://logout.datasektionen.se/$${1}",
 
-        "traefik-internal.enable=true",
-        "traefik-internal.http.routers.logout.rule=Host(`logout.nomad.dsekt.internal`)",
+        "traefik.http.routers.logout-internal.rule=Host(`logout.nomad.dsekt.internal`)",
+        "traefik.http.routers.logout-internal.entrypoints=web-internal",
       ]
     }
 

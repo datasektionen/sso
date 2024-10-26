@@ -15,8 +15,6 @@ require (
 	golang.org/x/text v0.18.0
 )
 
-replace github.com/zitadel/oidc/v3 => github.com/foodelevator/oidc/v3 v3.0.0-20240919191901-44a5a7d15759
-
 require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect

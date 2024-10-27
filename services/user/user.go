@@ -71,14 +71,7 @@ func (s *service) LoginUser(ctx context.Context, kthid string) httputil.ToRespon
 		return err
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{
-			Name:     auth.SESSION_COOKIE,
-			Value:    sessionID.String(),
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
-		})
+		http.SetCookie(w, auth.UserCookie(sessionID.String()))
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 }

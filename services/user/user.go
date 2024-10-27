@@ -9,6 +9,7 @@ import (
 	"github.com/datasektionen/logout/pkg/httputil"
 	dev "github.com/datasektionen/logout/services/dev/export"
 	passkey "github.com/datasektionen/logout/services/passkey/export"
+	"github.com/datasektionen/logout/services/user/auth"
 	"github.com/datasektionen/logout/services/user/export"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -70,20 +71,13 @@ func (s *service) LoginUser(ctx context.Context, kthid string) httputil.ToRespon
 		return err
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{
-			Name:     "session",
-			Value:    sessionID.String(),
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
-		})
+		http.SetCookie(w, auth.SessionCookie(sessionID.String()))
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 }
 
 func (s *service) GetLoggedInKTHID(r *http.Request) (string, error) {
-	sessionCookie, _ := r.Cookie("session")
+	sessionCookie, _ := r.Cookie(auth.SessionCookieName)
 	if sessionCookie == nil {
 		return "", nil
 	}
@@ -113,7 +107,7 @@ func (s *service) GetLoggedInUser(r *http.Request) (*export.User, error) {
 }
 
 func (s *service) Logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	sessionCookie, _ := r.Cookie("session")
+	sessionCookie, _ := r.Cookie(auth.SessionCookieName)
 	if sessionCookie != nil {
 		sessionID, err := uuid.Parse(sessionCookie.Value)
 		if err != nil {
@@ -122,7 +116,7 @@ func (s *service) Logout(w http.ResponseWriter, r *http.Request) httputil.ToResp
 			}
 		}
 	}
-	http.SetCookie(w, &http.Cookie{Name: "session", MaxAge: -1})
+	http.SetCookie(w, &http.Cookie{Name: auth.SessionCookieName, MaxAge: -1})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
 }

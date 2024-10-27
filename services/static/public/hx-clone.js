@@ -7,7 +7,6 @@ htmx.defineExtension('clone', {
                 const get = evt.detail.elt.getAttribute('hx-get')
                 if (get && get.startsWith('clone-template#')) {
                     const selector = get.substring(15)
-                    //console.log('htmx-clone: Intercepting xhr request to inject template with selector:', selector)
                     const template = document.querySelector(selector)
                     let templateContent = ''
                     if (!template) {

@@ -25,7 +25,6 @@ templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
 				for (let ac of credAss.publicKey.allowCredentials) {
 					ac.id = decodebase64url(ac.id);
 				}
-				console.log(credAss);
 				event.preventDefault();
 				try {
 					let cred = await navigator.credentials.get(credAss);

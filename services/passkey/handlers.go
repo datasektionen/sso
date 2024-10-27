@@ -8,6 +8,7 @@ import (
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/services/passkey/export"
+	"github.com/datasektionen/logout/services/user/auth"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
@@ -40,8 +41,8 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 
 func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	var body struct {
-		KTHID string `json:"kthid"`
-		Cred protocol.CredentialAssertionResponse `json:"cred"`
+		KTHID string                               `json:"kthid"`
+		Cred  protocol.CredentialAssertionResponse `json:"cred"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		return httputil.BadRequest("Invalid credential")
@@ -67,7 +68,15 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 	if err != nil {
 		return err
 	}
-	return s.user.LoginUser(r.Context(), user.KTHID)
+
+	sessionID, err := s.db.CreateSession(r.Context(), user.KTHID)
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(w, auth.SessionCookie(sessionID.String()))
+
+	return nil
 }
 
 // ---

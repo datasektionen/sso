@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/datasektionen/logout/pkg/httputil"
+	"github.com/datasektionen/logout/services/user/auth"
 )
 
 func (s *service) login(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -19,7 +20,7 @@ func (s *service) login(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 		return err
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name:  "session",
+		Name:  auth.SessionCookieName,
 		Value: sessionID.String(),
 		Path:  "/",
 	})

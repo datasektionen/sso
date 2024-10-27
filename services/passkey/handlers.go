@@ -39,8 +39,8 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 
 func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	var body struct {
-		KTHID string `json:"kthid"`
-		Cred protocol.CredentialAssertionResponse `json:"cred"`
+		KTHID string                               `json:"kthid"`
+		Cred  protocol.CredentialAssertionResponse `json:"cred"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		return httputil.BadRequest("Invalid credential")
@@ -66,7 +66,22 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 	if err != nil {
 		return err
 	}
-	return s.user.LoginUser(r.Context(), user.KTHID)
+
+	sessionID, err := s.db.CreateSession(r.Context(), user.KTHID)
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session",
+		Value:    sessionID.String(),
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	return nil
 }
 
 // ---

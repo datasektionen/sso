@@ -60,7 +60,7 @@ func passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) templ.Com
 			return templ_7745c5c3_Err
 		}
 		if credAss != nil {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script type=\"module\">\n\t\t\t\tlet form = document.querySelector(\"#passkey-login-form\");\n\t\t\t\tlet credAss = JSON.parse(form.dataset.credAss);\n\t\t\t\tcredAss.publicKey.challenge = decodebase64url(credAss.publicKey.challenge);\n\t\t\t\tfor (let ac of credAss.publicKey.allowCredentials) {\n\t\t\t\t\tac.id = decodebase64url(ac.id);\n\t\t\t\t}\n\t\t\t\tconsole.log(credAss);\n\t\t\t\tevent.preventDefault();\n\t\t\t\ttry {\n\t\t\t\t\tlet cred = await navigator.credentials.get(credAss);\n\t\t\t\t\tlet res = await fetch(\"/login/passkey/finish\", {\n\t\t\t\t\t\tmethod: \"post\",\n\t\t\t\t\t\theaders: { \"Content-Type\": \"application/json\" },\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\tkthid: new FormData(form).get(\"kthid\"),\n\t\t\t\t\t\t\tcred: {\n\t\t\t\t\t\t\t\tid: cred.id,\n\t\t\t\t\t\t\t\trawId: encodebase64url(cred.rawId),\n\t\t\t\t\t\t\t\ttype: cred.type,\n\t\t\t\t\t\t\t\tauthenticatorAttachment: cred.authenticatorAttachment,\n\t\t\t\t\t\t\t\tresponse: {\n\t\t\t\t\t\t\t\t\tauthenticatorData: encodebase64url(cred.response.authenticatorData),\n\t\t\t\t\t\t\t\t\tclientDataJSON: encodebase64url(cred.response.clientDataJSON),\n\t\t\t\t\t\t\t\t\tsignature: encodebase64url(cred.response.signature),\n\t\t\t\t\t\t\t\t\tuserHandle: encodebase64url(cred.response.userHandle),\n\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t}),\n\t\t\t\t\t});\n\t\t\t\t\tif (res.status == 200)\n\t\t\t\t\t\twindow.location.replace(\"/\");\n\t\t\t\t\telse\n\t\t\t\t\t\tthrow new Error(await res.text());\n\t\t\t\t} catch (err) {\n\t\t\t\t\tlet text = (err.name === \"NotAllowedError\")\n\t\t\t\t\t\t? \"Missing permission or request was cancelled\"\n\t\t\t\t\t\t: err.message;\n\t\t\t\t\tlet el = document.createElement(\"p\");\n\t\t\t\t\tel.classList.add(\"error\");\n\t\t\t\t\tel.textContent = text;\n\t\t\t\t\tform.appendChild(el);\n\t\t\t\t} finally {\n\t\t\t\t\tform.querySelector(\"button\").classList.remove(\"spinner\");\n\t\t\t\t}\n\t\t\t</script>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script type=\"module\">\n\t\t\t\tlet form = document.querySelector(\"#passkey-login-form\");\n\t\t\t\tlet credAss = JSON.parse(form.dataset.credAss);\n\t\t\t\tcredAss.publicKey.challenge = decodebase64url(credAss.publicKey.challenge);\n\t\t\t\tfor (let ac of credAss.publicKey.allowCredentials) {\n\t\t\t\t\tac.id = decodebase64url(ac.id);\n\t\t\t\t}\n\t\t\t\tevent.preventDefault();\n\t\t\t\ttry {\n\t\t\t\t\tlet cred = await navigator.credentials.get(credAss);\n\t\t\t\t\tlet res = await fetch(\"/login/passkey/finish\", {\n\t\t\t\t\t\tmethod: \"post\",\n\t\t\t\t\t\theaders: { \"Content-Type\": \"application/json\" },\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\tkthid: new FormData(form).get(\"kthid\"),\n\t\t\t\t\t\t\tcred: {\n\t\t\t\t\t\t\t\tid: cred.id,\n\t\t\t\t\t\t\t\trawId: encodebase64url(cred.rawId),\n\t\t\t\t\t\t\t\ttype: cred.type,\n\t\t\t\t\t\t\t\tauthenticatorAttachment: cred.authenticatorAttachment,\n\t\t\t\t\t\t\t\tresponse: {\n\t\t\t\t\t\t\t\t\tauthenticatorData: encodebase64url(cred.response.authenticatorData),\n\t\t\t\t\t\t\t\t\tclientDataJSON: encodebase64url(cred.response.clientDataJSON),\n\t\t\t\t\t\t\t\t\tsignature: encodebase64url(cred.response.signature),\n\t\t\t\t\t\t\t\t\tuserHandle: encodebase64url(cred.response.userHandle),\n\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t}),\n\t\t\t\t\t});\n\t\t\t\t\tif (res.status == 200)\n\t\t\t\t\t\twindow.location.replace(\"/\");\n\t\t\t\t\telse\n\t\t\t\t\t\tthrow new Error(await res.text());\n\t\t\t\t} catch (err) {\n\t\t\t\t\tlet text = (err.name === \"NotAllowedError\")\n\t\t\t\t\t\t? \"Missing permission or request was cancelled\"\n\t\t\t\t\t\t: err.message;\n\t\t\t\t\tlet el = document.createElement(\"p\");\n\t\t\t\t\tel.classList.add(\"error\");\n\t\t\t\t\tel.textContent = text;\n\t\t\t\t\tform.appendChild(el);\n\t\t\t\t} finally {\n\t\t\t\t\tform.querySelector(\"button\").classList.remove(\"spinner\");\n\t\t\t\t}\n\t\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -72,7 +72,7 @@ func passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) templ.Com
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(kthid)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 76, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 75, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -137,7 +137,7 @@ func showPasskey(passkey export.Passkey) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(passkey.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 98, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 97, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -150,7 +150,7 @@ func showPasskey(passkey export.Passkey) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs("/passkey/" + passkey.ID.String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 105, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 104, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -225,7 +225,7 @@ func addPasskeyForm(cc *protocol.CredentialCreation) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.JSONString(cc))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 138, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 137, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {

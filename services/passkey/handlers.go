@@ -8,6 +8,7 @@ import (
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/services/passkey/export"
+	"github.com/datasektionen/logout/services/user/auth"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
@@ -73,7 +74,7 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
+		Name:     auth.SESSION_COOKIE,
 		Value:    sessionID.String(),
 		Path:     "/",
 		HttpOnly: true,

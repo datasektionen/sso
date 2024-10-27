@@ -27,7 +27,8 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 	}
 	passkeys, err := s.listPasskeysForUser(r.Context(), user.KTHID)
 	if len(passkeys) == 0 {
-		return httputil.BadRequest("You have no registered passkeys")
+		w.Header().Add("HX-Reswap", "beforeend")
+		return `<p class="error">You have no registered passkeys</p>`
 	}
 	credAss, sessionData, err := s.webauthn.BeginLogin(export.WebAuthnUser{User: user, Passkeys: passkeys})
 	hackSession = sessionData

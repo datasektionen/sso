@@ -20,7 +20,7 @@ func (s *service) login(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 		return err
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name:  auth.SESSION_COOKIE,
+		Name:  auth.SessionCookieName,
 		Value: sessionID.String(),
 		Path:  "/",
 	})

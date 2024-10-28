@@ -2,11 +2,11 @@ package auth
 
 import "net/http"
 
-const SESSION_COOKIE string = "_logout_session"
+const SessionCookieName string = "_logout_session"
 
-func UserCookie(sessionID string) *http.Cookie {
+func SessionCookie(sessionID string) *http.Cookie {
 	return &http.Cookie{
-		Name:     SESSION_COOKIE,
+		Name:     SessionCookieName,
 		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,

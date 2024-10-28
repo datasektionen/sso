@@ -73,7 +73,7 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 		return err
 	}
 
-	http.SetCookie(w, auth.UserCookie(sessionID.String()))
+	http.SetCookie(w, auth.SessionCookie(sessionID.String()))
 
 	return nil
 }

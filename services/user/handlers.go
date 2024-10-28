@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const NEXT_URL_COOKIE string = "_logout_next-url"
+const nextUrlCookie string = "_logout_next-url"
 
 func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	returnURL := r.FormValue("next-url")
@@ -22,7 +22,7 @@ func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 	}
 	hasCookie := false
 	if returnURL == "" {
-		c, _ := r.Cookie(NEXT_URL_COOKIE)
+		c, _ := r.Cookie(nextUrlCookie)
 		if c != nil {
 			returnURL = c.Value
 			hasCookie = true
@@ -35,14 +35,14 @@ func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 		return err
 	} else if kthid != "" {
 		if hasCookie {
-			http.SetCookie(w, &http.Cookie{Name: NEXT_URL_COOKIE, MaxAge: -1})
+			http.SetCookie(w, &http.Cookie{Name: nextUrlCookie, MaxAge: -1})
 		}
 		http.Redirect(w, r, returnURL, http.StatusSeeOther)
 		return nil
 	}
 	if returnURL != "" {
 		http.SetCookie(w, &http.Cookie{
-			Name:     NEXT_URL_COOKIE,
+			Name:     nextUrlCookie,
 			Value:    returnURL,
 			MaxAge:   int((time.Minute * 10).Seconds()),
 			Secure:   true,

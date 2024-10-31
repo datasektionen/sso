@@ -6,6 +6,7 @@ import (
 	"embed"
 
 	"github.com/datasektionen/logout/pkg/config"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
@@ -43,14 +44,32 @@ func ConnectAndMigrate(ctx context.Context) (*Queries, error) {
 }
 
 func (q *Queries) Tx(ctx context.Context, f func(db *Queries) error) error {
-	pool := q.db.(*pgxpool.Pool)
-	tx, err := pool.Begin(ctx)
+	txq, err := q.Begin(ctx)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
-	if err := f(q.WithTx(tx)); err != nil {
+	defer txq.Rollback(ctx)
+	if err := f(txq); err != nil {
 		return err
 	}
-	return tx.Commit(ctx)
+	return txq.Commit(ctx)
+}
+
+func (q *Queries) Begin(ctx context.Context) (*Queries, error) {
+	// q.db is either *pgxpool.Pool or pgx.Tx. Both have this method
+	tx, err := q.db.(interface {
+		Begin(ctx context.Context) (pgx.Tx, error)
+	}).Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return q.WithTx(tx), nil
+}
+
+func (q *Queries) Commit(ctx context.Context) error {
+	return q.db.(pgx.Tx).Commit(ctx)
+}
+
+func (q *Queries) Rollback(ctx context.Context) error {
+	return q.db.(pgx.Tx).Rollback(ctx)
 }

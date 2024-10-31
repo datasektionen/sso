@@ -132,7 +132,12 @@ func (s *service) FinishInvite(w http.ResponseWriter, r *http.Request, kthid str
 		slog.Error("Could not find user in ldap", "kthid", kthid, "invite id", id)
 		return true, errors.New("Could not find user in ldap")
 	}
-	if err := s.db.CreateUser(r.Context(), database.CreateUserParams{
+	tx, err := s.db.Begin(r.Context())
+	if err != nil {
+		return true, err
+	}
+	defer tx.Rollback(r.Context())
+	if err := tx.CreateUser(r.Context(), database.CreateUserParams{
 		Kthid:      kthid,
 		UgKthid:    person.UGKTHID,
 		Email:      kthid + "@kth.se",
@@ -141,7 +146,10 @@ func (s *service) FinishInvite(w http.ResponseWriter, r *http.Request, kthid str
 	}); err != nil {
 		return true, err
 	}
-	if err := s.db.IncrementInviteUses(r.Context(), id); err != nil {
+	if err := tx.IncrementInviteUses(r.Context(), id); err != nil {
+		return true, err
+	}
+	if err := tx.Commit(r.Context()); err != nil {
 		return true, err
 	}
 	http.SetCookie(w, &http.Cookie{Name: "invite", MaxAge: -1})

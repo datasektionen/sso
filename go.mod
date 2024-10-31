@@ -3,7 +3,7 @@ module github.com/datasektionen/logout
 go 1.22.1
 
 require (
-	github.com/a-h/templ v0.2.747
+	github.com/a-h/templ v0.2.778
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/go-webauthn/webauthn v0.11.1
@@ -50,7 +50,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
-	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect

@@ -145,5 +145,6 @@ func (s *service) FinishInvite(w http.ResponseWriter, r *http.Request, kthid str
 		return true, err
 	}
 	http.SetCookie(w, &http.Cookie{Name: "invite", MaxAge: -1})
+	slog.Info("User invite link used", "kthid", kthid, "invite-id", inv.ID)
 	return true, s.LoginUser(r.Context(), kthid)
 }

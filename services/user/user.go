@@ -31,6 +31,7 @@ func NewService(db *database.Queries) (*service, error) {
 	http.Handle("GET /{$}", httputil.Route(s.index))
 	http.Handle("GET /logout", httputil.Route(s.Logout))
 	http.Handle("GET /account", httputil.Route(s.account))
+	http.Handle("POST /account/request-name-change", httputil.Route(s.requestNameChange))
 	http.Handle("GET /invite/{id}", httputil.Route(s.acceptInvite))
 
 	return s, nil

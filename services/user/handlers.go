@@ -12,6 +12,7 @@ import (
 	"github.com/datasektionen/logout/pkg/pls"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const nextUrlCookie string = "_logout_next-url"
@@ -84,6 +85,29 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 	}
 	isAdmin, err := pls.CheckUser(r.Context(), user.KTHID, "admin-read")
 	return account(*user, passkeySettings, isAdmin)
+}
+
+func (s *service) requestNameChange(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user, err := s.GetLoggedInUser(r)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return httputil.BadRequest("Not logged in")
+	}
+	firstName := r.FormValue("first-name")
+	familyName := r.FormValue("family-name")
+	if firstName == "" || familyName == "" {
+		return httputil.BadRequest("Missing first name or family name")
+	}
+	if err := s.db.UserSetNameChangeRequest(r.Context(), database.UserSetNameChangeRequestParams{
+		FirstNameChangeRequest:  pgtype.Text{String: firstName},
+		FamilyNameChangeRequest: pgtype.Text{String: familyName},
+		Kthid:                   user.KTHID,
+	}); err != nil {
+		return err
+	}
+	return "Name change request sent to Systemansvarig!"
 }
 
 func (s *service) acceptInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

@@ -50,6 +50,53 @@ templ account(user export.User, passkeySettings func() templ.Component, isAdmin 
 					"
 				><img class="w-3/5 h-3/5 invert" src="/public/log-out.svg"/></a>
 			</div>
+			<button
+				hx-get={ "clone-template##request-name-change" }
+				hx-swap="outerHTML"
+				class="
+					bg-[#3f4c66] p-1.5 block rounded border text-center
+					select-none border-transparent outline-none
+					focus:border-cerise-strong hover:border-cerise-light
+				"
+			>
+				Request name change
+			</button>
+			<template id="request-name-change">
+				<form
+					hx-post="/account/request-name-change"
+					hx-swap="textContent"
+					class="flex gap-2 flex-col"
+				>
+					<label for="first-name">First name</label>
+					<input
+						type="text"
+						name="first-name"
+						id="first-name"
+						value={ user.FirstName }
+						required
+						class={ input }
+					/>
+					<label for="family-name">Family name</label>
+					<input
+						type="text"
+						name="family-name"
+						id="family-name"
+						value={ user.FamilyName }
+						required
+						class={ input }
+					/>
+					<div class="flex gap-2">
+						<button
+							type="submit"
+							class={ button + " w-full" }
+						>Request name change</button>
+						<button
+							type="submit"
+							class={ button + " bg-red-600/50 hover:bg-red-600" }
+						>Cancel</button>
+					</div>
+				</form>
+			</template>
 			@passkeySettings()
 		</div>
 	}
@@ -75,3 +122,23 @@ templ acceptInvite() {
 		</script>
 	}
 }
+
+var input = `
+	border border-neutral-500 grow
+	outline-none focus:border-cerise-strong hover:border-cerise-light
+	bg-slate-800 p-1.5 rounded h-8
+`
+
+var button = `
+	bg-[#3f4c66] p-1.5 block rounded border text-center
+	select-none border-transparent outline-none
+	focus:border-cerise-strong hover:border-cerise-light
+`
+
+var roundButton = `
+	bg-[#3f4c66] shrink-0 h-5 w-5 rounded-full
+	grid place-items-center pointer
+	border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+	[&>img]:w-3/5 [&>img]:h-3/5 [&>img]:invert
+	[&>p]:text-center [&>p]:leading-none
+`

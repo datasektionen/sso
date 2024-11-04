@@ -35,3 +35,9 @@ where kthid = $1;
 update users
 set member_to = $2
 where kthid = $1;
+
+-- name: UserSetNameChangeRequest :exec
+update users
+set first_name_change_request = $1,
+    family_name_change_request = $2
+where kthid = $3;

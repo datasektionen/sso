@@ -987,6 +987,11 @@ html {
   border-color: rgb(236 95 153 / var(--tw-border-opacity));
 }
 
+.hover\:bg-red-600:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(220 38 38 / var(--tw-bg-opacity));
+}
+
 .focus\:border-cerise-strong:focus {
   --tw-border-opacity: 1;
   border-color: rgb(238 42 123 / var(--tw-border-opacity));

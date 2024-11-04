@@ -77,7 +77,7 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (string, error) 
 }
 
 const getUser = `-- name: GetUser :one
-select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id
+select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
 from users
 where kthid = $1
 `
@@ -94,6 +94,8 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 		&i.YearTag,
 		&i.MemberTo,
 		&i.WebauthnID,
+		&i.FirstNameChangeRequest,
+		&i.FamilyNameChangeRequest,
 	)
 	return i, err
 }
@@ -121,5 +123,23 @@ type UserSetMemberToParams struct {
 
 func (q *Queries) UserSetMemberTo(ctx context.Context, arg UserSetMemberToParams) error {
 	_, err := q.db.Exec(ctx, userSetMemberTo, arg.Kthid, arg.MemberTo)
+	return err
+}
+
+const userSetNameChangeRequest = `-- name: UserSetNameChangeRequest :exec
+update users
+set first_name_change_request = $1,
+    family_name_change_request = $2
+where kthid = $3
+`
+
+type UserSetNameChangeRequestParams struct {
+	FirstNameChangeRequest  pgtype.Text
+	FamilyNameChangeRequest pgtype.Text
+	Kthid                   string
+}
+
+func (q *Queries) UserSetNameChangeRequest(ctx context.Context, arg UserSetNameChangeRequestParams) error {
+	_, err := q.db.Exec(ctx, userSetNameChangeRequest, arg.FirstNameChangeRequest, arg.FamilyNameChangeRequest, arg.Kthid)
 	return err
 }

@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/templates"
-	"github.com/datasektionen/logout/services/user/export"
 )
 
 func index(passkeyLogin func() templ.Component, devLogin func() templ.Component) templ.Component {
@@ -72,7 +72,7 @@ func index(passkeyLogin func() templ.Component, devLogin func() templ.Component)
 	})
 }
 
-func account(user export.User, passkeySettings func() templ.Component, isAdmin bool) templ.Component {
+func account(user models.User, passkeySettings func() templ.Component, isAdmin bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

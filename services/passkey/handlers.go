@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/services/passkey/export"
 	"github.com/datasektionen/logout/services/user/auth"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -31,7 +31,7 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 		w.Header().Add("HX-Reswap", "beforeend")
 		return `<p class="error">You have no registered passkeys</p>`
 	}
-	credAss, sessionData, err := s.webauthn.BeginLogin(export.WebAuthnUser{User: user, Passkeys: passkeys})
+	credAss, sessionData, err := s.webauthn.BeginLogin(models.WebAuthnUser{User: user, Passkeys: passkeys})
 	hackSession = sessionData
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 		return err
 	}
 
-	_, err = s.webauthn.ValidateLogin(export.WebAuthnUser{User: user, Passkeys: passkeys}, *hackSession, credAss)
+	_, err = s.webauthn.ValidateLogin(models.WebAuthnUser{User: user, Passkeys: passkeys}, *hackSession, credAss)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (s *service) addPasskeyForm(w http.ResponseWriter, r *http.Request) httputi
 	if user == nil {
 		return httputil.Unauthorized()
 	}
-	creation, sessionData, err := s.webauthn.BeginRegistration(export.WebAuthnUser{User: user})
+	creation, sessionData, err := s.webauthn.BeginRegistration(models.WebAuthnUser{User: user})
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.To
 
 	// Passkeys aren't retrieved from within this function, so we don't need to
 	// populate that field on WebAuthnUser.
-	cred, err := s.webauthn.CreateCredential(export.WebAuthnUser{User: user}, *hackSession, cc)
+	cred, err := s.webauthn.CreateCredential(models.WebAuthnUser{User: user}, *hackSession, cc)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.To
 	if err != nil {
 		return err
 	}
-	passkey := export.Passkey{ID: id, Name: name}
+	passkey := models.Passkey{ID: id, Name: name}
 	return showPasskey(passkey)
 }
 

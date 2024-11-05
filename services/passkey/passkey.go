@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/a-h/templ"
+	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
@@ -50,18 +51,18 @@ func (s *service) Assign(user user.Service) {
 	s.user = user
 }
 
-func (s *service) listPasskeysForUser(ctx context.Context, kthid string) ([]export.Passkey, error) {
+func (s *service) listPasskeysForUser(ctx context.Context, kthid string) ([]models.Passkey, error) {
 	dbPasskeys, err := s.db.ListPasskeysByUser(ctx, kthid)
 	if err != nil {
 		return nil, err
 	}
-	passkeys := make([]export.Passkey, len(dbPasskeys))
+	passkeys := make([]models.Passkey, len(dbPasskeys))
 	for i, passkey := range dbPasskeys {
 		var c webauthn.Credential
 		if err := json.Unmarshal([]byte(passkey.Data), &c); err != nil {
 			return nil, err
 		}
-		passkeys[i] = export.Passkey{
+		passkeys[i] = models.Passkey{
 			ID:   passkey.ID,
 			Name: passkey.Name,
 			Cred: c,

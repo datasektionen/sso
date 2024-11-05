@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/templates"
-	"github.com/datasektionen/logout/services/passkey/export"
 	"github.com/go-webauthn/webauthn/protocol"
 )
 
@@ -115,7 +115,7 @@ func passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) templ.Com
 	})
 }
 
-func showPasskey(passkey export.Passkey) templ.Component {
+func showPasskey(passkey models.Passkey) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -170,7 +170,7 @@ func showPasskey(passkey export.Passkey) templ.Component {
 	})
 }
 
-func passkeySettings(passkeys []export.Passkey) templ.Component {
+func passkeySettings(passkeys []models.Passkey) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

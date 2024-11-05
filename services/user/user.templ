@@ -1,8 +1,8 @@
 package user
 
 import (
+	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/templates"
-	"github.com/datasektionen/logout/services/user/export"
 )
 
 templ index(passkeyLogin func() templ.Component, devLogin func() templ.Component) {
@@ -24,7 +24,7 @@ templ index(passkeyLogin func() templ.Component, devLogin func() templ.Component
 	}
 }
 
-templ account(user export.User, passkeySettings func() templ.Component, isAdmin bool) {
+templ account(user models.User, passkeySettings func() templ.Component, isAdmin bool) {
 	@templates.Modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<div class="flex gap-2 items-center">

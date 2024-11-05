@@ -1,9 +1,9 @@
 package passkey
 
 import (
-	"github.com/datasektionen/logout/services/passkey/export"
-	"github.com/go-webauthn/webauthn/protocol"
+	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/templates"
+	"github.com/go-webauthn/webauthn/protocol"
 )
 
 templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
@@ -92,7 +92,7 @@ templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
 	</form>
 }
 
-templ showPasskey(passkey export.Passkey) {
+templ showPasskey(passkey models.Passkey) {
 	<li class="flex p-2 gap-2 items-center">
 		<span>{ passkey.Name }</span>
 		<button
@@ -110,7 +110,7 @@ templ showPasskey(passkey export.Passkey) {
 	</li>
 }
 
-templ passkeySettings(passkeys []export.Passkey) {
+templ passkeySettings(passkeys []models.Passkey) {
 	<section class="flex flex-col">
 		<h2 class="text-lg">Passkeys:</h2>
 		<ul id="passkey-list">

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	dev "github.com/datasektionen/logout/services/dev/export"
@@ -41,7 +42,7 @@ func (s *service) Assign(dev dev.Service, passkey passkey.Service) {
 	s.passkey = passkey
 }
 
-func (s *service) GetUser(ctx context.Context, kthid string) (*export.User, error) {
+func (s *service) GetUser(ctx context.Context, kthid string) (*models.User, error) {
 	user, err := s.db.GetUser(ctx, kthid)
 	if err == pgx.ErrNoRows {
 		return nil, nil
@@ -53,7 +54,7 @@ func (s *service) GetUser(ctx context.Context, kthid string) (*export.User, erro
 	if user.MemberTo.Valid {
 		memberTo = user.MemberTo.Time
 	}
-	return &export.User{
+	return &models.User{
 		KTHID:      user.Kthid,
 		UGKTHID:    user.UgKthid,
 		Email:      user.Email,
@@ -95,7 +96,7 @@ func (s *service) GetLoggedInKTHID(r *http.Request) (string, error) {
 	return session, nil
 }
 
-func (s *service) GetLoggedInUser(r *http.Request) (*export.User, error) {
+func (s *service) GetLoggedInUser(r *http.Request) (*models.User, error) {
 	kthid, err := s.GetLoggedInKTHID(r)
 	if err != nil {
 		return nil, err

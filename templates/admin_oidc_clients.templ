@@ -1,4 +1,4 @@
-package admin
+package templates
 
 import (
 	"encoding/base64"
@@ -11,7 +11,7 @@ func b64(bytes []byte) string {
 	return base64.URLEncoding.EncodeToString(bytes)
 }
 
-templ oidcClient(client database.OidcClient, secret []byte) {
+templ OidcClient(client database.OidcClient, secret []byte) {
 	<li class="p-2">
 		<p class="flex gap-2 items-center">
 			ID: <code>{ b64(client.ID) }</code>
@@ -33,7 +33,7 @@ templ oidcClient(client database.OidcClient, secret []byte) {
 		}
 		<ul class="pl-3">
 			for _, uri := range client.RedirectUris {
-				@redirectURI(client.ID, uri)
+				@RedirectURI(client.ID, uri)
 			}
 		</ul>
 		<button
@@ -70,7 +70,7 @@ templ oidcClient(client database.OidcClient, secret []byte) {
 	</li>
 }
 
-templ redirectURI(clientID []byte, uri string) {
+templ RedirectURI(clientID []byte, uri string) {
 	<li class="flex gap-2 items-center">
 		{ uri }
 		<button
@@ -84,13 +84,13 @@ templ redirectURI(clientID []byte, uri string) {
 	</li>
 }
 
-templ oidcClients(clients []database.OidcClient) {
-	@page() {
+templ OidcClients(clients []database.OidcClient) {
+	@AdminPage() {
 		<section class="flex flex-col p-8">
 			<h2 class="text-lg">OIDC Clients:</h2>
 			<ul id="oidc-client-list">
 				for _, client := range clients {
-					@oidcClient(client, nil)
+					@OidcClient(client, nil)
 				}
 			</ul>
 			<button

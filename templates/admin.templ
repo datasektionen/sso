@@ -1,20 +1,38 @@
-package admin
+package templates
 
 import (
 	"fmt"
-	"github.com/datasektionen/logout/pkg/templates"
 	"github.com/datasektionen/logout/services/static"
 )
 
-templ admin() {
-	@page()
+templ AdminPage() {
+	@page() {
+		<nav
+			class="
+				w-full h-12 bg-gray-700 flex uppercase
+				[&>a:not(:first-child)]:flex [&>a]:items-center [&>a:not(:first-child)]:px-3 hover:[&>a]:bg-gray-600 [&>a]:transition-colors
+			"
+		>
+			<a href="/admin" class="h-full block aspect-square grid place-items-center fill-cerise-regular bg-gray-600">
+				@templ.Raw(static.PublicAsString("delta.svg"))
+			</a>
+			<a href="/admin/members">Members</a>
+			<a href="/admin/oidc-clients">OIDC Clients</a>
+			<a href="/admin/invites">Invites</a>
+		</nav>
+		<div class="flex justify-center min-h-[calc(100vh-3rem)]">
+			<main class="bg-gray-800 w-[1000px] md:max-w-[calc(100vw-8rem)]">
+				{ children... }
+			</main>
+		</div>
+	}
 }
 
-templ members() {
-	@page() {
+templ Members() {
+	@AdminPage() {
 		<div class="p-8">
 			@uploadForm()
-			@uploadStatus(false)
+			@UploadStatus(false)
 		</div>
 	}
 }
@@ -44,7 +62,7 @@ templ uploadForm() {
 	</form>
 }
 
-templ uploadStatus(withStuff bool) {
+templ UploadStatus(withStuff bool) {
 	if withStuff {
 		<div
 			id="upload-status"
@@ -60,35 +78,12 @@ templ uploadStatus(withStuff bool) {
 	}
 }
 
-templ uploadProgress(progress float64) {
+templ UploadProgress(progress float64) {
 	<div class="bg-cerise-regular h-full" { templ.Attributes{"style": fmt.Sprint("width: ", progress * 100, "%")}... }></div>
 }
 
-templ uploadMessage(message string, isErr bool) {
-	<p class={ "p-2 rounded " + templates.BigIfTrue(isErr, "bg-red-600/50", "bg-green-600/50") }>{ message }</p>
-}
-
-templ page() {
-	@templates.Page() {
-		<nav
-			class="
-				w-full h-12 bg-gray-700 flex uppercase
-				[&>a:not(:first-child)]:flex [&>a]:items-center [&>a:not(:first-child)]:px-3 hover:[&>a]:bg-gray-600 [&>a]:transition-colors
-			"
-		>
-			<a href="/admin" class="h-full block aspect-square grid place-items-center fill-cerise-regular bg-gray-600">
-				@templ.Raw(static.PublicAsString("delta.svg"))
-			</a>
-			<a href="/admin/members">Members</a>
-			<a href="/admin/oidc-clients">OIDC Clients</a>
-			<a href="/admin/invites">Invites</a>
-		</nav>
-		<div class="flex justify-center min-h-[calc(100vh-3rem)]">
-			<main class="bg-gray-800 w-[1000px] md:max-w-[calc(100vw-8rem)]">
-				{ children... }
-			</main>
-		</div>
-	}
+templ UploadMessage(message string, isErr bool) {
+	<p class={ "p-2 rounded " + bigIfTrue(isErr, "bg-red-600/50", "bg-green-600/50") }>{ message }</p>
 }
 
 var input = `

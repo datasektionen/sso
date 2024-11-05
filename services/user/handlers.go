@@ -10,6 +10,7 @@ import (
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/kthldap"
 	"github.com/datasektionen/logout/pkg/pls"
+	"github.com/datasektionen/logout/templates"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -66,7 +67,7 @@ func (s *service) index(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 			SameSite: http.SameSiteLaxMode,
 		})
 	}
-	return index(s.passkey.PasskeyLogin(), s.dev.LoginForm)
+	return templates.Index(s.passkey.PasskeyLogin(), s.dev.LoginForm)
 }
 
 func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -83,7 +84,7 @@ func (s *service) account(w http.ResponseWriter, r *http.Request) httputil.ToRes
 		return err
 	}
 	isAdmin, err := pls.CheckUser(r.Context(), user.KTHID, "admin-read")
-	return account(*user, passkeySettings, isAdmin)
+	return templates.Account(*user, passkeySettings, isAdmin)
 }
 
 func (s *service) acceptInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -119,7 +120,7 @@ func (s *service) acceptInvite(w http.ResponseWriter, r *http.Request) httputil.
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 	})
-	return acceptInvite()
+	return templates.AcceptInvite()
 }
 
 func (s *service) FinishInvite(w http.ResponseWriter, r *http.Request, kthid string) (bool, httputil.ToResponse) {

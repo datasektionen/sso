@@ -1,14 +1,6 @@
 package templates
 
-func BigIfTrue[T any](cond bool, thenVal, elseVal T) T {
-	if cond {
-		return thenVal
-	} else {
-		return elseVal
-	}
-}
-
-templ Page() {
+templ page() {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -27,8 +19,8 @@ templ Page() {
 	</html>
 }
 
-templ Modal() {
-	@Page() {
+templ modal() {
+	@page() {
 		<div class="grid place-items-center min-h-screen">
 			<main class="bg-gray-800 rounded w-[22rem] max-w-[calc(100vw-2rem)]">
 				{ children... }

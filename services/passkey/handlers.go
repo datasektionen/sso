@@ -9,6 +9,7 @@ import (
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/services/user/auth"
+	"github.com/datasektionen/logout/templates"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
@@ -36,7 +37,7 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 	if err != nil {
 		return err
 	}
-	return passkeyLogin(kthid, credAss)
+	return templates.PasskeyLoginForm(kthid, credAss)
 }
 
 func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -95,7 +96,7 @@ func (s *service) addPasskeyForm(w http.ResponseWriter, r *http.Request) httputi
 	}
 	hackSession = sessionData
 
-	return addPasskeyForm(creation)
+	return templates.AddPasskeyForm(creation)
 }
 
 func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -139,7 +140,7 @@ func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.To
 		return err
 	}
 	passkey := models.Passkey{ID: id, Name: name}
-	return showPasskey(passkey)
+	return templates.ShowPasskey(passkey)
 }
 
 func (s *service) removePasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

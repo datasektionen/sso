@@ -1,12 +1,11 @@
-package passkey
+package templates
 
 import (
 	"github.com/datasektionen/logout/models"
-	"github.com/datasektionen/logout/pkg/templates"
 	"github.com/go-webauthn/webauthn/protocol"
 )
 
-templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
+templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 	<form
 		id="passkey-login-form"
 		hx-post="/login/passkey/begin"
@@ -84,7 +83,7 @@ templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
 					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
 					grid place-items-center pointer
 					border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
-				`+templates.BigIfTrue(credAss != nil, "spinner", "") }
+				`+bigIfTrue(credAss != nil, "spinner", "") }
 			>
 				<img src="/public/key_icon.svg" class="w-3/5 h-3/5 invert"/>
 			</button>
@@ -92,7 +91,7 @@ templ passkeyLogin(kthid string, credAss *protocol.CredentialAssertion) {
 	</form>
 }
 
-templ showPasskey(passkey models.Passkey) {
+templ ShowPasskey(passkey models.Passkey) {
 	<li class="flex p-2 gap-2 items-center">
 		<span>{ passkey.Name }</span>
 		<button
@@ -110,12 +109,12 @@ templ showPasskey(passkey models.Passkey) {
 	</li>
 }
 
-templ passkeySettings(passkeys []models.Passkey) {
+templ PasskeySettings(passkeys []models.Passkey) {
 	<section class="flex flex-col">
 		<h2 class="text-lg">Passkeys:</h2>
 		<ul id="passkey-list">
 			for _, passkey := range passkeys {
-				@showPasskey(passkey)
+				@ShowPasskey(passkey)
 			}
 		</ul>
 		<button
@@ -132,7 +131,7 @@ templ passkeySettings(passkeys []models.Passkey) {
 	</section>
 }
 
-templ addPasskeyForm(cc *protocol.CredentialCreation) {
+templ AddPasskeyForm(cc *protocol.CredentialCreation) {
 	<form
 		data-credential-creation={ templ.JSONString(cc) }
 		onsubmit="addPasskey(this, event)"

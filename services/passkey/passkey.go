@@ -12,6 +12,7 @@ import (
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/services/passkey/export"
 	user "github.com/datasektionen/logout/services/user/export"
+	"github.com/datasektionen/logout/templates"
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 
@@ -72,7 +73,7 @@ func (s *service) listPasskeysForUser(ctx context.Context, kthid string) ([]mode
 }
 
 func (s *service) PasskeyLogin() func() templ.Component {
-	return func() templ.Component { return passkeyLogin("", nil) }
+	return func() templ.Component { return templates.PasskeyLoginForm("", nil) }
 }
 
 func (s *service) PasskeySettings(ctx context.Context, kthid string) (func() templ.Component, error) {
@@ -80,5 +81,5 @@ func (s *service) PasskeySettings(ctx context.Context, kthid string) (func() tem
 	if err != nil {
 		return nil, err
 	}
-	return func() templ.Component { return passkeySettings(passkeys) }, nil
+	return func() templ.Component { return templates.PasskeySettings(passkeys) }, nil
 }

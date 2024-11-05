@@ -1,12 +1,11 @@
-package user
+package templates
 
 import (
 	"github.com/datasektionen/logout/models"
-	"github.com/datasektionen/logout/pkg/templates"
 )
 
-templ index(passkeyLogin func() templ.Component, devLogin func() templ.Component) {
-	@templates.Modal() {
+templ Index(passkeyLogin func() templ.Component, devLogin func() templ.Component) {
+	@modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<img class="h-40 pb-4 block" src="/public/skold_vit.svg"/>
 			<a
@@ -24,8 +23,8 @@ templ index(passkeyLogin func() templ.Component, devLogin func() templ.Component
 	}
 }
 
-templ account(user models.User, passkeySettings func() templ.Component, isAdmin bool) {
-	@templates.Modal() {
+templ Account(user models.User, passkeySettings func() templ.Component, isAdmin bool) {
+	@modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<div class="flex gap-2 items-center">
 				<p class="basis-full">{ user.FirstName } { user.FamilyName } ({ user.KTHID })</p>
@@ -55,8 +54,8 @@ templ account(user models.User, passkeySettings func() templ.Component, isAdmin 
 	}
 }
 
-templ acceptInvite() {
-	@templates.Modal() {
+templ AcceptInvite() {
+	@modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<img class="h-40 pb-4 block" src="/public/skold_vit.svg"/>
 			<a

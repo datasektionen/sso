@@ -19,6 +19,7 @@ import (
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/kthldap"
 	"github.com/datasektionen/logout/pkg/pls"
+	"github.com/datasektionen/logout/templates"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -55,11 +56,11 @@ func (s *service) auth(h http.Handler) http.Handler {
 }
 
 func (s *service) admin(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	return admin()
+	return templates.AdminPage()
 }
 
 func (s *service) members(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	return members()
+	return templates.Members()
 }
 
 func (s *service) invites(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -67,7 +68,7 @@ func (s *service) invites(w http.ResponseWriter, r *http.Request) httputil.ToRes
 	if err != nil {
 		return err
 	}
-	return invites(invs)
+	return templates.Invites(invs)
 }
 
 func (s *service) invite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -79,7 +80,7 @@ func (s *service) invite(w http.ResponseWriter, r *http.Request) httputil.ToResp
 	if err != nil {
 		return httputil.BadRequest("No such invite")
 	}
-	return invite(inv)
+	return templates.Invite(inv)
 }
 
 func (s *service) createInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -101,7 +102,7 @@ func (s *service) createInvite(w http.ResponseWriter, r *http.Request) httputil.
 	if err != nil {
 		return err
 	}
-	return invite(inv)
+	return templates.Invite(inv)
 }
 
 func (s *service) deleteInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -126,7 +127,7 @@ func (s *service) editInviteForm(w http.ResponseWriter, r *http.Request) httputi
 	if err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such invite")
 	}
-	return editInvite(invite)
+	return templates.EditInvite(invite)
 }
 
 func (s *service) updateInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -154,7 +155,7 @@ func (s *service) updateInvite(w http.ResponseWriter, r *http.Request) httputil.
 	if err != nil {
 		return err
 	}
-	return invite(inv)
+	return templates.Invite(inv)
 }
 
 func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -193,7 +194,7 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 		}
 
 		defer func() {
-			events <- sheetEvent{"message", uploadMessage("Done!", false)}
+			events <- sheetEvent{"message", templates.UploadMessage("Done!", false)}
 		}()
 
 		const (
@@ -204,20 +205,20 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 
 		sheet, err := excelize.OpenReader(bytes.NewBuffer(data))
 		if err != nil {
-			events <- sheetEvent{"message", uploadMessage("Could not parse sheet: "+err.Error(), true)}
+			events <- sheetEvent{"message", templates.UploadMessage("Could not parse sheet: "+err.Error(), true)}
 			return
 		}
 		if sheet.SheetCount < 1 {
-			events <- sheetEvent{"message", uploadMessage("No sheets found in the provided file", true)}
+			events <- sheetEvent{"message", templates.UploadMessage("No sheets found in the provided file", true)}
 			return
 		}
 		rows, err := sheet.GetRows(sheet.GetSheetName(0))
 		if err != nil {
-			events <- sheetEvent{"message", uploadMessage("No sheets found in the provided file: "+err.Error(), true)}
+			events <- sheetEvent{"message", templates.UploadMessage("No sheets found in the provided file: "+err.Error(), true)}
 			return
 		}
 		if len(rows) == 0 {
-			events <- sheetEvent{"message", uploadMessage("Header (first) row not found", true)}
+			events <- sheetEvent{"message", templates.UploadMessage("Header (first) row not found", true)}
 			return
 		}
 		var dateCol, emailCol, chapterCol int = -1, -1, -1
@@ -232,15 +233,15 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 			}
 		}
 		if dateCol == -1 {
-			events <- sheetEvent{"message", uploadMessage("Could not find a column for dates", true)}
+			events <- sheetEvent{"message", templates.UploadMessage("Could not find a column for dates", true)}
 			return
 		}
 		if emailCol == -1 {
-			events <- sheetEvent{"message", uploadMessage("Could not find a column for emails", true)}
+			events <- sheetEvent{"message", templates.UploadMessage("Could not find a column for emails", true)}
 			return
 		}
 		if chapterCol == -1 {
-			events <- sheetEvent{"message", uploadMessage("Could not find a column for chapters", true)}
+			events <- sheetEvent{"message", templates.UploadMessage("Could not find a column for chapters", true)}
 			return
 		}
 
@@ -249,7 +250,7 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 				continue
 			}
 			if dateCol >= len(columns) || emailCol >= len(columns) || chapterCol >= len(columns) {
-				events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
+				events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
 					"Some column (with index %d, %d or %d) not found on row '%s' with length %d",
 					dateCol,
 					emailCol,
@@ -265,7 +266,7 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 
 			kthid, found := strings.CutSuffix(email, "@kth.se")
 			if !found {
-				events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
+				events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
 					"Cannot get kth id from row '%s'. Complain to THS that they should have kth-ids in their membership sheet :)",
 					strings.Join(columns, ","),
 				), true)}
@@ -277,7 +278,7 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 					Kthid:    kthid,
 					MemberTo: pgtype.Date{Time: time.Now(), Valid: true},
 				}); err != nil {
-					events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
+					events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
 						"Could not end membership for user '%s': %v",
 						kthid,
 						err,
@@ -288,7 +289,7 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 
 			memberTo, err := time.Parse(time.DateOnly, date)
 			if err != nil {
-				events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
+				events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
 					"Invalid date '%s' for user '%s': %v",
 					date,
 					kthid,
@@ -304,7 +305,7 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 						return err
 					}
 					if person == nil {
-						events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
+						events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
 							"Could not find user with kthid '%s' in KTH's ldap",
 							kthid,
 						), true)}
@@ -330,19 +331,19 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 					MemberTo: pgtype.Date{Valid: true, Time: memberTo},
 				})
 			}); err != nil {
-				events <- sheetEvent{"message", uploadMessage(fmt.Sprintf(
+				events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
 					"Could not update user '%s' in database: %v",
 					kthid,
 					err,
 				), true)}
 			}
-			events <- sheetEvent{"progress", uploadProgress(float64(i) / float64(len(rows)-1))}
+			events <- sheetEvent{"progress", templates.UploadProgress(float64(i) / float64(len(rows)-1))}
 		}
-		events <- sheetEvent{"progress", uploadProgress(1)}
+		events <- sheetEvent{"progress", templates.UploadProgress(1)}
 
 		return
 	}()
-	return uploadStatus(true)
+	return templates.UploadStatus(true)
 }
 
 func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -382,7 +383,7 @@ func (s *service) oidcClients(w http.ResponseWriter, r *http.Request) httputil.T
 	if err != nil {
 		return err
 	}
-	return oidcClients(clients)
+	return templates.OidcClients(clients)
 }
 
 func (s *service) createOIDCClient(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -403,7 +404,7 @@ func (s *service) createOIDCClient(w http.ResponseWriter, r *http.Request) httpu
 	if err != nil {
 		return err
 	}
-	return oidcClient(client, secret[:])
+	return templates.OidcClient(client, secret[:])
 }
 
 func (s *service) deleteOIDCClient(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -449,7 +450,7 @@ func (s *service) addRedirectURI(w http.ResponseWriter, r *http.Request) httputi
 		return err
 	}
 
-	return redirectURI(id, newURI)
+	return templates.RedirectURI(id, newURI)
 }
 
 func (s *service) removeRedirectURI(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

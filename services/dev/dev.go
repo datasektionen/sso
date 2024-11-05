@@ -11,6 +11,7 @@ import (
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/services/dev/export"
 	user "github.com/datasektionen/logout/services/user/export"
+	"github.com/datasektionen/logout/templates"
 )
 
 //go:generate templ generate
@@ -42,5 +43,5 @@ func (s *service) LoginForm() templ.Component {
 			return nil
 		})
 	}
-	return loginForm()
+	return templates.DevLoginForm()
 }

@@ -9,14 +9,23 @@ import (
 
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/pls"
+	"github.com/datasektionen/logout/service"
 	"github.com/google/uuid"
 )
 
-func (s *service) hello(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func MountRoutes(s *service.Service) {
+	http.Handle("/legacyapi/hello", httputil.Route(s, hello))
+	http.Handle("/legacyapi/login", httputil.Route(s, login))
+	http.Handle("/legacyapi/callback", httputil.Route(s, callback))
+	http.Handle("/legacyapi/verify/{token}", httputil.Route(s, verify))
+	http.Handle("/legacyapi/logout", httputil.Route(s, logout))
+}
+
+func hello(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return "Hello Login!!!!"
 }
 
-func (s *service) login(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func login(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	callbackString := r.FormValue("callback")
 	callback, err := url.Parse(callbackString)
 	if err != nil {
@@ -50,30 +59,30 @@ func (s *service) login(w http.ResponseWriter, r *http.Request) httputil.ToRespo
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
-	s.user.RedirectToLogin(w, r, "/legacyapi/callback")
+	s.RedirectToLogin(w, r, "/legacyapi/callback")
 	return nil
 }
 
-func (s *service) callback(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func callback(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	callback, _ := r.Cookie("legacyapi-callback")
 	if callback == nil {
 		return httputil.BadRequest("Idk where you came from. Maybe you took longer than 10 minutes?")
 	}
-	user, err := s.user.GetLoggedInUser(r)
+	user, err := s.GetLoggedInUser(r)
 	if err != nil {
 		return err
 	}
 	if user == nil {
 		return httputil.BadRequest("You did not seem to get logged in")
 	}
-	token, err := s.db.CreateToken(r.Context(), user.KTHID)
+	token, err := s.DB.CreateToken(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
 	return http.RedirectHandler(callback.Value+token.String(), http.StatusSeeOther)
 }
 
-func (s *service) verify(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func verify(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	token, err := uuid.Parse(strings.TrimSuffix(r.PathValue("token"), ".json"))
 	if err != nil {
 		return httputil.BadRequest("Invalid token")
@@ -86,11 +95,11 @@ func (s *service) verify(w http.ResponseWriter, r *http.Request) httputil.ToResp
 	if !allowed {
 		return httputil.Forbidden("API Key invalid or has incorrect permissions")
 	}
-	kthid, err := s.db.GetToken(r.Context(), token)
+	kthid, err := s.DB.GetToken(r.Context(), token)
 	if err != nil {
 		return err
 	}
-	user, err := s.user.GetUser(r.Context(), kthid)
+	user, err := s.GetUser(r.Context(), kthid)
 	if err != nil {
 		return err
 	}
@@ -103,15 +112,15 @@ func (s *service) verify(w http.ResponseWriter, r *http.Request) httputil.ToResp
 	})
 }
 
-func (s *service) logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.user.GetLoggedInUser(r)
+func logout(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user, err := s.GetLoggedInUser(r)
 	if err != nil {
 		return err
 	}
 	if user != nil {
-		if err := s.db.DeleteToken(r.Context(), user.KTHID); err != nil {
+		if err := s.DB.DeleteToken(r.Context(), user.KTHID); err != nil {
 			return err
 		}
 	}
-	return s.user.Logout(w, r)
+	return s.Logout(w, r)
 }

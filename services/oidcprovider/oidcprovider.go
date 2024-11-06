@@ -17,9 +17,8 @@ import (
 	"time"
 
 	"github.com/datasektionen/logout/pkg/config"
-	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
-	user "github.com/datasektionen/logout/services/user/export"
+	"github.com/datasektionen/logout/service"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -30,12 +29,11 @@ import (
 
 // http://localhost:7000/op/authorize?client_id=bing&response_type=token&scope=openid&redirect_uri=http://localhost:8080/callback
 
-type service struct {
+type provider struct {
 	provider   *op.Provider
-	user       user.Service
-	db         *database.Queries
 	dotabase   dotabase
 	signingKey *ecdsa.PrivateKey
+	s          *service.Service
 }
 
 type dotabase struct {
@@ -44,9 +42,9 @@ type dotabase struct {
 	mu              sync.Mutex
 }
 
-var _ op.Storage = &service{}
+var _ op.Storage = &provider{}
 
-func NewService(db *database.Queries) (*service, error) {
+func MountRoutes(s *service.Service) error {
 	privateKey := ecdsa.PrivateKey{
 		PublicKey: ecdsa.PublicKey{
 			Curve: elliptic.P256(),
@@ -57,22 +55,22 @@ func NewService(db *database.Queries) (*service, error) {
 	}
 	parts := strings.SplitN(config.Config.OIDCProviderKey, ",", 3)
 	if _, ok := privateKey.X.SetString(parts[0], 62); !ok {
-		return nil, errors.New("Invalid x in $OIDC_PROVIDER_KEY")
+		return errors.New("Invalid x in $OIDC_PROVIDER_KEY")
 	}
 	if _, ok := privateKey.Y.SetString(parts[1], 62); !ok {
-		return nil, errors.New("Invalid y in $OIDC_PROVIDER_KEY")
+		return errors.New("Invalid y in $OIDC_PROVIDER_KEY")
 	}
 	if _, ok := privateKey.D.SetString(parts[2], 62); !ok {
-		return nil, errors.New("Invalid d in $OIDC_PROVIDER_KEY")
+		return errors.New("Invalid d in $OIDC_PROVIDER_KEY")
 	}
 
-	s := &service{
-		db: db,
+	p := &provider{
 		dotabase: dotabase{
 			reqByID:         make(map[uuid.UUID]authRequest),
 			reqIdByAuthCode: make(map[string]uuid.UUID),
 		},
 		signingKey: &privateKey,
+		s:          s,
 	}
 	var opts []op.Option
 	if config.Config.Dev {
@@ -81,10 +79,10 @@ func NewService(db *database.Queries) (*service, error) {
 	var key [32]byte
 
 	if _, err := rand.Read(key[:]); err != nil {
-		return nil, err
+		return err
 	}
 	var err error
-	s.provider, err = op.NewProvider(&op.Config{
+	p.provider, err = op.NewProvider(&op.Config{
 		CryptoKey:          key,
 		SupportedUILocales: []language.Tag{language.English},
 		SupportedClaims: []string{
@@ -94,63 +92,59 @@ func NewService(db *database.Queries) (*service, error) {
 			"email", "email_verified",
 		},
 	},
-		s,
+		p,
 		op.StaticIssuer(config.Config.OIDCProviderIssuerURL.String()),
 		opts...,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if config.Config.OIDCProviderIssuerURL.Path != "/op" {
-		return nil, errors.New("The path of $OIDC_PROVIDER_ISSUER_URL must be `/`")
+		return errors.New("The path of $OIDC_PROVIDER_ISSUER_URL must be `/`")
 	}
 
-	http.Handle("/op/", http.StripPrefix("/op", s.provider.Handler))
-	http.Handle("/op-callback", httputil.Route(s.callback))
+	http.Handle("/op/", http.StripPrefix("/op", p.provider.Handler))
+	http.Handle("/op-callback", httputil.Route(nil, p.callback))
 
-	return s, nil
+	return nil
 }
 
-func (s *service) Assign(user user.Service) {
-	s.user = user
-}
-
-func (s *service) callback(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func (p *provider) callback(_ any, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	authRequestID := r.FormValue("auth-request-id")
 	id, err := uuid.Parse(authRequestID)
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	s.dotabase.mu.Lock()
-	defer s.dotabase.mu.Unlock()
-	req, ok := s.dotabase.reqByID[id]
+	p.dotabase.mu.Lock()
+	defer p.dotabase.mu.Unlock()
+	req, ok := p.dotabase.reqByID[id]
 	if !ok {
 		return httputil.BadRequest("No request with that id")
 	}
 
-	req.kthid, err = s.user.GetLoggedInKTHID(r)
+	req.kthid, err = p.s.GetLoggedInKTHID(r)
 	if err != nil {
 		return err
 	}
 	if req.kthid == "" {
 		return httputil.BadRequest("User did not seem to get logged in")
 	}
-	s.dotabase.reqByID[id] = req
+	p.dotabase.reqByID[id] = req
 
-	http.Redirect(w, r, "/op"+op.AuthCallbackURL(s.provider)(r.Context(), authRequestID), http.StatusSeeOther)
+	http.Redirect(w, r, "/op"+op.AuthCallbackURL(p.provider)(r.Context(), authRequestID), http.StatusSeeOther)
 	return nil
 }
 
 // AuthRequestByCode implements op.Storage.
-func (s *service) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
-	s.dotabase.mu.Lock()
-	defer s.dotabase.mu.Unlock()
-	id, ok := s.dotabase.reqIdByAuthCode[code]
+func (p *provider) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
+	p.dotabase.mu.Lock()
+	defer p.dotabase.mu.Unlock()
+	id, ok := p.dotabase.reqIdByAuthCode[code]
 	if !ok {
 		return nil, httputil.BadRequest("Invalid code")
 	}
-	req, ok := s.dotabase.reqByID[id]
+	req, ok := p.dotabase.reqByID[id]
 	if !ok {
 		return nil, errors.New("Valid code but omg i lost the request")
 	}
@@ -158,14 +152,14 @@ func (s *service) AuthRequestByCode(ctx context.Context, code string) (op.AuthRe
 }
 
 // AuthRequestByID implements op.Storage.
-func (s *service) AuthRequestByID(ctx context.Context, authRequestID string) (op.AuthRequest, error) {
+func (p *provider) AuthRequestByID(ctx context.Context, authRequestID string) (op.AuthRequest, error) {
 	id, err := uuid.Parse(authRequestID)
 	if err != nil {
 		return nil, httputil.BadRequest("Invalid uuid")
 	}
-	s.dotabase.mu.Lock()
-	req, ok := s.dotabase.reqByID[id]
-	s.dotabase.mu.Unlock()
+	p.dotabase.mu.Lock()
+	req, ok := p.dotabase.reqByID[id]
+	p.dotabase.mu.Unlock()
 	if !ok {
 		return nil, httputil.BadRequest("No request with that id")
 	}
@@ -173,57 +167,57 @@ func (s *service) AuthRequestByID(ctx context.Context, authRequestID string) (op
 }
 
 // CreateAccessAndRefreshTokens implements op.Storage.
-func (s *service) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, currentRefreshToken string) (accessTokenID string, newRefreshTokenID string, expiration time.Time, err error) {
+func (p *provider) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, currentRefreshToken string) (accessTokenID string, newRefreshTokenID string, expiration time.Time, err error) {
 	slog.Warn("oidcprovider.*service.CreateAccessAndRefreshTokens", "request", request, "currentRefreshToken", currentRefreshToken)
 	panic("unimplemented")
 }
 
 // CreateAccessToken implements op.Storage.
-func (s *service) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
+func (p *provider) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
 	slog.Warn("oidcprovider.*service.CreateAccessToken", "request", request)
 	return strings.Join(request.GetScopes(), " "), time.Now().Add(time.Minute), nil
 }
 
 // CreateAuthRequest implements op.Storage.
-func (s *service) CreateAuthRequest(ctx context.Context, r *oidc.AuthRequest, userID string) (op.AuthRequest, error) {
+func (p *provider) CreateAuthRequest(ctx context.Context, r *oidc.AuthRequest, userID string) (op.AuthRequest, error) {
 	if userID != "" {
 		slog.Info("oidcprovider.*service.CreateAuthRequest: we got a userID!!!", "userID", userID)
 	}
 
 	id := uuid.New()
 	req := authRequest{id: id, authCode: "", inner: r}
-	s.dotabase.mu.Lock()
-	s.dotabase.reqByID[id] = req
-	s.dotabase.mu.Unlock()
+	p.dotabase.mu.Lock()
+	p.dotabase.reqByID[id] = req
+	p.dotabase.mu.Unlock()
 	return req, nil
 }
 
 // DeleteAuthRequest implements op.Storage.
-func (s *service) DeleteAuthRequest(ctx context.Context, authRequestID string) error {
+func (p *provider) DeleteAuthRequest(ctx context.Context, authRequestID string) error {
 	slog.Warn("oidcprovider.*service.DeleteAuthRequest", "authRequestID", authRequestID)
 
 	id, err := uuid.Parse(authRequestID)
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	s.dotabase.mu.Lock()
-	defer s.dotabase.mu.Unlock()
-	req, ok := s.dotabase.reqByID[id]
+	p.dotabase.mu.Lock()
+	defer p.dotabase.mu.Unlock()
+	req, ok := p.dotabase.reqByID[id]
 	if !ok {
 		return httputil.BadRequest("No request with that id")
 	}
-	delete(s.dotabase.reqByID, id)
-	delete(s.dotabase.reqIdByAuthCode, req.authCode)
+	delete(p.dotabase.reqByID, id)
+	delete(p.dotabase.reqIdByAuthCode, req.authCode)
 	return nil
 }
 
 // AuthorizeClientIDSecret implements op.Storage.
-func (s *service) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
+func (p *provider) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
 	id, err := base64.URLEncoding.DecodeString(clientID)
 	if err != nil {
 		return httputil.BadRequest("Invalid id format")
 	}
-	_, err = s.db.GetClient(ctx, id)
+	_, err = p.s.DB.GetClient(ctx, id)
 	if err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such client")
 	}
@@ -243,12 +237,12 @@ func (s *service) AuthorizeClientIDSecret(ctx context.Context, clientID string, 
 }
 
 // GetClientByClientID implements op.Storage.
-func (s *service) GetClientByClientID(ctx context.Context, clientID string) (op.Client, error) {
+func (p *provider) GetClientByClientID(ctx context.Context, clientID string) (op.Client, error) {
 	id, err := base64.URLEncoding.DecodeString(clientID)
 	if err != nil {
 		return nil, httputil.BadRequest("Invalid id format")
 	}
-	c, err := s.db.GetClient(ctx, id)
+	c, err := p.s.DB.GetClient(ctx, id)
 	if err == pgx.ErrNoRows {
 		return nil, httputil.BadRequest("No such client")
 	}
@@ -263,63 +257,63 @@ func (s *service) GetClientByClientID(ctx context.Context, clientID string) (op.
 }
 
 // GetKeyByIDAndClientID implements op.Storage.
-func (s *service) GetKeyByIDAndClientID(ctx context.Context, keyID string, clientID string) (*jose.JSONWebKey, error) {
+func (p *provider) GetKeyByIDAndClientID(ctx context.Context, keyID string, clientID string) (*jose.JSONWebKey, error) {
 	slog.Warn("oidcprovider.*service.GetKeyByIDAndClientID", "keyID", keyID, "clientID", clientID)
 	panic("unimplemented")
 }
 
 // GetPrivateClaimsFromScopes implements op.Storage.
-func (s *service) GetPrivateClaimsFromScopes(ctx context.Context, userID string, clientID string, scopes []string) (map[string]any, error) {
+func (p *provider) GetPrivateClaimsFromScopes(ctx context.Context, userID string, clientID string, scopes []string) (map[string]any, error) {
 	slog.Warn("oidcprovider.*service.GetPrivateClaimsFromScopes", "userID", userID, "clientID", clientID, "scopes", scopes)
 	panic("unimplemented")
 }
 
 // GetRefreshTokenInfo implements op.Storage.
-func (s *service) GetRefreshTokenInfo(ctx context.Context, clientID string, token string) (userID string, tokenID string, err error) {
+func (p *provider) GetRefreshTokenInfo(ctx context.Context, clientID string, token string) (userID string, tokenID string, err error) {
 	slog.Warn("oidcprovider.*service.GetRefreshTokenInfo", "clientID", clientID, "token", token)
 	panic("unimplemented")
 }
 
 // Health implements op.Storage.
-func (s *service) Health(ctx context.Context) error {
+func (p *provider) Health(ctx context.Context) error {
 	slog.Warn("oidcprovider.*service.Health")
 	panic("unimplemented")
 }
 
 // RevokeToken implements op.Storage.
-func (s *service) RevokeToken(ctx context.Context, tokenOrTokenID string, userID string, clientID string) *oidc.Error {
+func (p *provider) RevokeToken(ctx context.Context, tokenOrTokenID string, userID string, clientID string) *oidc.Error {
 	slog.Warn("oidcprovider.*service.RevokeToken", "tokenOrTokenID", tokenOrTokenID, "userID", userID, "clientID", clientID)
 	panic("unimplemented")
 }
 
 // SaveAuthCode implements op.Storage.
-func (s *service) SaveAuthCode(ctx context.Context, authRequestID string, code string) error {
+func (p *provider) SaveAuthCode(ctx context.Context, authRequestID string, code string) error {
 	slog.Warn("oidcprovider.*service.SaveAuthCode", "authRequestID", authRequestID, "code", code)
 	id, err := uuid.Parse(authRequestID)
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	s.dotabase.mu.Lock()
-	defer s.dotabase.mu.Unlock()
-	req, ok := s.dotabase.reqByID[id]
+	p.dotabase.mu.Lock()
+	defer p.dotabase.mu.Unlock()
+	req, ok := p.dotabase.reqByID[id]
 	if !ok {
 		return httputil.BadRequest("No request with that id")
 	}
-	s.dotabase.reqIdByAuthCode[code] = id
+	p.dotabase.reqIdByAuthCode[code] = id
 	req.authCode = code
-	s.dotabase.reqByID[id] = req
+	p.dotabase.reqByID[id] = req
 	return nil
 }
 
 // SetIntrospectionFromToken implements op.Storage.
-func (s *service) SetIntrospectionFromToken(ctx context.Context, userinfo *oidc.IntrospectionResponse, tokenID string, subject string, clientID string) error {
+func (p *provider) SetIntrospectionFromToken(ctx context.Context, userinfo *oidc.IntrospectionResponse, tokenID string, subject string, clientID string) error {
 	slog.Warn("oidcprovider.*service.SetIntrospectionFromToken", "userinfo", userinfo, "tokenID", tokenID, "subject", subject, "clientID", clientID)
 	panic("unimplemented")
 }
 
 // SetUserinfoFromScopes implements op.Storage.
-func (s *service) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.UserInfo, kthid string, clientID string, scopes []string) error {
-	user, err := s.user.GetUser(ctx, kthid)
+func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.UserInfo, kthid string, clientID string, scopes []string) error {
+	user, err := p.s.GetUser(ctx, kthid)
 	if err != nil {
 		return err
 	}
@@ -344,9 +338,9 @@ func (s *service) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.User
 }
 
 // SetUserinfoFromToken implements op.Storage.
-func (s *service) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID string, kthid string, origin string) error {
+func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID string, kthid string, origin string) error {
 	slog.Warn("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo, "tokenID", tokenID, "subject", kthid, "origin", origin)
-	user, err := s.user.GetUser(ctx, kthid)
+	user, err := p.s.GetUser(ctx, kthid)
 	if err != nil {
 		return err
 	}
@@ -373,7 +367,7 @@ func (s *service) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserI
 }
 
 // SignatureAlgorithms implements op.Storage.
-func (s *service) SignatureAlgorithms(ctx context.Context) ([]jose.SignatureAlgorithm, error) {
+func (p *provider) SignatureAlgorithms(ctx context.Context) ([]jose.SignatureAlgorithm, error) {
 	return []jose.SignatureAlgorithm{jose.ES256}, nil
 }
 
@@ -387,37 +381,37 @@ func (s publicKey) Use() string                        { return "sig" }
 var _ op.Key = publicKey{}
 
 // KeySet implements op.Storage.
-func (s *service) KeySet(ctx context.Context) ([]op.Key, error) {
-	return []op.Key{publicKey{&s.signingKey.PublicKey}}, nil
+func (p *provider) KeySet(ctx context.Context) ([]op.Key, error) {
+	return []op.Key{publicKey{&p.signingKey.PublicKey}}, nil
 }
 
 type privateKey struct{ *ecdsa.PrivateKey }
 
-func (s privateKey) ID() string                                  { return "the-one-and-only" }
-func (s privateKey) Key() any                                    { return s.PrivateKey }
-func (s privateKey) SignatureAlgorithm() jose.SignatureAlgorithm { return jose.ES256 }
+func (k privateKey) ID() string                                  { return "the-one-and-only" }
+func (k privateKey) Key() any                                    { return k.PrivateKey }
+func (k privateKey) SignatureAlgorithm() jose.SignatureAlgorithm { return jose.ES256 }
 
 var _ op.SigningKey = privateKey{}
 
 // SigningKey implements op.Storage.
-func (s *service) SigningKey(ctx context.Context) (op.SigningKey, error) {
-	return privateKey{s.signingKey}, nil
+func (p *provider) SigningKey(ctx context.Context) (op.SigningKey, error) {
+	return privateKey{p.signingKey}, nil
 }
 
 // TerminateSession implements op.Storage.
-func (s *service) TerminateSession(ctx context.Context, userID string, clientID string) error {
+func (p *provider) TerminateSession(ctx context.Context, userID string, clientID string) error {
 	slog.Warn("oidcprovider.*service.TerminateSession", "userID", userID, "clientID", clientID)
 	panic("unimplemented")
 }
 
 // TokenRequestByRefreshToken implements op.Storage.
-func (s *service) TokenRequestByRefreshToken(ctx context.Context, refreshTokenID string) (op.RefreshTokenRequest, error) {
+func (p *provider) TokenRequestByRefreshToken(ctx context.Context, refreshTokenID string) (op.RefreshTokenRequest, error) {
 	slog.Warn("oidcprovider.*service.TokenRequestByRefreshToken", "refreshTokenID", refreshTokenID)
 	panic("unimplemented")
 }
 
 // ValidateJWTProfileScopes implements op.Storage.
-func (s *service) ValidateJWTProfileScopes(ctx context.Context, userID string, scopes []string) ([]string, error) {
+func (p *provider) ValidateJWTProfileScopes(ctx context.Context, userID string, scopes []string) ([]string, error) {
 	slog.Warn("oidcprovider.*service.ValidateJWTProfileScopes", "userID", userID, "scopes", scopes)
 	panic("unimplemented")
 }

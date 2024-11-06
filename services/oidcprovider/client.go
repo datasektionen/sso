@@ -2,10 +2,10 @@ package oidcprovider
 
 import (
 	"log/slog"
+	"net/url"
 	"time"
 
 	"github.com/datasektionen/logout/pkg/config"
-	user "github.com/datasektionen/logout/services/user/export"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
@@ -73,7 +73,7 @@ func (c client) IsScopeAllowed(scope string) bool {
 
 // LoginURL implements op.Client.
 func (c client) LoginURL(authRequestID string) string {
-	return user.LoginPath("/op-callback?auth-request-id=" + authRequestID)
+	return "/?" + url.Values{"next-url": []string{"/op-callback?auth-request-id=" + authRequestID}}.Encode()
 }
 
 // PostLogoutRedirectURIs implements op.Client.

@@ -45,9 +45,9 @@ func Respond(resp ToResponse, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Route(f func(w http.ResponseWriter, r *http.Request) ToResponse) http.Handler {
+func Route[S any](s S, f func(s S, w http.ResponseWriter, r *http.Request) ToResponse) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		Respond(f(w, r), w, r)
+		Respond(f(s, w, r), w, r)
 	})
 }
 

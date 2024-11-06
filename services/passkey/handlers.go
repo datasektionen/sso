@@ -6,18 +6,28 @@ import (
 	"time"
 
 	"github.com/datasektionen/logout/models"
+	"github.com/datasektionen/logout/pkg/auth"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/services/user/auth"
+	"github.com/datasektionen/logout/service"
 	"github.com/datasektionen/logout/templates"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 )
 
-func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func MountRoutes(s *service.Service) {
+	http.Handle("POST /login/passkey/begin", httputil.Route(s, beginLoginPasskey))
+	http.Handle("POST /login/passkey/finish", httputil.Route(s, finishLoginPasskey))
+
+	http.Handle("GET /passkey/add-form", httputil.Route(s, addPasskeyForm))
+	http.Handle("POST /passkey", httputil.Route(s, addPasskey))
+	http.Handle("DELETE /passkey/{id}", httputil.Route(s, removePasskey))
+}
+
+func beginLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	kthid := r.FormValue("kthid")
-	user, err := s.user.GetUser(r.Context(), kthid)
+	user, err := s.GetUser(r.Context(), kthid)
 	if err != nil {
 		return err
 	}
@@ -25,12 +35,12 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 		w.Header().Add("HX-Reswap", "beforeend")
 		return `<p class="error">No such user</p>`
 	}
-	passkeys, err := s.listPasskeysForUser(r.Context(), user.KTHID)
+	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
 	if len(passkeys) == 0 {
 		w.Header().Add("HX-Reswap", "beforeend")
 		return `<p class="error">You have no registered passkeys</p>`
 	}
-	credAss, sessionData, err := s.webauthn.BeginLogin(models.WebAuthnUser{User: user, Passkeys: passkeys})
+	credAss, sessionData, err := s.WebAuthn.BeginLogin(models.WebAuthnUser{User: user, Passkeys: passkeys})
 	if err != nil {
 		return err
 	}
@@ -38,7 +48,7 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 	if err != nil {
 		return err
 	}
-	if err := s.db.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{
+	if err := s.DB.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{
 		Kthid: user.KTHID,
 		Data:  sessionDataBytes,
 	}); err != nil {
@@ -47,7 +57,7 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 	return templates.PasskeyLoginForm(kthid, credAss)
 }
 
-func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func finishLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	var body struct {
 		KTHID string                               `json:"kthid"`
 		Cred  protocol.CredentialAssertionResponse `json:"cred"`
@@ -60,19 +70,19 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 		return httputil.BadRequest("Invalid credential")
 	}
 
-	user, err := s.user.GetUser(r.Context(), body.KTHID)
+	user, err := s.GetUser(r.Context(), body.KTHID)
 	if err != nil {
 		return err
 	}
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	passkeys, err := s.listPasskeysForUser(r.Context(), user.KTHID)
+	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
 
-	sessionDataBytes, err := s.db.TakeWebAuthnSessionData(r.Context(), user.KTHID)
+	sessionDataBytes, err := s.DB.TakeWebAuthnSessionData(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
@@ -80,12 +90,12 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 	if err := json.Unmarshal(sessionDataBytes, &sessionData); err != nil {
 		return err
 	}
-	_, err = s.webauthn.ValidateLogin(models.WebAuthnUser{User: user, Passkeys: passkeys}, sessionData, credAss)
+	_, err = s.WebAuthn.ValidateLogin(models.WebAuthnUser{User: user, Passkeys: passkeys}, sessionData, credAss)
 	if err != nil {
 		return err
 	}
 
-	sessionID, err := s.db.CreateSession(r.Context(), user.KTHID)
+	sessionID, err := s.DB.CreateSession(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
@@ -95,15 +105,15 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 	return nil
 }
 
-func (s *service) addPasskeyForm(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.user.GetLoggedInUser(r)
+func addPasskeyForm(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user, err := s.GetLoggedInUser(r)
 	if err != nil {
 		return err
 	}
 	if user == nil {
 		return httputil.Unauthorized()
 	}
-	creation, sessionData, err := s.webauthn.BeginRegistration(models.WebAuthnUser{User: user})
+	creation, sessionData, err := s.WebAuthn.BeginRegistration(models.WebAuthnUser{User: user})
 	if err != nil {
 		return err
 	}
@@ -111,7 +121,7 @@ func (s *service) addPasskeyForm(w http.ResponseWriter, r *http.Request) httputi
 	if err != nil {
 		return err
 	}
-	if err := s.db.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{
+	if err := s.DB.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{
 		Kthid: user.KTHID,
 		Data:  sessionDataBytes,
 	}); err != nil {
@@ -121,8 +131,8 @@ func (s *service) addPasskeyForm(w http.ResponseWriter, r *http.Request) httputi
 	return templates.AddPasskeyForm(creation)
 }
 
-func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.user.GetLoggedInUser(r)
+func addPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user, err := s.GetLoggedInUser(r)
 	if err != nil {
 		return err
 	}
@@ -142,7 +152,7 @@ func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.To
 		return httputil.BadRequest("Invalid credential")
 	}
 
-	sessionDataBytes, err := s.db.TakeWebAuthnSessionData(r.Context(), user.KTHID)
+	sessionDataBytes, err := s.DB.TakeWebAuthnSessionData(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
@@ -152,7 +162,7 @@ func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.To
 	}
 	// Passkeys aren't retrieved from within this function, so we don't need to
 	// populate that field on WebAuthnUser.
-	cred, err := s.webauthn.CreateCredential(models.WebAuthnUser{User: user}, sessionData, cc)
+	cred, err := s.WebAuthn.CreateCredential(models.WebAuthnUser{User: user}, sessionData, cc)
 	if err != nil {
 		return err
 	}
@@ -161,7 +171,7 @@ func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.To
 		name = time.Now().Format(time.DateOnly)
 	}
 	credRaw, _ := json.Marshal(cred)
-	id, err := s.db.AddPasskey(r.Context(), database.AddPasskeyParams{
+	id, err := s.DB.AddPasskey(r.Context(), database.AddPasskeyParams{
 		Kthid: user.KTHID,
 		Name:  name,
 		Data:  string(credRaw),
@@ -173,8 +183,8 @@ func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.To
 	return templates.ShowPasskey(passkey)
 }
 
-func (s *service) removePasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.user.GetLoggedInUser(r)
+func removePasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user, err := s.GetLoggedInUser(r)
 	if err != nil {
 		return err
 	}
@@ -183,7 +193,7 @@ func (s *service) removePasskey(w http.ResponseWriter, r *http.Request) httputil
 	}
 	passkeyID, err := uuid.Parse(r.PathValue("id"))
 
-	if err := s.db.RemovePasskey(r.Context(), database.RemovePasskeyParams{
+	if err := s.DB.RemovePasskey(r.Context(), database.RemovePasskeyParams{
 		Kthid: user.KTHID,
 		ID:    passkeyID,
 	}); err != nil {

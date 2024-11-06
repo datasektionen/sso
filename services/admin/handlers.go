@@ -13,12 +13,15 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/kthldap"
 	"github.com/datasektionen/logout/pkg/pls"
+	"github.com/datasektionen/logout/service"
 	"github.com/datasektionen/logout/templates"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -27,14 +30,54 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func (s *service) auth(h http.Handler) http.Handler {
-	return httputil.Route(func(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-		kthid, err := s.user.GetLoggedInKTHID(r)
+func MountRoutes(s *service.Service) {
+	http.Handle("GET /admin", auth(s, httputil.Route(s, admin)))
+
+	http.Handle("GET /admin/members", auth(s, httputil.Route(s, members)))
+	http.Handle("POST /admin/members/upload-sheet", auth(s, httputil.Route(s, uploadSheet)))
+	http.Handle("GET /admin/members/upload-sheet", auth(s, httputil.Route(s, processSheet)))
+
+	http.Handle("GET /admin/oidc-clients", auth(s, httputil.Route(s, oidcClients)))
+	http.Handle("POST /admin/oidc-clients", auth(s, httputil.Route(s, createOIDCClient)))
+	http.Handle("DELETE /admin/oidc-clients/{id}", auth(s, httputil.Route(s, deleteOIDCClient)))
+	http.Handle("POST /admin/oidc-clients/{id}", auth(s, httputil.Route(s, addRedirectURI)))
+	http.Handle("DELETE /admin/oidc-clients/{id}/{uri}", auth(s, httputil.Route(s, removeRedirectURI)))
+
+	http.Handle("GET /admin/invites", auth(s, httputil.Route(s, invites)))
+	http.Handle("GET /admin/invites/{id}", auth(s, httputil.Route(s, invite)))
+	http.Handle("POST /admin/invites", auth(s, httputil.Route(s, createInvite)))
+	http.Handle("DELETE /admin/invites/{id}", auth(s, httputil.Route(s, deleteInvite)))
+	http.Handle("GET /admin/invites/{id}/edit", auth(s, httputil.Route(s, editInviteForm)))
+	http.Handle("PUT /admin/invites/{id}", auth(s, httputil.Route(s, updateInvite)))
+}
+
+var memberSheet struct {
+	// This is locked when retrieving or assigning the reader channel.
+	mu sync.Mutex
+	// The post handler will instantiate this channel and finish the response.
+	// It will then wait for an "event channel" to be sent on this channel
+	// until it begins processing the uploaded sheet and then continuously send
+	// events from the sheet handling on the "event channel". After processing,
+	// this channel will be closed and reassigned to nil.
+	//
+	// The get handler will send an "event channel" on this channel, read
+	// events from that and send them along to the client with SSE.
+	reader chan<- chan<- sheetEvent
+}
+
+type sheetEvent struct {
+	name      string
+	component templ.Component
+}
+
+func auth(s *service.Service, h http.Handler) http.Handler {
+	return httputil.Route(s, func(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+		kthid, err := s.GetLoggedInKTHID(r)
 		if err != nil {
 			return err
 		}
 		if kthid == "" {
-			s.user.RedirectToLogin(w, r, r.URL.Path)
+			s.RedirectToLogin(w, r, r.URL.Path)
 			return nil
 		}
 		perm := "admin-write"
@@ -55,35 +98,35 @@ func (s *service) auth(h http.Handler) http.Handler {
 	})
 }
 
-func (s *service) admin(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func admin(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return templates.AdminPage()
 }
 
-func (s *service) members(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func members(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return templates.Members()
 }
 
-func (s *service) invites(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	invs, err := s.db.ListInvites(r.Context())
+func invites(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	invs, err := s.DB.ListInvites(r.Context())
 	if err != nil {
 		return err
 	}
 	return templates.Invites(invs)
 }
 
-func (s *service) invite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func invite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	inv, err := s.db.GetInvite(r.Context(), id)
+	inv, err := s.DB.GetInvite(r.Context(), id)
 	if err != nil {
 		return httputil.BadRequest("No such invite")
 	}
 	return templates.Invite(inv)
 }
 
-func (s *service) createInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func createInvite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	name := r.FormValue("name")
 	expiresAt, err := time.Parse(time.DateOnly, r.FormValue("expires-at"))
 	if err != nil {
@@ -94,7 +137,7 @@ func (s *service) createInvite(w http.ResponseWriter, r *http.Request) httputil.
 	if err != nil && maxUsesStr != "" {
 		return httputil.BadRequest("Invalid int for max uses")
 	}
-	inv, err := s.db.CreateInvite(r.Context(), database.CreateInviteParams{
+	inv, err := s.DB.CreateInvite(r.Context(), database.CreateInviteParams{
 		Name:      name,
 		ExpiresAt: pgtype.Timestamp{Time: expiresAt, Valid: true},
 		MaxUses:   pgtype.Int4{Int32: int32(maxUses), Valid: maxUsesStr != ""},
@@ -105,12 +148,12 @@ func (s *service) createInvite(w http.ResponseWriter, r *http.Request) httputil.
 	return templates.Invite(inv)
 }
 
-func (s *service) deleteInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func deleteInvite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		return httputil.BadRequest("Invalid id")
 	}
-	if err := s.db.DeleteInvite(r.Context(), id); err == pgx.ErrNoRows {
+	if err := s.DB.DeleteInvite(r.Context(), id); err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such invite")
 	} else if err != nil {
 		return err
@@ -118,19 +161,19 @@ func (s *service) deleteInvite(w http.ResponseWriter, r *http.Request) httputil.
 	return nil
 }
 
-func (s *service) editInviteForm(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func editInviteForm(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		return httputil.BadRequest("Invalid id")
 	}
-	invite, err := s.db.GetInvite(r.Context(), id)
+	invite, err := s.DB.GetInvite(r.Context(), id)
 	if err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such invite")
 	}
 	return templates.EditInvite(invite)
 }
 
-func (s *service) updateInvite(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func updateInvite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		return httputil.BadRequest("Invalid id")
@@ -146,7 +189,7 @@ func (s *service) updateInvite(w http.ResponseWriter, r *http.Request) httputil.
 	if err != nil && maxUsesStr != "" {
 		return httputil.BadRequest("Invalid int for max uses")
 	}
-	inv, err := s.db.UpdateInvite(r.Context(), database.UpdateInviteParams{
+	inv, err := s.DB.UpdateInvite(r.Context(), database.UpdateInviteParams{
 		ID:        id,
 		Name:      name,
 		ExpiresAt: pgtype.Timestamp{Time: expiresAt, Valid: true},
@@ -158,14 +201,14 @@ func (s *service) updateInvite(w http.ResponseWriter, r *http.Request) httputil.
 	return templates.Invite(inv)
 }
 
-func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	s.memberSheet.mu.Lock()
-	defer s.memberSheet.mu.Unlock()
-	if s.memberSheet.reader != nil {
+func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	memberSheet.mu.Lock()
+	defer memberSheet.mu.Unlock()
+	if memberSheet.reader != nil {
 		return httputil.BadRequest("Membership sheet upload currently in progress")
 	}
 	reader := make(chan chan<- sheetEvent)
-	s.memberSheet.reader = reader
+	memberSheet.reader = reader
 	sheet, _, err := r.FormFile("sheet")
 	if err != nil {
 		return httputil.BadRequest("")
@@ -178,9 +221,9 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 	go func() {
 		defer func() {
 			close(reader)
-			s.memberSheet.mu.Lock()
-			s.memberSheet.reader = nil
-			s.memberSheet.mu.Unlock()
+			memberSheet.mu.Lock()
+			memberSheet.reader = nil
+			memberSheet.mu.Unlock()
 		}()
 
 		var events chan<- sheetEvent
@@ -274,7 +317,7 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 			}
 
 			if !strings.Contains(chapter, "Datasektionen") {
-				if err := s.db.UserSetMemberTo(ctx, database.UserSetMemberToParams{
+				if err := s.DB.UserSetMemberTo(ctx, database.UserSetMemberToParams{
 					Kthid:    kthid,
 					MemberTo: pgtype.Date{Time: time.Now(), Valid: true},
 				}); err != nil {
@@ -297,7 +340,7 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 				), true)}
 			}
 
-			if err := s.db.Tx(ctx, func(db *database.Queries) error {
+			if err := s.DB.Tx(ctx, func(db *database.Queries) error {
 				_, err := db.GetUser(ctx, kthid)
 				if err == pgx.ErrNoRows {
 					person, err := kthldap.Lookup(ctx, kthid)
@@ -346,10 +389,10 @@ func (s *service) uploadSheet(w http.ResponseWriter, r *http.Request) httputil.T
 	return templates.UploadStatus(true)
 }
 
-func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	s.memberSheet.mu.Lock()
-	reader := s.memberSheet.reader
-	s.memberSheet.mu.Unlock()
+func processSheet(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	memberSheet.mu.Lock()
+	reader := memberSheet.reader
+	memberSheet.mu.Unlock()
 	if r == nil {
 		return httputil.BadRequest("No membership sheet upload waiting to get started")
 	}
@@ -378,15 +421,15 @@ func (s *service) processSheet(w http.ResponseWriter, r *http.Request) httputil.
 	return nil
 }
 
-func (s *service) oidcClients(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	clients, err := s.db.ListClients(r.Context())
+func oidcClients(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	clients, err := s.DB.ListClients(r.Context())
 	if err != nil {
 		return err
 	}
 	return templates.OidcClients(clients)
 }
 
-func (s *service) createOIDCClient(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func createOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	if err := r.ParseForm(); err != nil {
 		return httputil.BadRequest("Body must be valid application/x-www-form-urlencoded")
 	}
@@ -400,20 +443,20 @@ func (s *service) createOIDCClient(w http.ResponseWriter, r *http.Request) httpu
 	h.Write(secret[:])
 	id := h.Sum(nil)
 
-	client, err := s.db.CreateClient(r.Context(), id)
+	client, err := s.DB.CreateClient(r.Context(), id)
 	if err != nil {
 		return err
 	}
 	return templates.OidcClient(client, secret[:])
 }
 
-func (s *service) deleteOIDCClient(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func deleteOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
 	if err != nil {
 		return httputil.BadRequest("Invalid id")
 	}
 
-	if err := s.db.DeleteClient(r.Context(), id); err == pgx.ErrNoRows {
+	if err := s.DB.DeleteClient(r.Context(), id); err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such client")
 	} else if err != nil {
 		return err
@@ -421,7 +464,7 @@ func (s *service) deleteOIDCClient(w http.ResponseWriter, r *http.Request) httpu
 	return nil
 }
 
-func (s *service) addRedirectURI(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func addRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
 	if err != nil {
 		return httputil.BadRequest("Invalid id")
@@ -431,7 +474,7 @@ func (s *service) addRedirectURI(w http.ResponseWriter, r *http.Request) httputi
 		return httputil.BadRequest("Missing uri")
 	}
 
-	client, err := s.db.GetClient(r.Context(), id)
+	client, err := s.DB.GetClient(r.Context(), id)
 	if err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such client")
 	} else if err != nil {
@@ -440,7 +483,7 @@ func (s *service) addRedirectURI(w http.ResponseWriter, r *http.Request) httputi
 
 	client.RedirectUris = append(client.RedirectUris, newURI)
 
-	if _, err := s.db.UpdateClient(
+	if _, err := s.DB.UpdateClient(
 		r.Context(),
 		database.UpdateClientParams{
 			ID:           client.ID,
@@ -453,14 +496,14 @@ func (s *service) addRedirectURI(w http.ResponseWriter, r *http.Request) httputi
 	return templates.RedirectURI(id, newURI)
 }
 
-func (s *service) removeRedirectURI(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func removeRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
 	if err != nil {
 		return httputil.BadRequest("Invalid id")
 	}
 	uri := r.PathValue("uri")
 
-	client, err := s.db.GetClient(r.Context(), id)
+	client, err := s.DB.GetClient(r.Context(), id)
 	if err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such client")
 	} else if err != nil {
@@ -469,7 +512,7 @@ func (s *service) removeRedirectURI(w http.ResponseWriter, r *http.Request) http
 
 	client.RedirectUris = slices.DeleteFunc(client.RedirectUris, func(u string) bool { return u == uri })
 
-	if _, err := s.db.UpdateClient(
+	if _, err := s.DB.UpdateClient(
 		r.Context(),
 		database.UpdateClientParams{
 			ID:           client.ID,

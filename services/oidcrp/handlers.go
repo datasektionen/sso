@@ -6,21 +6,27 @@ import (
 	"net/http"
 
 	"github.com/datasektionen/logout/pkg/httputil"
+	"github.com/datasektionen/logout/service"
 	"github.com/google/uuid"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 )
 
-func (s *service) kthLogin(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	if s.relyingParty == nil {
+func MountRoutes(s *service.Service) {
+	http.Handle("GET /login/oidc/kth", httputil.Route(s, kthLogin))
+	http.Handle("GET /oidc/kth/callback", httputil.Route(s, kthCallback))
+}
+
+func kthLogin(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	if s.RelyingParty == nil {
 		return errors.New("KTH OIDC is not reachable at the moment")
 	}
 
-	return rp.AuthURLHandler(uuid.NewString, s.relyingParty)
+	return rp.AuthURLHandler(uuid.NewString, s.RelyingParty)
 }
 
-func (s *service) kthCallback(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	if s.relyingParty == nil {
+func kthCallback(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	if s.RelyingParty == nil {
 		return errors.New("KTH OIDC is not reachable at the moment")
 	}
 
@@ -38,14 +44,14 @@ func (s *service) kthCallback(w http.ResponseWriter, r *http.Request) httputil.T
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		user, err := s.user.GetUser(r.Context(), kthid)
+		user, err := s.GetUser(r.Context(), kthid)
 		if err != nil {
 			slog.Error("Could not get user", "kthid", kthid, "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		if user == nil {
-			ok, resp := s.user.FinishInvite(w, r, kthid)
+			ok, resp := s.FinishInvite(w, r, kthid)
 			if ok {
 				httputil.Respond(resp, w, r)
 			} else {
@@ -58,6 +64,6 @@ func (s *service) kthCallback(w http.ResponseWriter, r *http.Request) httputil.T
 			}
 			return
 		}
-		httputil.Respond(s.user.LoginUser(r.Context(), user.KTHID), w, r)
-	}, s.relyingParty)
+		httputil.Respond(s.LoginUser(r.Context(), user.KTHID), w, r)
+	}, s.RelyingParty)
 }

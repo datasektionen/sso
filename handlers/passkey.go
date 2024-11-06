@@ -1,4 +1,4 @@
-package passkey
+package handlers
 
 import (
 	"encoding/json"
@@ -15,15 +15,6 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 )
-
-func MountRoutes(s *service.Service) {
-	http.Handle("POST /login/passkey/begin", httputil.Route(s, beginLoginPasskey))
-	http.Handle("POST /login/passkey/finish", httputil.Route(s, finishLoginPasskey))
-
-	http.Handle("GET /passkey/add-form", httputil.Route(s, addPasskeyForm))
-	http.Handle("POST /passkey", httputil.Route(s, addPasskey))
-	http.Handle("DELETE /passkey/{id}", httputil.Route(s, removePasskey))
-}
 
 func beginLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	kthid := r.FormValue("kthid")

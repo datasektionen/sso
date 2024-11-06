@@ -1,19 +1,12 @@
-package dev
+package handlers
 
 import (
 	"net/http"
 
 	"github.com/datasektionen/logout/pkg/auth"
-	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/service"
 )
-
-func MountRoutes(s *service.Service) {
-	if config.Config.Dev {
-		http.Handle("POST /login/dev", httputil.Route(s, login))
-	}
-}
 
 func login(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.GetUser(r.Context(), r.FormValue("kthid"))

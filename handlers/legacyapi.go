@@ -1,4 +1,4 @@
-package legacyapi
+package handlers
 
 import (
 	"net/http"
@@ -13,19 +13,11 @@ import (
 	"github.com/google/uuid"
 )
 
-func MountRoutes(s *service.Service) {
-	http.Handle("/legacyapi/hello", httputil.Route(s, hello))
-	http.Handle("/legacyapi/login", httputil.Route(s, login))
-	http.Handle("/legacyapi/callback", httputil.Route(s, callback))
-	http.Handle("/legacyapi/verify/{token}", httputil.Route(s, verify))
-	http.Handle("/legacyapi/logout", httputil.Route(s, logout))
-}
-
-func hello(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func legacyAPIHello(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return "Hello Login!!!!"
 }
 
-func login(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func legacyAPILogin(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	callbackString := r.FormValue("callback")
 	callback, err := url.Parse(callbackString)
 	if err != nil {
@@ -63,7 +55,7 @@ func login(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.
 	return nil
 }
 
-func callback(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func legacyAPICallback(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	callback, _ := r.Cookie("legacyapi-callback")
 	if callback == nil {
 		return httputil.BadRequest("Idk where you came from. Maybe you took longer than 10 minutes?")
@@ -82,7 +74,7 @@ func callback(s *service.Service, w http.ResponseWriter, r *http.Request) httput
 	return http.RedirectHandler(callback.Value+token.String(), http.StatusSeeOther)
 }
 
-func verify(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func legacyAPIVerify(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	token, err := uuid.Parse(strings.TrimSuffix(r.PathValue("token"), ".json"))
 	if err != nil {
 		return httputil.BadRequest("Invalid token")
@@ -112,7 +104,7 @@ func verify(s *service.Service, w http.ResponseWriter, r *http.Request) httputil
 	})
 }
 
-func logout(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func legacyAPILogout(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.GetLoggedInUser(r)
 	if err != nil {
 		return err

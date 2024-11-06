@@ -1,4 +1,4 @@
-package user
+package handlers
 
 import (
 	"net/http"
@@ -11,13 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
-
-func MountRoutes(s *service.Service) {
-	http.Handle("GET /{$}", httputil.Route(s, index))
-	http.Handle("GET /logout", httputil.Route(s, logout))
-	http.Handle("GET /account", httputil.Route(s, account))
-	http.Handle("GET /invite/{id}", httputil.Route(s, acceptInvite))
-}
 
 const nextUrlCookie string = "_logout_next-url"
 

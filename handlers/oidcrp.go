@@ -1,4 +1,4 @@
-package oidcrp
+package handlers
 
 import (
 	"errors"
@@ -11,11 +11,6 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 )
-
-func MountRoutes(s *service.Service) {
-	http.Handle("GET /login/oidc/kth", httputil.Route(s, kthLogin))
-	http.Handle("GET /oidc/kth/callback", httputil.Route(s, kthCallback))
-}
 
 func kthLogin(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	if s.RelyingParty == nil {

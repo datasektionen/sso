@@ -1,4 +1,4 @@
-package admin
+package handlers
 
 import (
 	"bytes"
@@ -26,30 +26,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-
 	"github.com/xuri/excelize/v2"
 )
-
-func MountRoutes(s *service.Service) {
-	http.Handle("GET /admin", auth(s, httputil.Route(s, admin)))
-
-	http.Handle("GET /admin/members", auth(s, httputil.Route(s, members)))
-	http.Handle("POST /admin/members/upload-sheet", auth(s, httputil.Route(s, uploadSheet)))
-	http.Handle("GET /admin/members/upload-sheet", auth(s, httputil.Route(s, processSheet)))
-
-	http.Handle("GET /admin/oidc-clients", auth(s, httputil.Route(s, oidcClients)))
-	http.Handle("POST /admin/oidc-clients", auth(s, httputil.Route(s, createOIDCClient)))
-	http.Handle("DELETE /admin/oidc-clients/{id}", auth(s, httputil.Route(s, deleteOIDCClient)))
-	http.Handle("POST /admin/oidc-clients/{id}", auth(s, httputil.Route(s, addRedirectURI)))
-	http.Handle("DELETE /admin/oidc-clients/{id}/{uri}", auth(s, httputil.Route(s, removeRedirectURI)))
-
-	http.Handle("GET /admin/invites", auth(s, httputil.Route(s, invites)))
-	http.Handle("GET /admin/invites/{id}", auth(s, httputil.Route(s, invite)))
-	http.Handle("POST /admin/invites", auth(s, httputil.Route(s, createInvite)))
-	http.Handle("DELETE /admin/invites/{id}", auth(s, httputil.Route(s, deleteInvite)))
-	http.Handle("GET /admin/invites/{id}/edit", auth(s, httputil.Route(s, editInviteForm)))
-	http.Handle("PUT /admin/invites/{id}", auth(s, httputil.Route(s, updateInvite)))
-}
 
 var memberSheet struct {
 	// This is locked when retrieving or assigning the reader channel.
@@ -70,7 +48,7 @@ type sheetEvent struct {
 	component templ.Component
 }
 
-func auth(s *service.Service, h http.Handler) http.Handler {
+func authAdmin(s *service.Service, h http.Handler) http.Handler {
 	return httputil.Route(s, func(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 		kthid, err := s.GetLoggedInKTHID(r)
 		if err != nil {

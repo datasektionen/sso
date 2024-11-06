@@ -10,17 +10,12 @@ import (
 
 	"time"
 
+	"github.com/datasektionen/logout/handlers"
 	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/service"
-	"github.com/datasektionen/logout/services/admin"
-	"github.com/datasektionen/logout/services/dev"
-	"github.com/datasektionen/logout/services/legacyapi"
 	"github.com/datasektionen/logout/services/oidcprovider"
-	"github.com/datasektionen/logout/services/oidcrp"
-	"github.com/datasektionen/logout/services/passkey"
 	"github.com/datasektionen/logout/services/static"
-	"github.com/datasektionen/logout/services/user"
 )
 
 func main() {
@@ -36,12 +31,7 @@ func main() {
 	}
 	cancel()
 
-	user.MountRoutes(s)
-	passkey.MountRoutes(s)
-	oidcrp.MountRoutes(s)
-	legacyapi.MountRoutes(s)
-	dev.MountRoutes(s)
-	admin.MountRoutes(s)
+	handlers.MountRoutes(s)
 
 	static.Mount()
 

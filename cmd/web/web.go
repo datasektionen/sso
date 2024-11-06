@@ -13,9 +13,9 @@ import (
 	"github.com/datasektionen/logout/handlers"
 	"github.com/datasektionen/logout/pkg/config"
 	"github.com/datasektionen/logout/pkg/database"
+	"github.com/datasektionen/logout/pkg/oidcprovider"
+	"github.com/datasektionen/logout/pkg/static"
 	"github.com/datasektionen/logout/service"
-	"github.com/datasektionen/logout/services/oidcprovider"
-	"github.com/datasektionen/logout/services/static"
 )
 
 func main() {

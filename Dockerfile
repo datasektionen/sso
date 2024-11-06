@@ -14,7 +14,6 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 COPY pkg pkg
 COPY templates templates
 COPY models models
-COPY services services
 COPY cmd cmd
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \

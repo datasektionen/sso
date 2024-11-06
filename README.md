@@ -29,7 +29,7 @@ go install github.com/a-h/templ/cmd/templ@$(grep -oPm1 'github.com/a-h/templ \K[
 
 Download tailwind, using npm, your favourite or second-favourite package manager, or:
 ```sh
-TAILWIND_VERSION=$(head -n2 services/static/public/style.dist.css | grep -oP 'v\K\S+') # or use latest, it probably won't hurt.
+TAILWIND_VERSION=$(head -n2 pkg/static/public/style.dist.css | grep -oP 'v\K\S+') # or use latest, it probably won't hurt.
 curl -Lo tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/download/v$TAILWIND_VERSION/tailwindcss-linux-x64
 chmod +x tailwindcss
 ```

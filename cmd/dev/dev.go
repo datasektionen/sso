@@ -59,7 +59,7 @@ func main() {
 		tailwind = t
 	}
 	for _, cmd := range [][]string{
-		{tailwind, "-i", "style.css", "-o", "./services/static/public/style.dist.css"},
+		{tailwind, "-i", "style.css", "-o", "./pkg/static/public/style.dist.css"},
 	} {
 		go run(ctx, cmd)
 	}

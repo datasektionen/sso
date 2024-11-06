@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"github.com/datasektionen/logout/services/static"
+	"github.com/datasektionen/logout/pkg/static"
 )
 
 func AdminPage() templ.Component {

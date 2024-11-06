@@ -45,8 +45,8 @@ func webCmd(ctx context.Context) func() {
 		fmt.Fprintf(os.Stderr, "Starting web process failed: %v\n", err)
 	}
 	return func() {
-		syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
-		cmd.Wait()
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
+		_ = cmd.Wait()
 	}
 }
 
@@ -80,7 +80,7 @@ func main() {
 				cleared := false
 				for !cleared {
 					select {
-					case _ = <-restartMain:
+					case <-restartMain:
 					default:
 						cleared = true
 					}
@@ -126,6 +126,9 @@ func main() {
 		os.DirFS("."),
 		".",
 		func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
 			if !d.IsDir() {
 				return nil
 			}

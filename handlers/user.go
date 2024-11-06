@@ -85,6 +85,9 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 		return err
 	}
 	isAdmin, err := pls.CheckUser(r.Context(), user.KTHID, "admin-read")
+	if err != nil {
+		return err
+	}
 	return templates.Account(*user, passkeySettings, isAdmin)
 }
 

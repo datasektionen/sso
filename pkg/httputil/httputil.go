@@ -15,27 +15,30 @@ func Respond(resp ToResponse, w http.ResponseWriter, r *http.Request) {
 	if resp == nil {
 		return
 	}
-	switch resp.(type) {
+	switch resp := resp.(type) {
 	case templ.Component:
-		resp.(templ.Component).Render(r.Context(), w)
+		if err := resp.Render(r.Context(), w); err != nil {
+			Respond(err, w, r)
+			return
+		}
 	case error:
-		err := resp.(error)
+		err := resp
 		var httpErr HttpError
 		if errors.As(err, &httpErr) {
 			httpErr.ServeHTTP(w, r)
 		} else {
 			slog.Error("Error serving request", "path", r.URL.Path, "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal server error"))
+			_, _ = w.Write([]byte("Internal server error"))
 		}
 	case string:
-		s := resp.(string)
-		w.Write([]byte(s))
+		s := resp
+		_, _ = w.Write([]byte(s))
 	case http.Handler:
-		h := resp.(http.Handler)
+		h := resp
 		h.ServeHTTP(w, r)
 	case jsonValue:
-		j := resp.(jsonValue).any
+		j := resp.any
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(j); err != nil {
 			slog.Error("Error writing json", "value", j)
@@ -72,7 +75,7 @@ func (h HttpError) Error() string {
 
 func (h HttpError) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(h.StatusCode)
-	w.Write([]byte(h.Message))
+	_, _ = w.Write([]byte(h.Message))
 }
 
 func BadRequest(message string) error {

@@ -361,8 +361,6 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 			events <- sheetEvent{"progress", templates.UploadProgress(float64(i) / float64(len(rows)-1))}
 		}
 		events <- sheetEvent{"progress", templates.UploadProgress(1)}
-
-		return
 	}()
 	return templates.UploadStatus(true)
 }
@@ -382,15 +380,15 @@ func processSheet(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 	w.Header().Set("Content-Type", "text/event-stream")
 	flusher, canFlush := w.(interface{ Flush() })
 	for event := range ch {
-		w.Write([]byte("event: " + event.name + "\n"))
+		_, _ = w.Write([]byte("event: " + event.name + "\n"))
 		var buf bytes.Buffer
 		if event.component != nil {
-			event.component.Render(r.Context(), &buf)
+			_ = event.component.Render(r.Context(), &buf)
 		}
 		for _, line := range strings.Split(buf.String(), "\n") {
-			w.Write([]byte("data: " + line + "\n"))
+			_, _ = w.Write([]byte("data: " + line + "\n"))
 		}
-		w.Write([]byte("\n"))
+		_, _ = w.Write([]byte("\n"))
 		if canFlush {
 			flusher.Flush()
 		}
@@ -463,10 +461,7 @@ func addRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Request) 
 
 	if _, err := s.DB.UpdateClient(
 		r.Context(),
-		database.UpdateClientParams{
-			ID:           client.ID,
-			RedirectUris: client.RedirectUris,
-		},
+		database.UpdateClientParams(client),
 	); err != nil {
 		return err
 	}
@@ -492,10 +487,7 @@ func removeRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Reques
 
 	if _, err := s.DB.UpdateClient(
 		r.Context(),
-		database.UpdateClientParams{
-			ID:           client.ID,
-			RedirectUris: client.RedirectUris,
-		},
+		database.UpdateClientParams(client),
 	); err != nil {
 		return err
 	}

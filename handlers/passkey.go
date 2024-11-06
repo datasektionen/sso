@@ -27,6 +27,9 @@ func beginLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Reques
 		return `<p class="error">No such user</p>`
 	}
 	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
+	if err != nil {
+		return err
+	}
 	if len(passkeys) == 0 {
 		w.Header().Add("HX-Reswap", "beforeend")
 		return `<p class="error">You have no registered passkeys</p>`
@@ -183,7 +186,9 @@ func removePasskey(s *service.Service, w http.ResponseWriter, r *http.Request) h
 		return httputil.Unauthorized()
 	}
 	passkeyID, err := uuid.Parse(r.PathValue("id"))
-
+	if err != nil {
+		return httputil.BadRequest("Invalid uuid")
+	}
 	if err := s.DB.RemovePasskey(r.Context(), database.RemovePasskeyParams{
 		Kthid: user.KTHID,
 		ID:    passkeyID,

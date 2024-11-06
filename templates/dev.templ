@@ -31,3 +31,11 @@ templ DevLoginForm() {
 		</div>
 	</form>
 }
+
+templ devAutoReload() {
+	<script type="module">
+		let data = undefined;
+		let es = new EventSource("/dev/auto-reload");
+		es.onerror = _ => setInterval(() => fetch("/ping").then(resp => resp.text()).then(() => location.reload()).catch(_ => {}), 200);
+	</script>
+}

@@ -12,6 +12,9 @@ templ page() {
 			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js" integrity="sha384-fw+eTlCc7suMV/1w/7fr2/PmwElUIt5i82bi+qTiLXvjRXZ2/FkiTNA/w0MhXnGI" crossorigin="anonymous"></script>
 			<script src="/public/hx-clone.js"></script>
 			@base64Helpers()
+			if config.Config.Dev {
+				@devAutoReload()
+			}
 		</head>
 		<body class="bg-gray-900 text-neutral-100" hx-ext="clone">
 			{ children... }

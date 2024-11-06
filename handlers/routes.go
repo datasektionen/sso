@@ -9,6 +9,10 @@ import (
 )
 
 func MountRoutes(s *service.Service) {
+	http.HandleFunc("GET /ping", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("Pong! Regards, Logout"))
+	})
+
 	// user.go
 	http.Handle("GET /{$}", httputil.Route(s, index))
 	http.Handle("GET /logout", httputil.Route(s, logout))
@@ -37,7 +41,8 @@ func MountRoutes(s *service.Service) {
 
 	// dev.go
 	if config.Config.Dev {
-		http.Handle("POST /login/dev", httputil.Route(s, login))
+		http.Handle("POST /login/dev", httputil.Route(s, devLogin))
+		http.Handle("GET /dev/auto-reload", httputil.Route(s, autoReload))
 	}
 
 	// passkey.go

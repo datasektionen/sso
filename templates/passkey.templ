@@ -24,7 +24,6 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 				for (let ac of credAss.publicKey.allowCredentials) {
 					ac.id = decodebase64url(ac.id);
 				}
-				event.preventDefault();
 				try {
 					let cred = await navigator.credentials.get(credAss);
 					let res = await fetch("/login/passkey/finish", {

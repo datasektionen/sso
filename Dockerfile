@@ -12,6 +12,8 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     go mod download -x
 
 COPY pkg pkg
+COPY templates templates
+COPY models models
 COPY services services
 COPY cmd cmd
 

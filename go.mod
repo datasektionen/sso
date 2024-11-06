@@ -3,7 +3,7 @@ module github.com/datasektionen/logout
 go 1.22.1
 
 require (
-	github.com/a-h/templ v0.2.778
+	github.com/a-h/templ v0.2.793
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/go-webauthn/webauthn v0.11.1

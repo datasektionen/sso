@@ -1,6 +1,11 @@
 package templates
 
-templ page() {
+import (
+	"github.com/datasektionen/logout/pkg/static"
+	"github.com/datasektionen/logout/pkg/config"
+)
+
+templ base() {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -10,6 +15,7 @@ templ page() {
 			<link rel="stylesheet" href="/public/style.dist.css"/>
 			<script src="https://unpkg.com/htmx.org@2.0.1" integrity="sha384-QWGpdj554B4ETpJJC9z+ZHJcA/i59TyjxEPXiiUgN2WmTyV5OEZWCD6gQhgkdpB/" crossorigin="anonymous"></script>
 			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js" integrity="sha384-fw+eTlCc7suMV/1w/7fr2/PmwElUIt5i82bi+qTiLXvjRXZ2/FkiTNA/w0MhXnGI" crossorigin="anonymous"></script>
+			<script src="https://unpkg.com/hyperscript.org@0.9.13" integrity="sha384-5yQ5JTatiFEgeiEB4mfkRI3oTGtaNpbJGdcciZ4IEYFpLGt8yDsGAd7tKiMwnX9b" crossorigin="anonymous"></script>
 			<script src="/public/hx-clone.js"></script>
 			@base64Helpers()
 			if config.Config.Dev {
@@ -22,8 +28,39 @@ templ page() {
 	</html>
 }
 
+templ page(navItems templ.Component) {
+	@base() {
+		<nav
+			class="
+				w-full h-12 bg-gray-700 flex uppercase
+				overflow-auto
+				[&>a:not(:first-child)]:flex [&>a]:items-center [&>a:not(:first-child)]:px-3 hover:[&>a]:bg-gray-600 [&>a]:transition-colors
+				[&>a]:shrink-0
+			"
+		>
+			<a href="/" class="h-full block aspect-square grid place-items-center fill-cerise-regular bg-gray-600">
+				@templ.Raw(static.PublicAsString("delta.svg"))
+			</a>
+			@navItems
+		</nav>
+		<div class="flex justify-center min-h-[calc(100vh-3rem)]">
+			<main class="bg-gray-800 w-[1000px] md:max-w-[calc(100vw-8rem)]">
+				{ children... }
+			</main>
+		</div>
+	}
+}
+
+templ nav(includeAdmin bool) {
+	<a href="/account">Account</a>
+	if includeAdmin {
+		@adminNav()
+	}
+	<a href="/logout">Log out</a>
+}
+
 templ modal() {
-	@page() {
+	@base() {
 		<div class="grid place-items-center min-h-screen">
 			<main class="bg-gray-800 rounded w-[22rem] max-w-[calc(100vw-2rem)]">
 				{ children... }
@@ -31,6 +68,26 @@ templ modal() {
 		</div>
 	}
 }
+
+var input = `
+	border border-neutral-500 grow
+	outline-none focus:border-cerise-strong hover:border-cerise-light
+	bg-slate-800 p-1.5 rounded h-8
+`
+
+var button = `
+	bg-[#3f4c66] p-1 h-8 block rounded border text-center
+	select-none border-transparent outline-none
+	focus:border-cerise-strong hover:border-cerise-light
+`
+
+var roundButton = `
+	bg-[#3f4c66] shrink-0 h-5 w-5 rounded-full
+	grid place-items-center pointer
+	border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+	[&>img]:w-3/5 [&>img]:h-3/5 [&>img]:invert
+	[&>p]:text-center [&>p]:leading-none
+`
 
 templ base64Helpers() {
 	<script>

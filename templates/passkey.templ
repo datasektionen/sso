@@ -91,7 +91,7 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 }
 
 templ ShowPasskey(passkey models.Passkey) {
-	<li class="flex p-2 gap-2 items-center">
+	<li class="flex p-1 gap-2 items-center">
 		<span>{ passkey.Name }</span>
 		<button
 			class="
@@ -109,8 +109,8 @@ templ ShowPasskey(passkey models.Passkey) {
 }
 
 templ PasskeySettings(passkeys []models.Passkey) {
-	<section class="flex flex-col">
-		<h2 class="text-lg">Passkeys:</h2>
+	<section class="flex flex-col max-w-lg">
+		<h2 class="text-xl text-cerise-light">Passkeys:</h2>
 		<ul id="passkey-list">
 			for _, passkey := range passkeys {
 				@ShowPasskey(passkey)
@@ -125,6 +125,7 @@ templ PasskeySettings(passkeys []models.Passkey) {
 				bg-[#3f4c66] p-1.5 block rounded border text-center
 				select-none border-transparent outline-none
 				focus:border-cerise-strong hover:border-cerise-light
+				mt-1
 			"
 		>Add passkey</button>
 	</section>

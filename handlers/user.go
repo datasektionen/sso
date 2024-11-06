@@ -80,7 +80,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return nil
 	}
-	passkeySettings, err := s.PasskeySettings(r.Context(), user.KTHID)
+	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	if err != nil {
 		return err
 	}
-	return templates.Account(*user, passkeySettings, isAdmin)
+	return templates.Account(*user, passkeys, isAdmin)
 }
 
 func acceptInvite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

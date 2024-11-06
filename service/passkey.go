@@ -42,11 +42,3 @@ func (s *Service) ListPasskeysForUser(ctx context.Context, kthid string) ([]mode
 func (s *Service) PasskeyLogin() func() templ.Component {
 	return func() templ.Component { return templates.PasskeyLoginForm("", nil) }
 }
-
-func (s *Service) PasskeySettings(ctx context.Context, kthid string) (func() templ.Component, error) {
-	passkeys, err := s.ListPasskeysForUser(ctx, kthid)
-	if err != nil {
-		return nil, err
-	}
-	return func() templ.Component { return templates.PasskeySettings(passkeys) }, nil
-}

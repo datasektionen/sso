@@ -2,6 +2,7 @@ package templates
 
 import (
 	"github.com/datasektionen/logout/models"
+	"time"
 )
 
 templ Index(passkeyLogin func() templ.Component, devLogin func() templ.Component) {
@@ -23,33 +24,39 @@ templ Index(passkeyLogin func() templ.Component, devLogin func() templ.Component
 	}
 }
 
-templ Account(user models.User, passkeySettings func() templ.Component, isAdmin bool) {
-	@modal() {
-		<div class="p-8 flex flex-col gap-4">
-			<div class="flex gap-2 items-center">
-				<p class="basis-full">{ user.FirstName } { user.FamilyName } ({ user.KTHID })</p>
-				if isAdmin {
-					<a
-						href="/admin"
-						title="Administration"
-						class="
-							bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
-							grid place-items-center pointer
-							border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
-						"
-					><img class="w-3/5 h-3/5 invert" src="/public/delta.svg"/></a>
-				}
-				<a
-					href="/logout"
-					title="Log out"
-					class="
-						bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
-						grid place-items-center pointer
-						border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
-					"
-				><img class="w-3/5 h-3/5 invert" src="/public/log-out.svg"/></a>
-			</div>
-			@passkeySettings()
+templ Account(user models.User, passkeys []models.Passkey, isAdmin bool) {
+	@page(nav(isAdmin)) {
+		<div class="p-8 flex flex-col gap-8">
+			<section class="grid gap-4 text-lg">
+				<div>
+					<p class="text-xl text-cerise-light">Name</p>
+					<p>{ user.FirstName } { user.FamilyName }</p>
+				</div>
+				<div>
+					<p class="text-xl text-cerise-light">Username</p>
+					<p>{ user.KTHID }</p>
+				</div>
+				<div>
+					<p class="text-xl text-cerise-light">Email address</p>
+					<p>{ user.Email }</p>
+				</div>
+				<form>
+					<label for="year-tag" class="text-xl text-cerise-light">Year</label>
+					<br/>
+					<input class={ input + " w-16" } name="year-tag" id="year-tag" value={ user.YearTag } _="on input show next <button/>"/>
+					<button style="display: none" class={ button }>Save</button>
+				</form>
+				<div>
+					if user.MemberTo == (time.Time{}) {
+						<p>Not a chapter member</p>
+					} else if user.MemberTo.Before(time.Now()) {
+						<p>Was a chapter member until { user.MemberTo.Format(time.DateOnly) }</p>
+					} else {
+						<p>Chapter member until { user.MemberTo.Format(time.DateOnly) }</p>
+					}
+				</div>
+			</section>
+			@PasskeySettings(passkeys)
 		</div>
 	}
 }

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/datasektionen/logout/database"
 	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/auth"
-	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/service"
 	"github.com/datasektionen/logout/templates"

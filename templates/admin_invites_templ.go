@@ -10,8 +10,8 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"github.com/datasektionen/logout/database"
 	"github.com/datasektionen/logout/pkg/config"
-	"github.com/datasektionen/logout/pkg/database"
 	"strconv"
 	"time"
 )

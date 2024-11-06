@@ -10,9 +10,9 @@ import (
 
 	"time"
 
+	"github.com/datasektionen/logout/database"
 	"github.com/datasektionen/logout/handlers"
 	"github.com/datasektionen/logout/pkg/config"
-	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/oidcprovider"
 	"github.com/datasektionen/logout/pkg/static"
 	"github.com/datasektionen/logout/service"
@@ -25,7 +25,10 @@ func main() {
 		panic(err)
 	}
 
-	s := must(service.NewService(initCtx, db))
+	s, err := service.NewService(initCtx, db)
+	if err != nil {
+		panic(err)
+	}
 	if err := oidcprovider.MountRoutes(s); err != nil {
 		panic(err)
 	}
@@ -44,11 +47,4 @@ func main() {
 	slog.Info("Server started", "address", "http://localhost:"+port)
 	slog.Error("Failed serving http server", "error", http.Serve(l, nil))
 	os.Exit(1)
-}
-
-func must[T any](t T, err error) T {
-	if err != nil {
-		panic(err)
-	}
-	return t
 }

@@ -1,7 +1,7 @@
 ## Routes
 
 ```sh
-grep -r 'http.Handle(' --no-filename services/ | sed 's/\s\+//'
+grep -r 'http.Handle''(' --no-filename . | sed 's/^\s\+//'
 ```
 
 ## Development
@@ -16,7 +16,7 @@ probably best to get the latest version, using:
 go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 ```
 
-But to see which version was last used, look at the top of any generated file, e.g. `pkg/database/models.go`.
+But to see which version was last used, look at the top of any generated file, e.g. `database/models.go`.
 
 If you will modify `style.css` or any `.templ` files you need to download [templ](https://templ.guide/) and [tailwind](https://tailwindcss.com/).
 
@@ -148,5 +148,5 @@ since the user was (indirectly) redirected from KTH. Therefore they're set to
 
 ## Database schema
 
-The schema is defined by the migrations in `./pkg/database/migrations/`. A new
+The schema is defined by the migrations in `./database/migrations/`. A new
 one can be created using `go run ./cmd/manage goose create some_fancy_name sql`.

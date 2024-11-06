@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
-	"github.com/datasektionen/logout/pkg/database"
+	"github.com/datasektionen/logout/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/kthldap"
 	"github.com/datasektionen/logout/pkg/pls"

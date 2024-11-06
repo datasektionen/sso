@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/datasektionen/logout/pkg/database"
+	"github.com/datasektionen/logout/database"
 	"github.com/datasektionen/logout/pkg/kthldap"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pressly/goose/v3"
@@ -49,7 +49,7 @@ func main() {
 	case "goose":
 		_, db := must2(database.Connect(ctx))
 		gooseCMD := shift()
-		must0(goose.RunContext(context.Background(), gooseCMD, db(), "pkg/database/migrations", args...))
+		must0(goose.RunContext(context.Background(), gooseCMD, db(), "database/migrations", args...))
 	case "gen-oidc-provider-key":
 		key := must1(ecdsa.GenerateKey(elliptic.P256(), rand.Reader))
 		fmt.Printf(

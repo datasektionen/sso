@@ -11,7 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/datasektionen/logout/pkg/database"
+	"github.com/datasektionen/logout/database"
 	"net/url"
 )
 

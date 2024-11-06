@@ -8,9 +8,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/datasektionen/logout/database"
 	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/auth"
-	"github.com/datasektionen/logout/pkg/database"
 	"github.com/datasektionen/logout/pkg/httputil"
 	"github.com/datasektionen/logout/pkg/kthldap"
 	"github.com/google/uuid"

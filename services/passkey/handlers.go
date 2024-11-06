@@ -15,8 +15,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var hackSession *webauthn.SessionData
-
 func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	kthid := r.FormValue("kthid")
 	user, err := s.user.GetUser(r.Context(), kthid)
@@ -33,8 +31,17 @@ func (s *service) beginLoginPasskey(w http.ResponseWriter, r *http.Request) http
 		return `<p class="error">You have no registered passkeys</p>`
 	}
 	credAss, sessionData, err := s.webauthn.BeginLogin(models.WebAuthnUser{User: user, Passkeys: passkeys})
-	hackSession = sessionData
 	if err != nil {
+		return err
+	}
+	sessionDataBytes, err := json.Marshal(sessionData)
+	if err != nil {
+		return err
+	}
+	if err := s.db.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{
+		Kthid: user.KTHID,
+		Data:  sessionDataBytes,
+	}); err != nil {
 		return err
 	}
 	return templates.PasskeyLoginForm(kthid, credAss)
@@ -65,7 +72,15 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 		return err
 	}
 
-	_, err = s.webauthn.ValidateLogin(models.WebAuthnUser{User: user, Passkeys: passkeys}, *hackSession, credAss)
+	sessionDataBytes, err := s.db.TakeWebAuthnSessionData(r.Context(), user.KTHID)
+	if err != nil {
+		return err
+	}
+	var sessionData webauthn.SessionData
+	if err := json.Unmarshal(sessionDataBytes, &sessionData); err != nil {
+		return err
+	}
+	_, err = s.webauthn.ValidateLogin(models.WebAuthnUser{User: user, Passkeys: passkeys}, sessionData, credAss)
 	if err != nil {
 		return err
 	}
@@ -80,8 +95,6 @@ func (s *service) finishLoginPasskey(w http.ResponseWriter, r *http.Request) htt
 	return nil
 }
 
-// ---
-
 func (s *service) addPasskeyForm(w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.user.GetLoggedInUser(r)
 	if err != nil {
@@ -94,7 +107,16 @@ func (s *service) addPasskeyForm(w http.ResponseWriter, r *http.Request) httputi
 	if err != nil {
 		return err
 	}
-	hackSession = sessionData
+	sessionDataBytes, err := json.Marshal(sessionData)
+	if err != nil {
+		return err
+	}
+	if err := s.db.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{
+		Kthid: user.KTHID,
+		Data:  sessionDataBytes,
+	}); err != nil {
+		return err
+	}
 
 	return templates.AddPasskeyForm(creation)
 }
@@ -120,9 +142,17 @@ func (s *service) addPasskey(w http.ResponseWriter, r *http.Request) httputil.To
 		return httputil.BadRequest("Invalid credential")
 	}
 
+	sessionDataBytes, err := s.db.TakeWebAuthnSessionData(r.Context(), user.KTHID)
+	if err != nil {
+		return err
+	}
+	var sessionData webauthn.SessionData
+	if err := json.Unmarshal(sessionDataBytes, &sessionData); err != nil {
+		return err
+	}
 	// Passkeys aren't retrieved from within this function, so we don't need to
 	// populate that field on WebAuthnUser.
-	cred, err := s.webauthn.CreateCredential(models.WebAuthnUser{User: user}, *hackSession, cc)
+	cred, err := s.webauthn.CreateCredential(models.WebAuthnUser{User: user}, sessionData, cc)
 	if err != nil {
 		return err
 	}

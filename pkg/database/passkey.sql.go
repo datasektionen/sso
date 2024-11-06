@@ -75,3 +75,33 @@ func (q *Queries) RemovePasskey(ctx context.Context, arg RemovePasskeyParams) er
 	_, err := q.db.Exec(ctx, removePasskey, arg.Kthid, arg.ID)
 	return err
 }
+
+const storeWebAuthnSessionData = `-- name: StoreWebAuthnSessionData :exec
+insert into webauthn_session_data (kthid, data)
+values ($1, $2)
+on conflict (kthid)
+do update set data = $2
+`
+
+type StoreWebAuthnSessionDataParams struct {
+	Kthid string
+	Data  []byte
+}
+
+func (q *Queries) StoreWebAuthnSessionData(ctx context.Context, arg StoreWebAuthnSessionDataParams) error {
+	_, err := q.db.Exec(ctx, storeWebAuthnSessionData, arg.Kthid, arg.Data)
+	return err
+}
+
+const takeWebAuthnSessionData = `-- name: TakeWebAuthnSessionData :one
+delete from webauthn_session_data
+where kthid = $1
+returning data
+`
+
+func (q *Queries) TakeWebAuthnSessionData(ctx context.Context, kthid string) ([]byte, error) {
+	row := q.db.QueryRow(ctx, takeWebAuthnSessionData, kthid)
+	var data []byte
+	err := row.Scan(&data)
+	return data, err
+}

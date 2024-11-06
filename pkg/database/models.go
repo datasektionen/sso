@@ -52,3 +52,8 @@ type User struct {
 	MemberTo   pgtype.Date
 	WebauthnID []byte
 }
+
+type WebauthnSessionDatum struct {
+	Kthid string
+	Data  []byte
+}

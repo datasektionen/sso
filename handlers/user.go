@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -107,7 +106,6 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 	if len(yearTagList) > 0 {
 		var err error
 		*user, err = s.UpdateUser(r.Context(), user.KTHID, yearTagList[0])
-		slog.Info("Updated user year tag", "value", user.YearTag)
 		if err != nil {
 			return err
 		}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/datasektionen/logout/pkg/httputil"
@@ -91,6 +92,8 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	return templates.Account(*user, passkeys, isAdmin)
 }
 
+var yearTagRegex regexp.Regexp = *regexp.MustCompile(`[A-Z][a-z]?\d{2}`)
+
 func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.GetLoggedInUser(r)
 	if err != nil {
@@ -105,12 +108,16 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 	yearTagList := r.Form["year-tag"]
 	if len(yearTagList) > 0 {
 		var err error
-		*user, err = s.UpdateUser(r.Context(), user.KTHID, yearTagList[0])
+		yearTag := yearTagList[0]
+		if !yearTagRegex.Match([]byte(yearTag)) {
+			return templates.AccountYearForm(user.YearTag, `Invalid format. Must match [A-Z][a-z]?\d{2}`)
+		}
+		*user, err = s.UpdateUser(r.Context(), user.KTHID, yearTag)
 		if err != nil {
 			return err
 		}
 	}
-	return templates.AccountYearForm(user.YearTag)
+	return templates.AccountYearForm(user.YearTag, "")
 }
 
 func acceptInvite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

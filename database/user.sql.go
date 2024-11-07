@@ -108,6 +108,34 @@ func (q *Queries) RemoveSession(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const updateUser = `-- name: UpdateUser :one
+update users
+set year_tag = coalesce($2, year_tag) -- TODO: would be nice if we could make this function take year_tag as a pointer so it can actually be null here
+where kthid = $1
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id
+`
+
+type UpdateUserParams struct {
+	Kthid   string
+	YearTag string
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser, arg.Kthid, arg.YearTag)
+	var i User
+	err := row.Scan(
+		&i.Kthid,
+		&i.UgKthid,
+		&i.Email,
+		&i.FirstName,
+		&i.FamilyName,
+		&i.YearTag,
+		&i.MemberTo,
+		&i.WebauthnID,
+	)
+	return i, err
+}
+
 const userSetMemberTo = `-- name: UserSetMemberTo :exec
 update users
 set member_to = $2

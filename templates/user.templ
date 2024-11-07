@@ -40,12 +40,7 @@ templ Account(user models.User, passkeys []models.Passkey, isAdmin bool) {
 					<p class="text-xl text-cerise-light">Email address</p>
 					<p>{ user.Email }</p>
 				</div>
-				<form>
-					<label for="year-tag" class="text-xl text-cerise-light">Year</label>
-					<br/>
-					<input class={ input + " w-16" } name="year-tag" id="year-tag" value={ user.YearTag } _="on input show next <button/>"/>
-					<button style="display: none" class={ button }>Save</button>
-				</form>
+				@AccountYearForm(user.YearTag)
 				<div>
 					if user.MemberTo == (time.Time{}) {
 						<p>Not a chapter member</p>
@@ -59,6 +54,15 @@ templ Account(user models.User, passkeys []models.Passkey, isAdmin bool) {
 			@PasskeySettings(passkeys)
 		</div>
 	}
+}
+
+templ AccountYearForm(yearTag string) {
+	<form hx-patch="/account" hx-swap="outerHTML">
+		<label for="year-tag" class="text-xl text-cerise-light">Year</label>
+		<br/>
+		<input class={ input + " w-16" } name="year-tag" id="year-tag" value={ yearTag } _="on input show next <button/>"/>
+		<button style="display: none" class={ button }>Save</button>
+	</form>
 }
 
 templ AcceptInvite() {

@@ -17,19 +17,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Service) GetUser(ctx context.Context, kthid string) (*models.User, error) {
-	user, err := s.DB.GetUser(ctx, kthid)
-	if err == pgx.ErrNoRows {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
+func dbUserToModel(user database.User) models.User {
 	var memberTo time.Time
 	if user.MemberTo.Valid {
 		memberTo = user.MemberTo.Time
 	}
-	return &models.User{
+	return models.User{
 		KTHID:      user.Kthid,
 		UGKTHID:    user.UgKthid,
 		Email:      user.Email,
@@ -38,7 +31,30 @@ func (s *Service) GetUser(ctx context.Context, kthid string) (*models.User, erro
 		YearTag:    user.YearTag,
 		MemberTo:   memberTo,
 		WebAuthnID: user.WebauthnID,
-	}, nil
+	}
+}
+
+func (s *Service) GetUser(ctx context.Context, kthid string) (*models.User, error) {
+	user, err := s.DB.GetUser(ctx, kthid)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	u := dbUserToModel(user)
+	return &u, nil
+}
+
+func (s *Service) UpdateUser(ctx context.Context, kthid string, yearTag string) (models.User, error) {
+	user, err := s.DB.UpdateUser(ctx, database.UpdateUserParams{
+		Kthid:   kthid,
+		YearTag: yearTag,
+	})
+	if err != nil {
+		return models.User{}, err
+	}
+	return dbUserToModel(user), nil
 }
 
 func (s *Service) LoginUser(ctx context.Context, kthid string) httputil.ToResponse {

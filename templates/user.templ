@@ -27,54 +27,113 @@ templ Index(devLogin func() templ.Component) {
 templ Account(user models.User, passkeys []models.Passkey, isAdmin bool) {
 	@page(nav(isAdmin)) {
 		<div class="p-8 flex flex-col gap-8">
-			<section class="grid gap-4 text-lg">
-				<div>
-					<p class="text-xl text-cerise-light">Name</p>
-					<p>{ user.FirstName } { user.FamilyName }</p>
-				</div>
-				<div>
-					<p class="text-xl text-cerise-light">Username</p>
-					<p>{ user.KTHID }</p>
-				</div>
-				<div>
-					<p class="text-xl text-cerise-light">Email address</p>
-					<p>{ user.Email }</p>
-				</div>
-				@AccountYearForm(user.YearTag, "")
-				<div>
-					if user.MemberTo == (time.Time{}) {
-						<p>Not a chapter member</p>
-					} else if user.MemberTo.Before(time.Now()) {
-						<p>Was a chapter member until { user.MemberTo.Format(time.DateOnly) }</p>
-					} else {
-						<p>Chapter member until { user.MemberTo.Format(time.DateOnly) }</p>
-					}
-				</div>
-			</section>
+			@AccountSettingsForm(user, nil)
 			@PasskeySettings(passkeys)
 		</div>
 	}
 }
 
-templ AccountYearForm(yearTag, errorMessage string) {
-	<form hx-patch="/account" hx-swap="outerHTML" class="flex flex-col items-start">
-		<label for="year-tag" class="text-xl text-cerise-light">Year</label>
-		<div class="flex items-stretch gap-2">
-			<input
-				class={ input + " w-16" }
-				name="year-tag"
-				id="year-tag"
-				value={ yearTag }
-				_="on input show next <button/>"
-				required
-				autocomplete="off"
-			/>
-			<button style="display: none" class={ button }>Save</button>
+templ AccountSettingsForm(user models.User, errors map[string]string) {
+	<section class="grid gap-4 text-lg">
+		<div>
+			<p class="text-xl text-cerise-light">Name</p>
+			<div class="flex gap-2 items-center">
+				<p>{ user.FirstName } { user.FamilyName }</p>
+				<button
+					class={ roundButton }
+					title="Request to change name"
+					_="on click show next <form/>"
+				><p>✎</p></button>
+			</div>
+			if user.FirstNameChangeRequest != "" || user.FamilyNameChangeRequest != "" {
+				<div class="flex gap-2">
+					<p>
+						Pending name change request to:
+						{ bigIfTrue(user.FirstNameChangeRequest != "", user.FirstNameChangeRequest, user.FirstName) }
+						{ bigIfTrue(user.FamilyNameChangeRequest != "", user.FamilyNameChangeRequest, user.FamilyName) }
+					</p>
+					<form hx-target="closest section" hx-swap="outerHTML" hx-patch="/account">
+						<input type="hidden" name="first-name"/>
+						<input type="hidden" name="family-name"/>
+						<button
+							class="
+								bg-[#3f4c66] px-1.5 block rounded border text-center
+								select-none border-transparent outline-none
+								focus:border-cerise-strong hover:border-cerise-light
+							"
+						>Cancel</button>
+					</form>
+				</div>
+			}
+			<form
+				style="display: none"
+				class="flex flex-col gap-2 p-2 items-start"
+				hx-patch="/account"
+				hx-swap="outerHTML"
+				hx-target="closest section"
+			>
+				<p>Request to change your name. Will need to be approved by an administrator.</p>
+				<div>
+					<label for="first-name">First name:</label>
+					<input class={ input } type="text" id="first-name" name="first-name" autocomplete="off"/>
+				</div>
+				<div>
+					<label for="family-name">Family name:</label>
+					<input class={ input } type="text" id="family-name" name="family-name" autocomplete="off"/>
+				</div>
+				<button
+					class="
+						bg-[#3f4c66] px-1.5 block rounded border text-center
+						select-none border-transparent outline-none
+						focus:border-cerise-strong hover:border-cerise-light
+					"
+				>Request to change name</button>
+				<button
+					class="
+						bg-[#3f4c66] px-1.5 block rounded border text-center
+						select-none border-transparent outline-none
+						focus:border-cerise-strong hover:border-cerise-light
+					"
+					_="on click hide closest <form/> then halt"
+				>Cancel</button>
+			</form>
 		</div>
-		if errorMessage != "" {
-			<p class="text-red-500">{ errorMessage }</p>
-		}
-	</form>
+		<div>
+			<p class="text-xl text-cerise-light">Username</p>
+			<p>{ user.KTHID }</p>
+		</div>
+		<div>
+			<p class="text-xl text-cerise-light">Email address</p>
+			<p>{ user.Email }</p>
+		</div>
+		<form hx-patch="/account" hx-swap="outerHTML" hx-target="closest section" class="flex flex-col items-start">
+			<label for="year-tag" class="text-xl text-cerise-light">Year</label>
+			<div class="flex items-stretch gap-2">
+				<input
+					class={ input + " w-16" }
+					name="year-tag"
+					id="year-tag"
+					value={ user.YearTag }
+					_="on input show next <button/>"
+					required
+					autocomplete="off"
+				/>
+				<button style="display: none" class={ button }>Save</button>
+			</div>
+			if e, ok := errors["year-tag"]; ok {
+				<p class="text-red-500">{ e }</p>
+			}
+		</form>
+		<div>
+			if user.MemberTo == (time.Time{}) {
+				<p>Not a chapter member</p>
+			} else if user.MemberTo.Before(time.Now()) {
+				<p>Was a chapter member until { user.MemberTo.Format(time.DateOnly) }</p>
+			} else {
+				<p>Chapter member until { user.MemberTo.Format(time.DateOnly) }</p>
+			}
+		</div>
+	</section>
 }
 
 templ AcceptInvite() {

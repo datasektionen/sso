@@ -107,17 +107,34 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 	}
 	yearTagList := r.Form["year-tag"]
 	if len(yearTagList) > 0 {
-		var err error
 		yearTag := yearTagList[0]
 		if !yearTagRegex.Match([]byte(yearTag)) {
-			return templates.AccountYearForm(yearTag, `Invalid format. Must match `+yearTagRegex.String())
+			return templates.AccountSettingsForm(*user, map[string]string{"year-tag": `Invalid format. Must match ` + yearTagRegex.String()})
 		}
-		*user, err = s.UpdateUser(r.Context(), user.KTHID, yearTag)
+		var err error
+		*user, err = s.UserSetYear(r.Context(), user.KTHID, yearTag)
 		if err != nil {
 			return err
 		}
 	}
-	return templates.AccountYearForm(user.YearTag, "")
+	var firstNameChangeRequest, familyNameChangeRequest string
+	var doNameChangeRequest bool
+	if n := r.Form["first-name"]; len(n) != 0 {
+		firstNameChangeRequest = n[0]
+		doNameChangeRequest = true
+	}
+	if n := r.Form["family-name"]; len(n) != 0 {
+		familyNameChangeRequest = n[0]
+		doNameChangeRequest = true
+	}
+	if doNameChangeRequest {
+		var err error
+		*user, err = s.UserSetNameChangeRequest(r.Context(), user.KTHID, firstNameChangeRequest, familyNameChangeRequest)
+		if err != nil {
+			return err
+		}
+	}
+	return templates.AccountSettingsForm(*user, nil)
 }
 
 func acceptInvite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

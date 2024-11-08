@@ -23,14 +23,16 @@ func dbUserToModel(user database.User) models.User {
 		memberTo = user.MemberTo.Time
 	}
 	return models.User{
-		KTHID:      user.Kthid,
-		UGKTHID:    user.UgKthid,
-		Email:      user.Email,
-		FirstName:  user.FirstName,
-		FamilyName: user.FamilyName,
-		YearTag:    user.YearTag,
-		MemberTo:   memberTo,
-		WebAuthnID: user.WebauthnID,
+		KTHID:                   user.Kthid,
+		UGKTHID:                 user.UgKthid,
+		Email:                   user.Email,
+		FirstName:               user.FirstName,
+		FamilyName:              user.FamilyName,
+		YearTag:                 user.YearTag,
+		MemberTo:                memberTo,
+		WebAuthnID:              user.WebauthnID,
+		FirstNameChangeRequest:  user.FirstNameChangeRequest,
+		FamilyNameChangeRequest: user.FamilyNameChangeRequest,
 	}
 }
 
@@ -46,10 +48,22 @@ func (s *Service) GetUser(ctx context.Context, kthid string) (*models.User, erro
 	return &u, nil
 }
 
-func (s *Service) UpdateUser(ctx context.Context, kthid string, yearTag string) (models.User, error) {
-	user, err := s.DB.UpdateUser(ctx, database.UpdateUserParams{
+func (s *Service) UserSetYear(ctx context.Context, kthid string, yearTag string) (models.User, error) {
+	user, err := s.DB.UserSetYear(ctx, database.UserSetYearParams{
 		Kthid:   kthid,
 		YearTag: yearTag,
+	})
+	if err != nil {
+		return models.User{}, err
+	}
+	return dbUserToModel(user), nil
+}
+
+func (s *Service) UserSetNameChangeRequest(ctx context.Context, kthid string, firstName string, familyName string) (models.User, error) {
+	user, err := s.DB.UserSetNameChangeRequest(ctx, database.UserSetNameChangeRequestParams{
+		Kthid:                   kthid,
+		FirstNameChangeRequest:  firstName,
+		FamilyNameChangeRequest: familyName,
 	})
 	if err != nil {
 		return models.User{}, err

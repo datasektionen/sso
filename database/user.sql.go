@@ -77,7 +77,7 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (string, error) 
 }
 
 const getUser = `-- name: GetUser :one
-select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id
+select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
 from users
 where kthid = $1
 `
@@ -94,6 +94,8 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 		&i.YearTag,
 		&i.MemberTo,
 		&i.WebauthnID,
+		&i.FirstNameChangeRequest,
+		&i.FamilyNameChangeRequest,
 	)
 	return i, err
 }
@@ -106,34 +108,6 @@ where id = $1
 func (q *Queries) RemoveSession(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, removeSession, id)
 	return err
-}
-
-const updateUser = `-- name: UpdateUser :one
-update users
-set year_tag = coalesce($2, year_tag) -- TODO: would be nice if we could make this function take year_tag as a pointer so it can actually be null here
-where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id
-`
-
-type UpdateUserParams struct {
-	Kthid   string
-	YearTag string
-}
-
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUser, arg.Kthid, arg.YearTag)
-	var i User
-	err := row.Scan(
-		&i.Kthid,
-		&i.UgKthid,
-		&i.Email,
-		&i.FirstName,
-		&i.FamilyName,
-		&i.YearTag,
-		&i.MemberTo,
-		&i.WebauthnID,
-	)
-	return i, err
 }
 
 const userSetMemberTo = `-- name: UserSetMemberTo :exec
@@ -150,4 +124,66 @@ type UserSetMemberToParams struct {
 func (q *Queries) UserSetMemberTo(ctx context.Context, arg UserSetMemberToParams) error {
 	_, err := q.db.Exec(ctx, userSetMemberTo, arg.Kthid, arg.MemberTo)
 	return err
+}
+
+const userSetNameChangeRequest = `-- name: UserSetNameChangeRequest :one
+update users
+set first_name_change_request = $2,
+    family_name_change_request = $3
+where kthid = $1
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+`
+
+type UserSetNameChangeRequestParams struct {
+	Kthid                   string
+	FirstNameChangeRequest  string
+	FamilyNameChangeRequest string
+}
+
+func (q *Queries) UserSetNameChangeRequest(ctx context.Context, arg UserSetNameChangeRequestParams) (User, error) {
+	row := q.db.QueryRow(ctx, userSetNameChangeRequest, arg.Kthid, arg.FirstNameChangeRequest, arg.FamilyNameChangeRequest)
+	var i User
+	err := row.Scan(
+		&i.Kthid,
+		&i.UgKthid,
+		&i.Email,
+		&i.FirstName,
+		&i.FamilyName,
+		&i.YearTag,
+		&i.MemberTo,
+		&i.WebauthnID,
+		&i.FirstNameChangeRequest,
+		&i.FamilyNameChangeRequest,
+	)
+	return i, err
+}
+
+const userSetYear = `-- name: UserSetYear :one
+update users
+set year_tag = coalesce($2, year_tag)
+where kthid = $1
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+`
+
+type UserSetYearParams struct {
+	Kthid   string
+	YearTag string
+}
+
+func (q *Queries) UserSetYear(ctx context.Context, arg UserSetYearParams) (User, error) {
+	row := q.db.QueryRow(ctx, userSetYear, arg.Kthid, arg.YearTag)
+	var i User
+	err := row.Scan(
+		&i.Kthid,
+		&i.UgKthid,
+		&i.Email,
+		&i.FirstName,
+		&i.FamilyName,
+		&i.YearTag,
+		&i.MemberTo,
+		&i.WebauthnID,
+		&i.FirstNameChangeRequest,
+		&i.FamilyNameChangeRequest,
+	)
+	return i, err
 }

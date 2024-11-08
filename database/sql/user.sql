@@ -36,8 +36,15 @@ update users
 set member_to = $2
 where kthid = $1;
 
--- name: UpdateUser :one
+-- name: UserSetYear :one
 update users
-set year_tag = coalesce($2, year_tag) -- TODO: would be nice if we could make this function take year_tag as a pointer so it can actually be null here
+set year_tag = coalesce($2, year_tag)
+where kthid = $1
+returning *;
+
+-- name: UserSetNameChangeRequest :one
+update users
+set first_name_change_request = $2,
+    family_name_change_request = $3
 where kthid = $1
 returning *;

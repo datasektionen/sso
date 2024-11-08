@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/a-h/templ"
 	"github.com/datasektionen/logout/models"
 	"github.com/datasektionen/logout/pkg/config"
-	"github.com/datasektionen/logout/templates"
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 
@@ -37,8 +35,4 @@ func (s *Service) ListPasskeysForUser(ctx context.Context, kthid string) ([]mode
 		}
 	}
 	return passkeys, nil
-}
-
-func (s *Service) PasskeyLogin() func() templ.Component {
-	return func() templ.Component { return templates.PasskeyLoginForm("", nil) }
 }

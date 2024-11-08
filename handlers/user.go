@@ -65,7 +65,7 @@ func index(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.
 			SameSite: http.SameSiteLaxMode,
 		})
 	}
-	return templates.Index(s.PasskeyLogin(), s.DevLoginForm)
+	return templates.Index(s.DevLoginForm)
 }
 
 func logout(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

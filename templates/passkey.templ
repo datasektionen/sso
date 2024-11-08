@@ -9,7 +9,10 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 	<form
 		id="passkey-login-form"
 		hx-post="/login/passkey/begin"
-		hx-on::before-request="this.querySelectorAll('.error').forEach(e => e.remove())"
+		_="
+			on load if localStorage.logout_saved_kthid then set #pk-kthid.value to localStorage.logout_saved_kthid end
+			on submit remove <.error/> then if #pk-kthid.value then set localStorage.logout_saved_kthid to #pk-kthid.value
+		"
 		if credAss != nil {
 			data-cred-ass={ templ.JSONString(credAss) }
 		}

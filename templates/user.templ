@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-templ Index(passkeyLogin func() templ.Component, devLogin func() templ.Component) {
+templ Index(devLogin func() templ.Component) {
 	@modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<img class="h-40 pb-4 block" src="/public/skold_vit.svg"/>
@@ -18,7 +18,7 @@ templ Index(passkeyLogin func() templ.Component, devLogin func() templ.Component
 					focus:border-cerise-strong hover:border-cerise-light
 				"
 			>Log In with KTH</a>
-			@passkeyLogin()
+			@PasskeyLoginForm("", nil)
 			@devLogin()
 		</div>
 	}

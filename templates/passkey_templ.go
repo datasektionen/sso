@@ -200,7 +200,7 @@ func PasskeySettings(passkeys []models.Passkey) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul><button hx-get=\"/passkey/add-form\" hx-swap=\"afterend\" hx-on:htmx:after-swap=\"this.style.display = &#39;none&#39;\" id=\"add-passkey-button\" class=\"\n\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\tfocus:border-cerise-strong hover:border-cerise-light\n\t\t\t\tmt-1\n\t\t\t\">Add passkey</button></section>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul><button hx-get=\"/passkey/add-form\" hx-swap=\"afterend\" id=\"add-passkey-button\" _=\"on htmx:afterSwap hide me\" class=\"\n\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\tfocus:border-cerise-strong hover:border-cerise-light\n\t\t\t\tmt-1\n\t\t\t\">Add passkey</button></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -122,8 +122,8 @@ templ PasskeySettings(passkeys []models.Passkey) {
 		<button
 			hx-get="/passkey/add-form"
 			hx-swap="afterend"
-			hx-on:htmx:after-swap="this.style.display = 'none'"
 			id="add-passkey-button"
+			_="on htmx:afterSwap hide me"
 			class="
 				bg-[#3f4c66] p-1.5 block rounded border text-center
 				select-none border-transparent outline-none

@@ -2,7 +2,6 @@ package templates
 
 import (
 	"encoding/base64"
-	"encoding/hex"
 	"github.com/datasektionen/logout/database"
 	"net/url"
 )
@@ -38,11 +37,9 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 		</ul>
 		<button
 			class={ button }
-			hx-get={ "clone-template##add-uri-" + hex.EncodeToString(client.ID) }
-			hx-swap="beforeend"
-			hx-target="previous ul"
+			_="on click put (next <template/>).innerHTML at end of previous <ul/>"
 		>Add redirect URI</button>
-		<template id={ "add-uri-" + hex.EncodeToString(client.ID) }>
+		<template>
 			<li>
 				<form
 					hx-post={ "/admin/oidc-clients/" + b64(client.ID) }
@@ -60,7 +57,7 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 					</button>
 					<button
 						class={ roundButton }
-						hx-on:click="htmx.remove(htmx.closest(this, 'li'))"
+						_="on click remove closest <li/>"
 					>
 						<img src="/public/x.svg"/>
 					</button>

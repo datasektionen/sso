@@ -100,6 +100,55 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 	return i, err
 }
 
+const listUsers = `-- name: ListUsers :many
+select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+from users
+where case
+    when $3::text = '' then true
+    else kthid = $3 or first_name ~* $3 or family_name ~* $3
+end
+order by kthid
+limit $1
+offset $2
+`
+
+type ListUsersParams struct {
+	Limit  int32
+	Offset int32
+	Search string
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset, arg.Search)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.Kthid,
+			&i.UgKthid,
+			&i.Email,
+			&i.FirstName,
+			&i.FamilyName,
+			&i.YearTag,
+			&i.MemberTo,
+			&i.WebauthnID,
+			&i.FirstNameChangeRequest,
+			&i.FamilyNameChangeRequest,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeSession = `-- name: RemoveSession :exec
 delete from sessions
 where id = $1

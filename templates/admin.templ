@@ -1,6 +1,10 @@
 package templates
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/datasektionen/logout/models"
+	"time"
+)
 
 templ adminNav() {
 	<a href="/admin/members">Members</a>
@@ -17,34 +21,89 @@ templ AdminPage() {
 templ Members() {
 	@AdminPage() {
 		<div class="p-8">
+			<section hx-get="/admin/users" hx-trigger="load">
+				@MemberList([]models.User{}, "", 0, false)
+			</section>
 			@uploadForm()
 			@UploadStatus(false)
 		</div>
 	}
 }
 
+templ MemberList(users []models.User, search string, offset int, more bool) {
+	<div class="grid grid-cols-[repeat(4,auto)] gap-x-2 [&>*]:h-7">
+		<div class="grid grid-cols-subgrid col-span-full">
+			<span>Username</span>
+			<span>Name</span>
+			<span>Year</span>
+			<span>Member until</span>
+		</div>
+		for _, user := range users {
+			<div class="grid grid-cols-subgrid col-span-full">
+				<span>{ user.KTHID }</span>
+				<span>{ user.FirstName } { user.FamilyName }</span>
+				<span>{ user.YearTag }</span>
+				<span>{ user.MemberTo.Format(time.DateOnly) }</span>
+			</div>
+		}
+		for i := len(users); i < 20; i++ {
+			<div class="grid grid-cols-subgrid col-span-full"></div>
+		}
+	</div>
+	<div class="flex gap-2 pt-2" hx-target="closest section">
+		<input
+			hx-get="/admin/users"
+			type="text"
+			name="search"
+			placeholder="Search..."
+			class={ input }
+			value={ search }
+			if search != "" {
+				autofocus
+			}
+		/>
+		<button
+			hx-get="/admin/users"
+			class={ button }
+			hx-vals={ templ.JSONString(map[string]any{"offset": max(0, offset-20)}) }
+			hx-include='input[name="search"]'
+			if offset == 0 {
+				disabled
+			}
+		>prev</button>
+		<button
+			hx-get="/admin/users"
+			class={ button }
+			hx-vals={ templ.JSONString(map[string]any{"offset": offset + 20}) }
+			hx-include='input[name="search"]'
+			if !more {
+				disabled
+			}
+		>next</button>
+	</div>
+}
+
 templ uploadForm() {
 	<form
-		class="flex flex-col gap-2 p-2"
+		class="py-2 flex gap-2 items-center"
 		hx-post="/admin/members/upload-sheet"
 		hx-encoding="multipart/form-data"
 		hx-swap="outerHTML"
 		hx-target="#upload-status"
 	>
-		<div class="flex gap-2">
-			<input
-				name="sheet"
-				type="file"
-				required
-				class="
-					bg-[#3f4c66] rounded p-1 grid place-items-center pointer w-full
-					border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
-				"
-			/>
-			<button
-				class={ button + "h-auto" }
-			>Upload</button>
-		</div>
+		<p class="shrink-0">Upload THS membership sheet</p>
+		<input
+			name="sheet"
+			type="file"
+			required
+			class="
+				bg-[#3f4c66] rounded p-1 grid place-items-center pointer w-full
+				border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+			"
+		/>
+		<button
+			class={ button + "h-auto" }
+		>Upload</button>
 	</form>
 }
 

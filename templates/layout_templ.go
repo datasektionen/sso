@@ -238,7 +238,8 @@ var input = `
 var button = `
 	bg-[#3f4c66] p-1 h-8 block rounded border text-center
 	select-none border-transparent outline-none
-	focus:border-cerise-strong hover:border-cerise-light
+	enabled:focus:border-cerise-strong enabled:hover:border-cerise-light
+	disabled:text-gray-500
 `
 
 var roundButton = `

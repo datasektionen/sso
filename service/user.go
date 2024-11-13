@@ -36,6 +36,14 @@ func dbUserToModel(user database.User) models.User {
 	}
 }
 
+func DBUsersToModel(users []database.User) []models.User {
+	us := make([]models.User, len(users))
+	for i, u := range users {
+		us[i] = dbUserToModel(u)
+	}
+	return us
+}
+
 func (s *Service) GetUser(ctx context.Context, kthid string) (*models.User, error) {
 	user, err := s.DB.GetUser(ctx, kthid)
 	if err == pgx.ErrNoRows {

@@ -80,8 +80,31 @@ func admin(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.
 	return templates.AdminPage()
 }
 
-func members(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func membersPage(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return templates.Members()
+}
+
+func adminUsersForm(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	search := r.FormValue("search")
+	offsetStr := r.FormValue("offset")
+	offset, err := strconv.ParseInt(offsetStr, 10, 32)
+	if err != nil && offsetStr != "" {
+		return httputil.BadRequest("Invalid int for offset")
+	}
+	users, err := s.DB.ListUsers(r.Context(), database.ListUsersParams{
+		Search: search,
+		Limit:  21,
+		Offset: int32(offset),
+	})
+	if err != nil {
+		return err
+	}
+	more := false
+	if len(users) == 21 {
+		users = users[0:20:20]
+		more = true
+	}
+	return templates.MemberList(service.DBUsersToModel(users), search, int(offset), more)
 }
 
 func invites(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

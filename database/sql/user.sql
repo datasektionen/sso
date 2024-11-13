@@ -31,6 +31,17 @@ select *
 from users
 where kthid = $1;
 
+-- name: ListUsers :many
+select *
+from users
+where case
+    when @search::text = '' then true
+    else kthid = @search or first_name ~* @search or family_name ~* @search
+end
+order by kthid
+limit $1
+offset $2;
+
 -- name: UserSetMemberTo :exec
 update users
 set member_to = $2

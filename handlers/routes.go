@@ -23,7 +23,8 @@ func MountRoutes(s *service.Service) {
 	// admin.go
 	http.Handle("GET /admin", authAdmin(s, httputil.Route(s, admin)))
 
-	http.Handle("GET /admin/members", authAdmin(s, httputil.Route(s, members)))
+	http.Handle("GET /admin/members", authAdmin(s, httputil.Route(s, membersPage)))
+	http.Handle("GET /admin/users", authAdmin(s, httputil.Route(s, adminUsersForm)))
 	http.Handle("POST /admin/members/upload-sheet", authAdmin(s, httputil.Route(s, uploadSheet)))
 	http.Handle("GET /admin/members/upload-sheet", authAdmin(s, httputil.Route(s, processSheet)))
 

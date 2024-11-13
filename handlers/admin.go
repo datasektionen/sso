@@ -92,12 +92,13 @@ func adminUsersForm(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	if err != nil && offsetStr != "" {
 		return httputil.BadRequest("Invalid int for offset")
 	}
-	users, err := s.DB.ListUsers(r.Context(), database.ListUsersParams{
+	us, err := s.DB.ListUsers(r.Context(), database.ListUsersParams{
 		Search: search,
 		Limit:  21,
 		Offset: int32(offset),
 		Year:   year,
 	})
+	users := service.DBUsersToModel(us)
 	if err != nil {
 		return err
 	}
@@ -110,7 +111,7 @@ func adminUsersForm(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return err
 	}
-	return templates.MemberList(service.DBUsersToModel(users), search, int(offset), more, years, year)
+	return templates.MemberList(users, search, int(offset), more, years, year)
 }
 
 func invites(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

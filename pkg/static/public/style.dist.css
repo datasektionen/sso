@@ -688,24 +688,12 @@ html {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
-.grid-cols-subgrid {
-  grid-template-columns: subgrid;
-}
-
-.grid-cols-3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.grid-cols-5 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
 .grid-cols-\[repeat\(4\2c auto\)\] {
   grid-template-columns: repeat(4,auto);
 }
 
-.grid-rows-subgrid {
-  grid-template-rows: subgrid;
+.grid-cols-subgrid {
+  grid-template-columns: subgrid;
 }
 
 .flex-col {
@@ -752,22 +740,9 @@ html {
   gap: 2rem;
 }
 
-.gap-x-1 {
-  -moz-column-gap: 0.25rem;
-       column-gap: 0.25rem;
-}
-
-.gap-y-2 {
-  row-gap: 0.5rem;
-}
-
 .gap-x-2 {
   -moz-column-gap: 0.5rem;
        column-gap: 0.5rem;
-}
-
-.gap-y-1 {
-  row-gap: 0.25rem;
 }
 
 .overflow-auto {
@@ -1103,18 +1078,6 @@ html {
   .md\:max-w-\[calc\(100vw-8rem\)\] {
     max-width: calc(100vw - 8rem);
   }
-}
-
-.\[\&\>\*\]\:h-4>* {
-  height: 1rem;
-}
-
-.\[\&\>\*\]\:h-6>* {
-  height: 1.5rem;
-}
-
-.\[\&\>\*\]\:h-8>* {
-  height: 2rem;
 }
 
 .\[\&\>\*\]\:h-7>* {

@@ -43,7 +43,11 @@ templ MemberList(users []models.User, search string, offset int, more bool, year
 				<span>{ user.KTHID }</span>
 				<span>{ user.FirstName } { user.FamilyName }</span>
 				<span>{ user.YearTag }</span>
-				<span>{ user.MemberTo.Format(time.DateOnly) }</span>
+				<span>
+					if user.MemberTo != (time.Time{}) {
+						{ user.MemberTo.Format(time.DateOnly) }
+					}
+				</span>
 			</div>
 		}
 		for i := len(users); i < 20; i++ {

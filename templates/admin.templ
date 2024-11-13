@@ -22,7 +22,7 @@ templ Members() {
 	@AdminPage() {
 		<div class="p-8">
 			<section hx-get="/admin/users" hx-trigger="load">
-				@MemberList([]models.User{}, "", 0, false)
+				@MemberList([]models.User{}, "", 0, false, []string{}, "")
 			</section>
 			@uploadForm()
 			@UploadStatus(false)
@@ -30,7 +30,7 @@ templ Members() {
 	}
 }
 
-templ MemberList(users []models.User, search string, offset int, more bool) {
+templ MemberList(users []models.User, search string, offset int, more bool, years []string, selectedYear string) {
 	<div class="grid grid-cols-[repeat(4,auto)] gap-x-2 [&>*]:h-7">
 		<div class="grid grid-cols-subgrid col-span-full">
 			<span>Username</span>
@@ -62,11 +62,26 @@ templ MemberList(users []models.User, search string, offset int, more bool) {
 				autofocus
 			}
 		/>
+		<select
+			hx-get="/admin/users"
+			name="year"
+			hx-include='input[name="search"]'
+			class={ selectStyle }
+		>
+			<option value="">Year</option>
+			for _, year := range years {
+				<option
+					if year == selectedYear {
+						selected
+					}
+				>{ year }</option>
+			}
+		</select>
 		<button
 			hx-get="/admin/users"
 			class={ button }
 			hx-vals={ templ.JSONString(map[string]any{"offset": max(0, offset-20)}) }
-			hx-include='input[name="search"]'
+			hx-include='input[name="search"], select[name="year"]'
 			if offset == 0 {
 				disabled
 			}
@@ -75,7 +90,7 @@ templ MemberList(users []models.User, search string, offset int, more bool) {
 			hx-get="/admin/users"
 			class={ button }
 			hx-vals={ templ.JSONString(map[string]any{"offset": offset + 20}) }
-			hx-include='input[name="search"]'
+			hx-include='input[name="search"], select[name="year"]'
 			if !more {
 				disabled
 			}

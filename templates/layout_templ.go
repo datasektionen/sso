@@ -250,6 +250,12 @@ var roundButton = `
 	[&>p]:text-center [&>p]:leading-none
 `
 
+var selectStyle = `
+	border border-neutral-500
+	outline-none focus:border-cerise-strong hover:border-cerise-light
+	bg-slate-800 p-1.5 rounded h-8
+`
+
 func base64Helpers() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

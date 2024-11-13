@@ -61,6 +61,33 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
+const getAllYears = `-- name: GetAllYears :many
+select distinct year_tag
+from users
+where year_tag != ''
+order by year_tag
+`
+
+func (q *Queries) GetAllYears(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, getAllYears)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var year_tag string
+		if err := rows.Scan(&year_tag); err != nil {
+			return nil, err
+		}
+		items = append(items, year_tag)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSession = `-- name: GetSession :one
 update sessions
 set last_used_at = now()
@@ -107,6 +134,10 @@ where case
     when $3::text = '' then true
     else kthid = $3 or first_name ~* $3 or family_name ~* $3
 end
+and case
+    when $4::text = '' then true
+    else $4 = year_tag
+end
 order by kthid
 limit $1
 offset $2
@@ -116,10 +147,16 @@ type ListUsersParams struct {
 	Limit  int32
 	Offset int32
 	Search string
+	Year   string
 }
 
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset, arg.Search)
+	rows, err := q.db.Query(ctx, listUsers,
+		arg.Limit,
+		arg.Offset,
+		arg.Search,
+		arg.Year,
+	)
 	if err != nil {
 		return nil, err
 	}

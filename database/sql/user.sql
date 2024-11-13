@@ -38,9 +38,19 @@ where case
     when @search::text = '' then true
     else kthid = @search or first_name ~* @search or family_name ~* @search
 end
+and case
+    when @year::text = '' then true
+    else @year = year_tag
+end
 order by kthid
 limit $1
 offset $2;
+
+-- name: GetAllYears :many
+select distinct year_tag
+from users
+where year_tag != ''
+order by year_tag;
 
 -- name: UserSetMemberTo :exec
 update users

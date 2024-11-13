@@ -92,7 +92,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	return templates.Account(*user, passkeys, isAdmin)
 }
 
-var yearTagRegex regexp.Regexp = *regexp.MustCompile(`[A-Z][a-z]?\d{2}`)
+var yearTagRegex regexp.Regexp = *regexp.MustCompile(`[A-Z][A-Za-z]{0,3}-\d{2}`)
 
 func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.GetLoggedInUser(r)
@@ -110,7 +110,7 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 		var err error
 		yearTag := yearTagList[0]
 		if !yearTagRegex.Match([]byte(yearTag)) {
-			return templates.AccountYearForm(user.YearTag, `Invalid format. Must match [A-Z][a-z]?\d{2}`)
+			return templates.AccountYearForm(yearTag, `Invalid format. Must match `+yearTagRegex.String())
 		}
 		*user, err = s.UpdateUser(r.Context(), user.KTHID, yearTag)
 		if err != nil {

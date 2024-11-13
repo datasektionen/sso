@@ -10,7 +10,7 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 		id="passkey-login-form"
 		hx-post="/login/passkey/begin"
 		_="
-			on load if localStorage.logout_saved_kthid then set #pk-kthid.value to localStorage.logout_saved_kthid end
+			on load if localStorage.logout_saved_kthid then set #pk-kthid.value to localStorage.logout_saved_kthid then call #pk-init.focus() end
 			on submit remove <.error/> then if #pk-kthid.value then set localStorage.logout_saved_kthid to #pk-kthid.value
 		"
 		if credAss != nil {
@@ -81,6 +81,7 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 				"
 			/>
 			<button
+				id="pk-init"
 				class={ `
 					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
 					grid place-items-center pointer

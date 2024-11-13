@@ -37,7 +37,7 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 		</ul>
 		<button
 			class={ button }
-			_="on click put (next <template/>).innerHTML at end of previous <ul/>"
+			_="on click put (next <template/>).innerHTML at end of previous <ul/> then call htmx.process(previous <li/>)"
 		>Add redirect URI</button>
 		<template>
 			<li>

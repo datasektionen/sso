@@ -142,7 +142,7 @@ func OidcClient(client database.OidcClient, secret []byte) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" _=\"on click put (next &lt;template/&gt;).innerHTML at end of previous &lt;ul/&gt;\">Add redirect URI</button><template><li><form hx-post=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" _=\"on click put (next &lt;template/&gt;).innerHTML at end of previous &lt;ul/&gt; then call htmx.process(previous &lt;li/&gt;)\">Add redirect URI</button><template><li><form hx-post=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

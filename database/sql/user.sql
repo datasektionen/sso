@@ -36,7 +36,10 @@ select *
 from users
 where case
     when @search::text = '' then true
-    else kthid = @search or first_name ~* @search or family_name ~* @search
+    else kthid = @search
+      or first_name ~* @search
+      or family_name ~* @search
+      or first_name || ' ' || family_name ~* @search
 end
 and case
     when @year::text = '' then true

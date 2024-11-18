@@ -132,7 +132,10 @@ select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, web
 from users
 where case
     when $3::text = '' then true
-    else kthid = $3 or first_name ~* $3 or family_name ~* $3
+    else kthid = $3
+      or first_name ~* $3
+      or family_name ~* $3
+      or first_name || ' ' || family_name ~* $3
 end
 and case
     when $4::text = '' then true

@@ -2,9 +2,8 @@ package oidcprovider
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
@@ -30,10 +29,10 @@ import (
 // http://localhost:7000/op/authorize?client_id=bing&response_type=token&scope=openid&redirect_uri=http://localhost:8080/callback
 
 type provider struct {
-	provider   *op.Provider
-	dotabase   dotabase
-	signingKey *ecdsa.PrivateKey
-	s          *service.Service
+	provider *op.Provider
+	dotabase dotabase
+	rsaKey   *rsa.PrivateKey
+	s        *service.Service
 }
 
 type dotabase struct {
@@ -45,23 +44,41 @@ type dotabase struct {
 var _ op.Storage = &provider{}
 
 func MountRoutes(s *service.Service) error {
-	privateKey := ecdsa.PrivateKey{
-		PublicKey: ecdsa.PublicKey{
-			Curve: elliptic.P256(),
-			X:     new(big.Int),
-			Y:     new(big.Int),
+	// Yes, the initialization of this key does indeed seem very shady. I do
+	// however hope that if anything is done incorrectly, the
+	// privateKey.Validate() should catch that. I didn't find a nice way to
+	// initialize a private key from p and q and it is unneccesary to also
+	// store d, so I guess I have to calculate it 🤷.
+	privateKey := rsa.PrivateKey{
+		PublicKey: rsa.PublicKey{
+			N: &big.Int{},
+			E: 65537,
 		},
-		D: new(big.Int),
+		D:      &big.Int{},
+		Primes: []*big.Int{},
 	}
-	parts := strings.SplitN(config.Config.OIDCProviderKey, ",", 3)
-	if _, ok := privateKey.X.SetString(parts[0], 62); !ok {
-		return errors.New("Invalid x in $OIDC_PROVIDER_KEY")
+	{
+		parts := strings.SplitN(config.Config.OIDCProviderKey, ",", 3)
+		if len(parts) != 2 {
+			return errors.New("Expected $OIDC_PROVIDER_KEY to have two comma-separated prime numbers in base 62")
+		}
+		var p, q big.Int
+		p.SetString(parts[0], 62)
+		q.SetString(parts[1], 62)
+		privateKey.Primes = append(privateKey.Primes, &p, &q)
+		privateKey.N.Mul(&p, &q)
+		e := big.NewInt(int64(privateKey.E))
+		pMinus1 := (&big.Int{}).Sub(&p, big.NewInt(1))
+		qMinus1 := (&big.Int{}).Sub(&q, big.NewInt(1))
+		phi := (&big.Int{}).Mul(pMinus1, qMinus1)
+		privateKey.D.ModInverse(e, phi)
+		if err := privateKey.Validate(); err != nil {
+			return err
+		}
+		privateKey.Precompute()
 	}
-	if _, ok := privateKey.Y.SetString(parts[1], 62); !ok {
-		return errors.New("Invalid y in $OIDC_PROVIDER_KEY")
-	}
-	if _, ok := privateKey.D.SetString(parts[2], 62); !ok {
-		return errors.New("Invalid d in $OIDC_PROVIDER_KEY")
+	if err := privateKey.Validate(); err != nil {
+		return err
 	}
 
 	p := &provider{
@@ -69,8 +86,8 @@ func MountRoutes(s *service.Service) error {
 			reqByID:         make(map[uuid.UUID]authRequest),
 			reqIdByAuthCode: make(map[string]uuid.UUID),
 		},
-		signingKey: &privateKey,
-		s:          s,
+		rsaKey: &privateKey,
+		s:      s,
 	}
 	var opts []op.Option
 	if config.Config.Dev {
@@ -368,34 +385,34 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 
 // SignatureAlgorithms implements op.Storage.
 func (p *provider) SignatureAlgorithms(ctx context.Context) ([]jose.SignatureAlgorithm, error) {
-	return []jose.SignatureAlgorithm{jose.ES256}, nil
+	return []jose.SignatureAlgorithm{jose.RS256}, nil
 }
 
-type publicKey struct{ *ecdsa.PublicKey }
+type publicKey struct{ privateKey }
 
-func (s publicKey) ID() string                         { return "the-one-and-only" }
-func (s publicKey) Key() any                           { return s.PublicKey }
-func (s publicKey) Algorithm() jose.SignatureAlgorithm { return jose.ES256 }
+func (s publicKey) ID() string                         { return "schmunguss-key" }
+func (s publicKey) Key() any                           { return &s.PublicKey }
+func (s publicKey) Algorithm() jose.SignatureAlgorithm { return jose.RS256 }
 func (s publicKey) Use() string                        { return "sig" }
 
 var _ op.Key = publicKey{}
 
 // KeySet implements op.Storage.
 func (p *provider) KeySet(ctx context.Context) ([]op.Key, error) {
-	return []op.Key{publicKey{&p.signingKey.PublicKey}}, nil
+	return []op.Key{publicKey{privateKey{p.rsaKey}}}, nil
 }
 
-type privateKey struct{ *ecdsa.PrivateKey }
+type privateKey struct{ *rsa.PrivateKey }
 
-func (k privateKey) ID() string                                  { return "the-one-and-only" }
+func (k privateKey) ID() string                                  { return "schmunguss-key" }
 func (k privateKey) Key() any                                    { return k.PrivateKey }
-func (k privateKey) SignatureAlgorithm() jose.SignatureAlgorithm { return jose.ES256 }
+func (k privateKey) SignatureAlgorithm() jose.SignatureAlgorithm { return jose.RS256 }
 
 var _ op.SigningKey = privateKey{}
 
 // SigningKey implements op.Storage.
 func (p *provider) SigningKey(ctx context.Context) (op.SigningKey, error) {
-	return privateKey{p.signingKey}, nil
+	return privateKey{p.rsaKey}, nil
 }
 
 // TerminateSession implements op.Storage.

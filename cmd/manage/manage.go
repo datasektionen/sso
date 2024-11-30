@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/datasektionen/logout/database"
@@ -51,12 +51,17 @@ func main() {
 		gooseCMD := shift()
 		must0(goose.RunContext(context.Background(), gooseCMD, db(), "database/migrations", args...))
 	case "gen-oidc-provider-key":
-		key := must1(ecdsa.GenerateKey(elliptic.P256(), rand.Reader))
+		key := must1(rsa.GenerateKey(rand.Reader, 4096))
+		if len(key.Primes) != 2 {
+			panic("I wanted to primes but got " + strconv.Itoa(len(key.Primes)))
+		}
+		if key.E != 65537 {
+			panic("Expected public expontent e to be the standard 65537 but got " + strconv.Itoa(key.E))
+		}
 		fmt.Printf(
-			"OIDC_PROVIDER_KEY=%s,%s,%s\n",
-			key.X.Text(62),
-			key.Y.Text(62),
-			key.D.Text(62),
+			"OIDC_PROVIDER_KEY=%s,%s\n",
+			key.Primes[0].Text(62),
+			key.Primes[1].Text(62),
 		)
 	default:
 		panic("No such subcommand")

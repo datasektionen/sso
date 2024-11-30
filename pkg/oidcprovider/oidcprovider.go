@@ -343,6 +343,7 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 		case oidc.ScopeOpenID:
 			userinfo.Subject = kthid
 		case oidc.ScopeProfile:
+			userinfo.Name = user.FirstName + " " + user.FamilyName
 			userinfo.GivenName = user.FirstName
 			userinfo.FamilyName = user.FamilyName
 		case oidc.ScopeEmail:

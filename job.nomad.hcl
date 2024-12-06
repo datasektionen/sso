@@ -16,15 +16,13 @@ job "sso" {
         "traefik.http.routers.sso.rule=Host(`sso.datasektionen.se`)",
         "traefik.http.routers.sso.tls.certresolver=default",
 
-        # Temporarily redirect `logout.` to `sso.`. Should be removed when `logout.` is believed to probably no longer be used anywhere
-        "traefik.http.routers.sso-login2.rule=Host(`login2.datasektionen.se`)||Host(`logout.datasektionen.se`)",
+        "traefik.http.routers.sso-login2.rule=Host(`login2.datasektionen.se`)",
         "traefik.http.routers.sso-login2.tls.certresolver=default",
         "traefik.http.routers.sso-login2.middlewares=redirect-to-sso",
         "traefik.http.middlewares.redirect-to-sso.redirectregex.regex=^https://[^.]*.datasektionen.se/(.*)$",
         "traefik.http.middlewares.redirect-to-sso.redirectregex.replacement=https://sso.datasektionen.se/$${1}",
 
-        # Temporarily allow `logout.`. Should be removed when `logout.` is believed to probably no longer be used anywhere
-        "traefik.http.routers.sso-internal.rule=Host(`sso.nomad.dsekt.internal`)||Host(`logout.nomad.dsekt.internal`)",
+        "traefik.http.routers.sso-internal.rule=Host(`sso.nomad.dsekt.internal`)",
         "traefik.http.routers.sso-internal.entrypoints=web-internal",
       ]
     }

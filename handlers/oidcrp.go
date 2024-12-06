@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/service"
+	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/service"
 	"github.com/google/uuid"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	"github.com/zitadel/oidc/v3/pkg/oidc"

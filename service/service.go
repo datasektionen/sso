@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/datasektionen/logout/database"
+	"github.com/datasektionen/sso/database"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 )

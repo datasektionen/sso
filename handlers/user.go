@@ -5,15 +5,15 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/pkg/pls"
-	"github.com/datasektionen/logout/service"
-	"github.com/datasektionen/logout/templates"
+	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/pkg/pls"
+	"github.com/datasektionen/sso/service"
+	"github.com/datasektionen/sso/templates"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-const nextUrlCookie string = "_logout_next-url"
+const nextUrlCookie string = "_sso_next-url"
 
 func validNextURL(url string) bool {
 	if url == "" {

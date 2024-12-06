@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/datasektionen/logout/database"
-	"github.com/datasektionen/logout/pkg/kthldap"
+	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/pkg/kthldap"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pressly/goose/v3"
 )

@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/datasektionen/logout/pkg/config"
-	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/service"
+	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/service"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

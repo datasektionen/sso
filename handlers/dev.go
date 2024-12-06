@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/datasektionen/logout/pkg/auth"
-	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/service"
+	"github.com/datasektionen/sso/pkg/auth"
+	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/service"
 )
 
 func devLogin(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

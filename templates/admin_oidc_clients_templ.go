@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"encoding/base64"
-	"github.com/datasektionen/logout/database"
+	"github.com/datasektionen/sso/database"
 	"net/url"
 )
 

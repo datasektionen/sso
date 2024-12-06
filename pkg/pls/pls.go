@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/sso/pkg/config"
 )
 
 func CheckUser(ctx context.Context, kthid, permission string) (bool, error) {
@@ -27,7 +27,7 @@ func check(ctx context.Context, kind, who, permission string) (bool, error) {
 
 	system, perm, ok := strings.Cut(permission, ".")
 	if !ok {
-		system = "logout"
+		system = "sso"
 		perm = permission
 	}
 

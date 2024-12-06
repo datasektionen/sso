@@ -1,33 +1,35 @@
-job "logout" {
+job "sso" {
   type = "service"
   namespace = "auth"
 
-  group "logout" {
+  group "sso" {
     network {
       port "http" { }
     }
 
     service {
-      name     = "logout"
+      name     = "sso"
       port     = "http"
       provider = "nomad"
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.logout.rule=Host(`logout.datasektionen.se`)",
-        "traefik.http.routers.logout.tls.certresolver=default",
+        "traefik.http.routers.sso.rule=Host(`sso.datasektionen.se`)",
+        "traefik.http.routers.sso.tls.certresolver=default",
 
-        "traefik.http.routers.logout-login2.rule=Host(`login2.datasektionen.se`)",
-        "traefik.http.routers.logout-login2.tls.certresolver=default",
-        "traefik.http.routers.logout-login2.middlewares=redirect-to-logout",
-        "traefik.http.middlewares.redirect-to-logout.redirectregex.regex=^https://login2.datasektionen.se/(.*)$",
-        "traefik.http.middlewares.redirect-to-logout.redirectregex.replacement=https://logout.datasektionen.se/$${1}",
+        # Temporarily redirect `logout.` to `sso.`. Should be removed when `logout.` is believed to probably no longer be used anywhere
+        "traefik.http.routers.sso-login2.rule=Host(`login2.datasektionen.se`)||Host(`logout.datasektionen.se`)",
+        "traefik.http.routers.sso-login2.tls.certresolver=default",
+        "traefik.http.routers.sso-login2.middlewares=redirect-to-sso",
+        "traefik.http.middlewares.redirect-to-sso.redirectregex.regex=^https://[^.]*.datasektionen.se/(.*)$",
+        "traefik.http.middlewares.redirect-to-sso.redirectregex.replacement=https://sso.datasektionen.se/$${1}",
 
-        "traefik.http.routers.logout-internal.rule=Host(`logout.nomad.dsekt.internal`)",
-        "traefik.http.routers.logout-internal.entrypoints=web-internal",
+        # Temporarily allow `logout.`. Should be removed when `logout.` is believed to probably no longer be used anywhere
+        "traefik.http.routers.sso-internal.rule=Host(`sso.nomad.dsekt.internal`)||Host(`logout.nomad.dsekt.internal`)",
+        "traefik.http.routers.sso-internal.entrypoints=web-internal",
       ]
     }
 
-    task "logout" {
+    task "sso" {
       driver = "docker"
 
       config {
@@ -39,20 +41,19 @@ job "logout" {
         data        = <<ENV
 PORT={{ env "NOMAD_PORT_http" }}
 
-{{ with nomadVar "nomad/jobs/logout" }}
+{{ with nomadVar "nomad/jobs/sso" }}
 KTH_CLIENT_SECRET={{ .kth_client_secret }}
 OIDC_PROVIDER_KEY={{ .oidc_provider_key }}
-DATABASE_URL=postgresql://logout:logout@localhost:5432/logout
-DATABASE_URL=postgresql://logout:{{ .database_password }}@postgres.dsekt.internal:5432/logout
+DATABASE_URL=postgresql://sso:{{ .database_password }}@postgres.dsekt.internal:5432/sso
 {{ end }}
 
 KTH_ISSUER_URL=https://login.ug.kth.se/adfs
 KTH_CLIENT_ID=bad94f41-8323-4c26-8c59-fb6d6b8384db
 KTH_RP_ORIGIN=https://login2.datasektionen.se
 
-OIDC_PROVIDER_ISSUER_URL=https://logout.datasektionen.se/op
+OIDC_PROVIDER_ISSUER_URL=https://sso.datasektionen.se/op
 
-ORIGIN=https://logout.datasektionen.se
+ORIGIN=https://sso.datasektionen.se
 DEV=false
 # Temporary, is running through ssh proxy in tmux :)
 LDAP_PROXY_URL=http://ares.dsekt.internal:3389
@@ -71,5 +72,5 @@ ENV
 
 variable "image_tag" {
   type = string
-  default = "ghcr.io/datasektionen/logout:latest"
+  default = "ghcr.io/datasektionen/sso:latest"
 }

@@ -1,4 +1,4 @@
-- [ ] hitta på namn
+- [x] hitta på namn
 - [x] ladda upp på github
 - [x] Dockerfile
 - [x] migrations

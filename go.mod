@@ -1,4 +1,4 @@
-module github.com/datasektionen/logout
+module github.com/datasektionen/sso
 
 go 1.22.1
 

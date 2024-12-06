@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"embed"
 
-	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/sso/pkg/config"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"

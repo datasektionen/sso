@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/datasektionen/logout/database"
-	"github.com/datasektionen/logout/models"
-	"github.com/datasektionen/logout/pkg/auth"
-	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/pkg/kthldap"
+	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/models"
+	"github.com/datasektionen/sso/pkg/auth"
+	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/pkg/kthldap"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )

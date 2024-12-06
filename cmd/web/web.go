@@ -10,12 +10,12 @@ import (
 
 	"time"
 
-	"github.com/datasektionen/logout/database"
-	"github.com/datasektionen/logout/handlers"
-	"github.com/datasektionen/logout/pkg/config"
-	"github.com/datasektionen/logout/pkg/oidcprovider"
-	"github.com/datasektionen/logout/pkg/static"
-	"github.com/datasektionen/logout/service"
+	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/handlers"
+	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/pkg/oidcprovider"
+	"github.com/datasektionen/sso/pkg/static"
+	"github.com/datasektionen/sso/service"
 )
 
 func main() {

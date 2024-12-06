@@ -39,12 +39,12 @@ and then move it to a directory in your `$PATH` or set `$TAILWIND_PATH` to it's 
 
 Start a postgresql database, using e.g.:
 ```sh
-docker run -d --name logout-db -p 5432:5432 -e POSTGRES_PASSWORD=logout -e POSTGRES_DB=logout -e POSTGRES_USER=logout postgres:16-alpine3.19
+docker run -d --name sso-db -p 5432:5432 -e POSTGRES_PASSWORD=sso -e POSTGRES_DB=sso -e POSTGRES_USER=sso postgres:16-alpine3.19
 ```
 ...or add a user and database to an existing instance:
 ```sql
-CREATE USER logout WITH PASSWORD 'logout';
-CREATE DATABASE logout WITH OWNER logout;
+CREATE USER sso WITH PASSWORD 'sso';
+CREATE DATABASE sso WITH OWNER sso;
 ```
 
 ### Environment variables
@@ -91,12 +91,12 @@ vault write identity/entity-alias \
 
 vault write identity/oidc/scope/profile template=$(echo '{"username":{{identity.entity.name}}}' | base64 -)
 vault write identity/oidc/provider/default scopes_supported="profile"
-vault write identity/oidc/client/logout redirect_uris="http://localhost:7000/oidc/kth/callback" assignments=allow_all
+vault write identity/oidc/client/sso redirect_uris="http://localhost:7000/oidc/kth/callback" assignments=allow_all
 
 echo -n "
 KTH_ISSUER_URL=$(vault read -field=issuer identity/oidc/provider/default)
-KTH_CLIENT_ID=$(vault read -field=client_id identity/oidc/client/logout)
-KTH_CLIENT_SECRET=$(vault read -field=client_secret identity/oidc/client/logout)
+KTH_CLIENT_ID=$(vault read -field=client_id identity/oidc/client/sso)
+KTH_CLIENT_SECRET=$(vault read -field=client_secret identity/oidc/client/sso)
 KTH_RP_ORIGIN=http://localhost:7000
 "
 ```

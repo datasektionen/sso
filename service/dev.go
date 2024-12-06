@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"github.com/a-h/templ"
-	"github.com/datasektionen/logout/pkg/config"
-	"github.com/datasektionen/logout/templates"
+	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/templates"
 )
 
 func (s *Service) DevLoginForm() templ.Component {

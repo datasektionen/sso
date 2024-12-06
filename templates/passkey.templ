@@ -1,7 +1,7 @@
 package templates
 
 import (
-	"github.com/datasektionen/logout/models"
+	"github.com/datasektionen/sso/models"
 	"github.com/go-webauthn/webauthn/protocol"
 )
 
@@ -10,8 +10,8 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 		id="passkey-login-form"
 		hx-post="/login/passkey/begin"
 		_="
-			on load if localStorage.logout_saved_kthid then set #pk-kthid.value to localStorage.logout_saved_kthid then call #pk-init.focus() end
-			on submit remove <.error/> then if #pk-kthid.value then set localStorage.logout_saved_kthid to #pk-kthid.value
+			on load if localStorage.sso_saved_kthid then set #pk-kthid.value to localStorage.sso_saved_kthid then call #pk-init.focus() end
+			on submit remove <.error/> then if #pk-kthid.value then set localStorage.sso_saved_kthid to #pk-kthid.value
 		"
 		if credAss != nil {
 			data-cred-ass={ templ.JSONString(credAss) }

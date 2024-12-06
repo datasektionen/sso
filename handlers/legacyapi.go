@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/pkg/pls"
-	"github.com/datasektionen/logout/service"
+	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/pkg/pls"
+	"github.com/datasektionen/sso/service"
 	"github.com/google/uuid"
 )
 

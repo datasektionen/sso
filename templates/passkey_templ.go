@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/datasektionen/logout/models"
+	"github.com/datasektionen/sso/models"
 	"github.com/go-webauthn/webauthn/protocol"
 )
 
@@ -34,7 +34,7 @@ func PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) templ
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form id=\"passkey-login-form\" hx-post=\"/login/passkey/begin\" _=\"\n\t\t\ton load if localStorage.logout_saved_kthid then set #pk-kthid.value to localStorage.logout_saved_kthid then call #pk-init.focus() end\n\t\t\ton submit remove &lt;.error/&gt; then if #pk-kthid.value then set localStorage.logout_saved_kthid to #pk-kthid.value\n\t\t\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form id=\"passkey-login-form\" hx-post=\"/login/passkey/begin\" _=\"\n\t\t\ton load if localStorage.sso_saved_kthid then set #pk-kthid.value to localStorage.sso_saved_kthid then call #pk-init.focus() end\n\t\t\ton submit remove &lt;.error/&gt; then if #pk-kthid.value then set localStorage.sso_saved_kthid to #pk-kthid.value\n\t\t\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/sso/pkg/config"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )

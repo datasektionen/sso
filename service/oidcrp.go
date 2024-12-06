@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/sso/pkg/config"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	oidcHttp "github.com/zitadel/oidc/v3/pkg/http"
 )

@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"github.com/datasektionen/logout/models"
+	"github.com/datasektionen/sso/models"
 	"time"
 )
 

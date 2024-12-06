@@ -2,7 +2,7 @@ package auth
 
 import "net/http"
 
-const SessionCookieName string = "_logout_session"
+const SessionCookieName string = "_sso_session"
 
 func SessionCookie(sessionID string) *http.Cookie {
 	return &http.Cookie{

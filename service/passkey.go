@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/datasektionen/logout/models"
-	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/sso/models"
+	"github.com/datasektionen/sso/pkg/config"
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 

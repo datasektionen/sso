@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/datasektionen/logout/pkg/config"
+	"github.com/datasektionen/sso/pkg/config"
 )
 
 type Person struct {

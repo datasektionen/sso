@@ -3,14 +3,14 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/datasektionen/logout/pkg/config"
-	"github.com/datasektionen/logout/pkg/httputil"
-	"github.com/datasektionen/logout/service"
+	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/service"
 )
 
 func MountRoutes(s *service.Service) {
 	http.HandleFunc("GET /ping", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("Pong! Regards, Logout"))
+		_, _ = w.Write([]byte("Pong! Regards, SSO"))
 	})
 
 	// user.go

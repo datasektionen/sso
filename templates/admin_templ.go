@@ -123,7 +123,7 @@ func Members() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8\"><section hx-get=\"/admin/users\" hx-trigger=\"load\">")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8\"><section hx-get=\"/admin/users\" hx-trigger=\"load\" hx-swap=\"morph:innerHTML\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

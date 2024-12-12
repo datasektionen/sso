@@ -21,7 +21,7 @@ templ AdminPage() {
 templ Members() {
 	@AdminPage() {
 		<div class="p-8">
-			<section hx-get="/admin/users" hx-trigger="load">
+			<section hx-get="/admin/users" hx-trigger="load" hx-swap="morph:innerHTML">
 				@MemberList([]models.User{}, "", 0, false, []string{}, "")
 			</section>
 			@uploadForm()

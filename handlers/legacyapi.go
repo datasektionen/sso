@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/pkg/metrics"
 	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
+
 	"github.com/google/uuid"
 )
 
@@ -75,6 +77,8 @@ func legacyAPICallback(s *service.Service, w http.ResponseWriter, r *http.Reques
 }
 
 func legacyAPIVerify(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	metrics.IncVerifications("request")
+
 	token, err := uuid.Parse(strings.TrimSuffix(r.PathValue("token"), ".json"))
 	if err != nil {
 		return httputil.BadRequest("Invalid token")
@@ -95,6 +99,8 @@ func legacyAPIVerify(s *service.Service, w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		return err
 	}
+
+	metrics.IncVerifications("sucess")
 	return httputil.JSON(map[string]any{
 		"first_name": user.FirstName,
 		"last_name":  user.FamilyName,

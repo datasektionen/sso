@@ -13,6 +13,7 @@ import (
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/handlers"
 	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/pkg/metrics"
 	"github.com/datasektionen/sso/pkg/oidcprovider"
 	"github.com/datasektionen/sso/pkg/static"
 	"github.com/datasektionen/sso/service"
@@ -37,6 +38,7 @@ func main() {
 	handlers.MountRoutes(s)
 
 	static.Mount()
+	go metrics.Start(context.Background(), config.Config.MetricsPort)
 
 	port := strconv.Itoa(config.Config.Port)
 	l, err := net.Listen("tcp", ":"+port)

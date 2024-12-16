@@ -9,6 +9,7 @@ import (
 	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/auth"
 	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/pkg/metrics"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
 	"github.com/go-webauthn/webauthn/protocol"
@@ -95,6 +96,7 @@ func finishLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Reque
 	}
 
 	http.SetCookie(w, auth.SessionCookie(sessionID.String()))
+	metrics.IncLogin("passkey")
 
 	return nil
 }

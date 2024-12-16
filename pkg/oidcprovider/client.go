@@ -3,6 +3,7 @@ package oidcprovider
 import (
 	"log/slog"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/datasektionen/sso/pkg/config"
@@ -68,7 +69,10 @@ func (c client) IDTokenUserinfoClaimsAssertion() bool {
 // IsScopeAllowed implements op.Client.
 func (c client) IsScopeAllowed(scope string) bool {
 	slog.Warn("oidcprovider.client.IsScopeAllowed", "scope", scope)
-	panic("unimplemented")
+	if strings.HasPrefix(scope, "pls_") {
+		return true
+	}
+	return false
 }
 
 // LoginURL implements op.Client.

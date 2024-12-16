@@ -20,6 +20,31 @@ func CheckToken(ctx context.Context, token, permission string) (bool, error) {
 	return check(ctx, "token", token, permission)
 }
 
+func GetUserPermissionsForGroup(ctx context.Context, kthid string, group string) ([]string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(
+		"%s/api/user/%s/%s",
+		config.Config.PlsURL.String(),
+		url.PathEscape(kthid),
+		url.PathEscape(group),
+	), nil)
+	if err != nil {
+		return nil, err
+	}
+	slog.Info("pls getPermissions", "pls_url", config.Config.PlsURL.String(), "url", req.URL)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Unexpected status code from pls: %d", resp.StatusCode)
+	}
+	var body []string
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return nil, fmt.Errorf("Invalid JSON from pls: %w", err)
+	}
+	return body, nil
+}
+
 func check(ctx context.Context, kind, who, permission string) (bool, error) {
 	if config.Config.PlsURL == nil {
 		return true, nil

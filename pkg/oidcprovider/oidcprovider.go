@@ -198,7 +198,7 @@ func (p *provider) CreateAccessAndRefreshTokens(ctx context.Context, request op.
 // CreateAccessToken implements op.Storage.
 func (p *provider) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
 	slog.Warn("oidcprovider.*service.CreateAccessToken", "request", request)
-	return strings.Join(request.GetScopes(), " "), time.Now().Add(time.Hour * 24), nil
+	return strings.Join(request.GetScopes(), " "), time.Now().Add(time.Minute), nil
 }
 
 // CreateAuthRequest implements op.Storage.

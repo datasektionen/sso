@@ -58,7 +58,7 @@ func (c client) GrantTypes() []oidc.GrantType {
 // IDTokenLifetime implements op.Client.
 func (c client) IDTokenLifetime() time.Duration {
 	slog.Warn("oidcprovider.client.IDTokenLifetime")
-	return 0
+	return time.Hour * 24
 }
 
 // IDTokenUserinfoClaimsAssertion implements op.Client.

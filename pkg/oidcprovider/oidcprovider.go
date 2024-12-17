@@ -17,7 +17,9 @@ import (
 
 	"github.com/datasektionen/sso/pkg/config"
 	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
+
 	"github.com/go-jose/go-jose/v4"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -107,6 +109,10 @@ func MountRoutes(s *service.Service) error {
 			"sub",
 			"name", "family_name", "given_name",
 			"email", "email_verified",
+			"pls_*",
+		},
+		SupportedScopes: []string{
+			"openid", "profile", "email", "offline_access", "pls_*",
 		},
 	},
 		p,
@@ -338,6 +344,11 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 		slog.Error("SetUserinfoFromScopes: user not found", "kthid", kthid, "clientID", clientID, "scopes", scopes)
 		return errors.New("SetUserinfoFromScopes, no user but pretty sure that should have been handled in this request???")
 	}
+
+	if userinfo.Claims == nil {
+		userinfo.Claims = make(map[string]any)
+	}
+
 	for _, scope := range scopes {
 		switch scope {
 		case oidc.ScopeOpenID:
@@ -349,6 +360,16 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 		case oidc.ScopeEmail:
 			userinfo.Email = user.Email
 			userinfo.EmailVerified = true
+		}
+
+		if group, ok := strings.CutPrefix(scope, "pls_"); ok {
+			perms, err := pls.GetUserPermissionsForGroup(ctx, kthid, group)
+			if err != nil {
+				slog.Error("SetUserinfoFromScopes: error getting permissions", "err", err)
+				return err
+			}
+
+			userinfo.Claims[scope] = perms
 		}
 	}
 	slog.Info("oidcprovider.*service.SetUserinfoFromScopes", "userinfo", userinfo)
@@ -366,6 +387,11 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 		slog.Error("SetUserinfoFromToken: user not found", "kthid", kthid)
 		return errors.New("SetUserinfoFromToken, no user but pretty sure that should have been handled in this request???")
 	}
+
+	if userinfo.Claims == nil {
+		userinfo.Claims = make(map[string]any)
+	}
+
 	// TODO: Putting scopes in tokenID feels cursed
 	scopes := strings.Split(tokenID, " ")
 	for _, scope := range scopes {
@@ -378,6 +404,16 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 		case oidc.ScopeEmail:
 			userinfo.Email = user.Email
 			userinfo.EmailVerified = true
+		}
+
+		if group, ok := strings.CutPrefix(scope, "pls_"); ok {
+			perms, err := pls.GetUserPermissionsForGroup(ctx, kthid, group)
+			if err != nil {
+				slog.Error("SetUserinfoFromScopes: error getting permissions", "err", err)
+				return err
+			}
+
+			userinfo.Claims[scope] = perms
 		}
 	}
 	slog.Info("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo)

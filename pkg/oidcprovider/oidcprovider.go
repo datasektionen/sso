@@ -112,7 +112,7 @@ func MountRoutes(s *service.Service) error {
 			"pls_*",
 		},
 		SupportedScopes: []string{
-			"openid", "profile", "email", "phone", "address", "offline_access", "pls_*",
+			"openid", "profile", "email", "offline_access", "pls_*",
 		},
 	},
 		p,
@@ -362,8 +362,7 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 			userinfo.EmailVerified = true
 		}
 
-		if strings.HasPrefix(scope, "pls_") {
-			group := strings.TrimPrefix(scope, "pls_")
+		if group, ok := strings.CutPrefix(scope, "pls_"); ok {
 			perms, err := pls.GetUserPermissionsForGroup(ctx, kthid, group)
 			if err != nil {
 				slog.Error("SetUserinfoFromScopes: error getting permissions", "err", err)
@@ -407,8 +406,7 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 			userinfo.EmailVerified = true
 		}
 
-		if strings.HasPrefix(scope, "pls_") {
-			group := strings.TrimPrefix(scope, "pls_")
+		if group, ok := strings.CutPrefix(scope, "pls_"); ok {
 			perms, err := pls.GetUserPermissionsForGroup(ctx, kthid, group)
 			if err != nil {
 				slog.Error("SetUserinfoFromScopes: error getting permissions", "err", err)

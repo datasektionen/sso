@@ -69,8 +69,8 @@ func (c client) IDTokenUserinfoClaimsAssertion() bool {
 // IsScopeAllowed implements op.Client.
 func (c client) IsScopeAllowed(scope string) bool {
 	slog.Warn("oidcprovider.client.IsScopeAllowed", "scope", scope)
-	if before, after, ok := strings.Cut(scope, "_"); ok {
-		return before == "pls" && len(after) > 0
+	if after, ok := strings.CutPrefix(scope, "pls_"); ok {
+		return len(after) > 0
 	}
 	return false
 }

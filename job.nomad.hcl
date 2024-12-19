@@ -53,8 +53,7 @@ OIDC_PROVIDER_ISSUER_URL=https://sso.datasektionen.se/op
 
 ORIGIN=https://sso.datasektionen.se
 DEV=false
-# Temporary, is running through ssh proxy in tmux :)
-LDAP_PROXY_URL=http://ares.dsekt.internal:3389
+LDAP_PROXY_URL=http://ldap-proxy.dsekt.internal:38980
 PLS_URL=https://pls.datasektionen.se
 ENV
         destination = "local/.env"

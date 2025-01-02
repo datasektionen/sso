@@ -236,11 +236,7 @@ func (p *provider) DeleteAuthRequest(ctx context.Context, authRequestID string) 
 
 // AuthorizeClientIDSecret implements op.Storage.
 func (p *provider) AuthorizeClientIDSecret(ctx context.Context, clientID string, clientSecret string) error {
-	id, err := base64.URLEncoding.DecodeString(clientID)
-	if err != nil {
-		return httputil.BadRequest("Invalid id format")
-	}
-	_, err = p.s.DB.GetClient(ctx, id)
+	client, err := p.s.DB.GetClient(ctx, clientID)
 	if err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such client")
 	}
@@ -253,7 +249,7 @@ func (p *provider) AuthorizeClientIDSecret(ctx context.Context, clientID string,
 	}
 	h := sha256.New()
 	h.Write(secret)
-	if subtle.ConstantTimeCompare(id, h.Sum(nil)) != 1 {
+	if subtle.ConstantTimeCompare(client.SecretHash, h.Sum(nil)) != 1 {
 		return httputil.BadRequest("Invalid client secret")
 	}
 	return nil
@@ -261,11 +257,7 @@ func (p *provider) AuthorizeClientIDSecret(ctx context.Context, clientID string,
 
 // GetClientByClientID implements op.Storage.
 func (p *provider) GetClientByClientID(ctx context.Context, clientID string) (op.Client, error) {
-	id, err := base64.URLEncoding.DecodeString(clientID)
-	if err != nil {
-		return nil, httputil.BadRequest("Invalid id format")
-	}
-	c, err := p.s.DB.GetClient(ctx, id)
+	c, err := p.s.DB.GetClient(ctx, clientID)
 	if err == pgx.ErrNoRows {
 		return nil, httputil.BadRequest("No such client")
 	}
@@ -274,7 +266,7 @@ func (p *provider) GetClientByClientID(ctx context.Context, clientID string) (op
 	}
 
 	return client{
-		id:           base64.URLEncoding.EncodeToString(c.ID),
+		id:           c.ID,
 		redirectURIs: c.RedirectUris,
 	}, nil
 }

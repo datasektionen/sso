@@ -10,15 +10,20 @@ import (
 )
 
 const createClient = `-- name: CreateClient :one
-insert into oidc_clients (id, redirect_uris)
-values ($1, '{}')
-returning id, redirect_uris
+insert into oidc_clients (id, secret_hash, redirect_uris)
+values ($1, $2, '{}')
+returning secret_hash, redirect_uris, id
 `
 
-func (q *Queries) CreateClient(ctx context.Context, id []byte) (OidcClient, error) {
-	row := q.db.QueryRow(ctx, createClient, id)
+type CreateClientParams struct {
+	ID         string
+	SecretHash []byte
+}
+
+func (q *Queries) CreateClient(ctx context.Context, arg CreateClientParams) (OidcClient, error) {
+	row := q.db.QueryRow(ctx, createClient, arg.ID, arg.SecretHash)
 	var i OidcClient
-	err := row.Scan(&i.ID, &i.RedirectUris)
+	err := row.Scan(&i.SecretHash, &i.RedirectUris, &i.ID)
 	return i, err
 }
 
@@ -27,26 +32,26 @@ delete from oidc_clients
 where id = $1
 `
 
-func (q *Queries) DeleteClient(ctx context.Context, id []byte) error {
+func (q *Queries) DeleteClient(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, deleteClient, id)
 	return err
 }
 
 const getClient = `-- name: GetClient :one
-select id, redirect_uris
+select secret_hash, redirect_uris, id
 from oidc_clients
 where id = $1
 `
 
-func (q *Queries) GetClient(ctx context.Context, id []byte) (OidcClient, error) {
+func (q *Queries) GetClient(ctx context.Context, id string) (OidcClient, error) {
 	row := q.db.QueryRow(ctx, getClient, id)
 	var i OidcClient
-	err := row.Scan(&i.ID, &i.RedirectUris)
+	err := row.Scan(&i.SecretHash, &i.RedirectUris, &i.ID)
 	return i, err
 }
 
 const listClients = `-- name: ListClients :many
-select id, redirect_uris
+select secret_hash, redirect_uris, id
 from oidc_clients
 `
 
@@ -59,7 +64,7 @@ func (q *Queries) ListClients(ctx context.Context) ([]OidcClient, error) {
 	var items []OidcClient
 	for rows.Next() {
 		var i OidcClient
-		if err := rows.Scan(&i.ID, &i.RedirectUris); err != nil {
+		if err := rows.Scan(&i.SecretHash, &i.RedirectUris, &i.ID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -74,17 +79,17 @@ const updateClient = `-- name: UpdateClient :one
 update oidc_clients
 set redirect_uris = $2
 where id = $1
-returning id, redirect_uris
+returning secret_hash, redirect_uris, id
 `
 
 type UpdateClientParams struct {
-	ID           []byte
+	ID           string
 	RedirectUris []string
 }
 
 func (q *Queries) UpdateClient(ctx context.Context, arg UpdateClientParams) (OidcClient, error) {
 	row := q.db.QueryRow(ctx, updateClient, arg.ID, arg.RedirectUris)
 	var i OidcClient
-	err := row.Scan(&i.ID, &i.RedirectUris)
+	err := row.Scan(&i.SecretHash, &i.RedirectUris, &i.ID)
 	return i, err
 }

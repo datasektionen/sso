@@ -13,10 +13,10 @@ func b64(bytes []byte) string {
 templ OidcClient(client database.OidcClient, secret []byte) {
 	<li class="p-2">
 		<p class="flex gap-2 items-center">
-			ID: <code>{ b64(client.ID) }</code>
+			ID: <code>{ client.ID }</code>
 			<button
 				class={ roundButton }
-				hx-delete={ "/admin/oidc-clients/" + b64(client.ID) }
+				hx-delete={ "/admin/oidc-clients/" + client.ID }
 				hx-target="closest li"
 				hx-swap="outerHTML"
 				hx-confirm="Want to delete OIDC client? This action is irreversible!"
@@ -42,7 +42,7 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 		<template>
 			<li>
 				<form
-					hx-post={ "/admin/oidc-clients/" + b64(client.ID) }
+					hx-post={ "/admin/oidc-clients/" + client.ID }
 					class="flex gap-2 items-center"
 				>
 					<input
@@ -67,12 +67,12 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 	</li>
 }
 
-templ RedirectURI(clientID []byte, uri string) {
+templ RedirectURI(clientID string, uri string) {
 	<li class="flex gap-2 items-center">
 		{ uri }
 		<button
 			class={ roundButton }
-			hx-delete={ "/admin/oidc-clients/" + b64(clientID) + "/" + url.PathEscape(uri) }
+			hx-delete={ "/admin/oidc-clients/" + clientID + "/" + url.PathEscape(uri) }
 			hx-target="closest li"
 			hx-swap="outerHTML"
 		>
@@ -90,16 +90,27 @@ templ OidcClients(clients []database.OidcClient) {
 					@OidcClient(client, nil)
 				}
 			</ul>
-			<button
-				class="
-					bg-[#3f4c66] p-1.5 block rounded border text-center
-					select-none border-transparent outline-none
-					focus:border-cerise-strong hover:border-cerise-light
-				 "
+			<form
+				class="flex gap-4 items-stretch"
 				hx-post="/admin/oidc-clients"
 				hx-swap="beforeend"
 				hx-target="#oidc-client-list"
-			>New client</button>
+			>
+				<input
+					type="text"
+					pattern="^[a-z\-0-1]+$"
+					class={ input }
+					placeholder="ID"
+					name="id"
+				/>
+				<button
+					class="
+						bg-[#3f4c66] p-1.5 block rounded border text-center
+						select-none border-transparent outline-none
+						focus:border-cerise-strong hover:border-cerise-light
+					 "
+				>New client</button>
+			</form>
 		</section>
 	}
 }

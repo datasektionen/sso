@@ -8,8 +8,8 @@ select *
 from oidc_clients;
 
 -- name: CreateClient :one
-insert into oidc_clients (id, redirect_uris)
-values ($1, '{}')
+insert into oidc_clients (id, secret_hash, redirect_uris)
+values ($1, $2, '{}')
 returning *;
 
 -- name: UpdateClient :one

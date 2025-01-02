@@ -5,11 +5,12 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -25,31 +26,14 @@ import (
 	"github.com/datasektionen/sso/templates"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/xuri/excelize/v2"
 )
 
-var memberSheet struct {
-	// This is locked when retrieving or assigning the reader channel.
-	mu sync.Mutex
-	// The post handler will instantiate this channel and finish the response.
-	// It will then wait for an "event channel" to be sent on this channel
-	// until it begins processing the uploaded sheet and then continuously send
-	// events from the sheet handling on the "event channel". After processing,
-	// this channel will be closed and reassigned to nil.
-	//
-	// The get handler will send an "event channel" on this channel, read
-	// events from that and send them along to the client with SSE.
-	reader chan<- chan<- sheetEvent
-}
-
-type sheetEvent struct {
-	name      string
-	component templ.Component
-}
-
 func authAdmin(s *service.Service, h http.Handler) http.Handler {
 	return httputil.Route(s, func(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+
 		kthid, err := s.GetLoggedInKTHID(r)
 		if err != nil {
 			return err
@@ -69,10 +53,20 @@ func authAdmin(s *service.Service, h http.Handler) http.Handler {
 		if !allowed {
 			return httputil.Forbidden("Missing admin permission in pls")
 		}
+
+		h.ServeHTTP(w, r)
+
 		if r.Method != http.MethodGet {
-			slog.InfoContext(r.Context(), "Admin action taken", "kthid", kthid, "method", r.Method, "path", r.URL.Path)
+			args := []any{"kthid", kthid, "method", r.Method, "path", r.URL.Path}
+			if id := r.PathValue("id"); id != "" {
+				args = append(args, "id", id)
+			} else if r.Form != nil && r.Form.Has("id") {
+				args = append(args, "id", r.Form.Get("id"))
+			}
+			slog.InfoContext(r.Context(), "Admin action taken", args...)
 		}
-		return h
+
+		return nil
 	})
 }
 
@@ -207,6 +201,25 @@ func updateInvite(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		return err
 	}
 	return templates.Invite(inv)
+}
+
+var memberSheet struct {
+	// This is locked when retrieving or assigning the reader channel.
+	mu sync.Mutex
+	// The post handler will instantiate this channel and finish the response.
+	// It will then wait for an "event channel" to be sent on this channel
+	// until it begins processing the uploaded sheet and then continuously send
+	// events from the sheet handling on the "event channel". After processing,
+	// this channel will be closed and reassigned to nil.
+	//
+	// The get handler will send an "event channel" on this channel, read
+	// events from that and send them along to the client with SSE.
+	reader chan<- chan<- sheetEvent
+}
+
+type sheetEvent struct {
+	name      string
+	component templ.Component
 }
 
 func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -435,9 +448,12 @@ func oidcClients(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 	return templates.OidcClients(clients)
 }
 
+var oidcClientIDRegexp = regexp.MustCompile(`^[a-z\-0-1]+$`)
+
 func createOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	if err := r.ParseForm(); err != nil {
-		return httputil.BadRequest("Body must be valid application/x-www-form-urlencoded")
+	id := r.FormValue("id")
+	if !oidcClientIDRegexp.Match([]byte(id)) {
+		return httputil.BadRequest("ID must match " + oidcClientIDRegexp.String())
 	}
 
 	var secret [32]byte
@@ -447,20 +463,24 @@ func createOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request
 
 	h := sha256.New()
 	h.Write(secret[:])
-	id := h.Sum(nil)
+	secretHash := h.Sum(nil)
 
-	client, err := s.DB.CreateClient(r.Context(), id)
+	client, err := s.DB.CreateClient(r.Context(), database.CreateClientParams{
+		ID:         id,
+		SecretHash: secretHash,
+	})
 	if err != nil {
+		var pgerr *pgconn.PgError
+		if errors.As(err, &pgerr) && pgerr.Code == "23505" /* unique_violation */ {
+			return httputil.BadRequest("Client ID already taken")
+		}
 		return err
 	}
 	return templates.OidcClient(client, secret[:])
 }
 
 func deleteOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
-	if err != nil {
-		return httputil.BadRequest("Invalid id")
-	}
+	id := r.PathValue("id")
 
 	if err := s.DB.DeleteClient(r.Context(), id); err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such client")
@@ -471,10 +491,7 @@ func deleteOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request
 }
 
 func addRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
-	if err != nil {
-		return httputil.BadRequest("Invalid id")
-	}
+	id := r.PathValue("id")
 	newURI := r.FormValue("redirect-uri")
 	if newURI == "" {
 		return httputil.BadRequest("Missing uri")
@@ -491,7 +508,10 @@ func addRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Request) 
 
 	if _, err := s.DB.UpdateClient(
 		r.Context(),
-		database.UpdateClientParams(client),
+		database.UpdateClientParams{
+			ID:           client.ID,
+			RedirectUris: client.RedirectUris,
+		},
 	); err != nil {
 		return err
 	}
@@ -500,10 +520,7 @@ func addRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Request) 
 }
 
 func removeRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	id, err := base64.URLEncoding.DecodeString(r.PathValue("id"))
-	if err != nil {
-		return httputil.BadRequest("Invalid id")
-	}
+	id := r.PathValue("id")
 	uri := r.PathValue("uri")
 
 	client, err := s.DB.GetClient(r.Context(), id)
@@ -517,7 +534,10 @@ func removeRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Reques
 
 	if _, err := s.DB.UpdateClient(
 		r.Context(),
-		database.UpdateClientParams(client),
+		database.UpdateClientParams{
+			ID:           client.ID,
+			RedirectUris: client.RedirectUris,
+		},
 	); err != nil {
 		return err
 	}

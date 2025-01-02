@@ -232,11 +232,11 @@ func modal() templ.Component {
 var input = `
 	border border-neutral-500 grow
 	outline-none focus:border-cerise-strong hover:border-cerise-light
-	bg-slate-800 p-1.5 rounded h-8
+	bg-slate-800 p-1.5 rounded leading-tight
 `
 
 var button = `
-	bg-[#3f4c66] p-1 h-8 block rounded border text-center
+	bg-[#3f4c66] p-1 leading-tight block rounded border text-center
 	select-none border-transparent outline-none
 	enabled:focus:border-cerise-strong enabled:hover:border-cerise-light
 	disabled:text-gray-500
@@ -253,7 +253,7 @@ var roundButton = `
 var selectStyle = `
 	border border-neutral-500
 	outline-none focus:border-cerise-strong hover:border-cerise-light
-	bg-slate-800 p-1.5 rounded h-8
+	bg-slate-800 p-1.5 rounded leading-tight
 `
 
 func base64Helpers() templ.Component {

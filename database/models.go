@@ -25,8 +25,9 @@ type LegacyapiToken struct {
 }
 
 type OidcClient struct {
-	ID           []byte
+	SecretHash   []byte
 	RedirectUris []string
+	ID           string
 }
 
 type Passkey struct {

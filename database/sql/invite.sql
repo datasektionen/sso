@@ -1,8 +1,12 @@
 -- name: ListInvites :many
-select * from invites;
+select *
+from invites
+order by created_at;
 
 -- name: GetInvite :one
-select * from invites where id = $1;
+select *
+from invites
+where id = $1;
 
 -- name: CreateInvite :one
 insert into invites (

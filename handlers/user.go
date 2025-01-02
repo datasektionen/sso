@@ -92,7 +92,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	return templates.Account(*user, passkeys, isAdmin)
 }
 
-var yearTagRegex regexp.Regexp = *regexp.MustCompile(`[A-Z][A-Za-z]{0,3}-\d{2}`)
+var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z][A-Za-z]{0,3}-\d{2}$`)
 
 func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user, err := s.GetLoggedInUser(r)

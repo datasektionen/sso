@@ -20,6 +20,10 @@ templ Index(devLogin func() templ.Component) {
 			>Log In with KTH</a>
 			@PasskeyLoginForm("", nil)
 			@devLogin()
+			<a
+				class="text-right italic cursor-pointer hover:underline text-sm w-max ml-auto"
+				href="/request-account"
+			>Request account</a>
 		</div>
 	}
 }

@@ -58,7 +58,7 @@ func Index(devLogin func() templ.Component) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a class=\"text-right italic cursor-pointer hover:underline text-sm w-max ml-auto\" href=\"/register\">Request account</a></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -159,7 +159,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(user.FirstName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 41, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 45, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -172,7 +172,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(user.FamilyName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 41, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 45, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -212,7 +212,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(bigIfTrue(user.FirstNameChangeRequest != "", user.FirstNameChangeRequest, user.FirstName))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 52, Col: 97}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 56, Col: 97}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -225,7 +225,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(bigIfTrue(user.FamilyNameChangeRequest != "", user.FamilyNameChangeRequest, user.FamilyName))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 53, Col: 100}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 57, Col: 100}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -287,7 +287,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(user.KTHID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 103, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 107, Col: 18}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -300,7 +300,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(user.Email)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 107, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 111, Col: 18}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -335,7 +335,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(user.YearTag)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 116, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 120, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -375,7 +375,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(e)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 124, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 128, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -403,7 +403,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(user.MemberTo.Format(time.DateOnly))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 131, Col: 71}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 135, Col: 71}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -421,7 +421,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(user.MemberTo.Format(time.DateOnly))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 133, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 137, Col: 65}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {

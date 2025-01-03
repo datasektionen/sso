@@ -53,7 +53,9 @@ func (q *Queries) DeleteInvite(ctx context.Context, id uuid.UUID) error {
 }
 
 const getInvite = `-- name: GetInvite :one
-select id, name, created_at, expires_at, max_uses, current_uses from invites where id = $1
+select id, name, created_at, expires_at, max_uses, current_uses
+from invites
+where id = $1
 `
 
 func (q *Queries) GetInvite(ctx context.Context, id uuid.UUID) (Invite, error) {
@@ -82,7 +84,9 @@ func (q *Queries) IncrementInviteUses(ctx context.Context, id uuid.UUID) error {
 }
 
 const listInvites = `-- name: ListInvites :many
-select id, name, created_at, expires_at, max_uses, current_uses from invites
+select id, name, created_at, expires_at, max_uses, current_uses
+from invites
+order by created_at
 `
 
 func (q *Queries) ListInvites(ctx context.Context) ([]Invite, error) {

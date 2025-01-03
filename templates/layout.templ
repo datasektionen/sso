@@ -97,6 +97,33 @@ var selectStyle = `
 	bg-slate-800 p-1.5 rounded leading-tight
 `
 
+templ radioButton(attrs templ.Attributes) {
+	<label>
+		<div
+			class="
+				w-4 h-4 bg-slate-800 border border-neutral-500
+				rounded-full cursor-pointer relative inline-block
+				has-[:checked]:border-cerise-strong hover:border-cerise-light
+				mr-1
+			"
+		>
+			<input
+				type="radio"
+				class="absolute opacity-0 pointer-events-none peer h-4 w-4"
+				{ attrs ... }
+			/>
+			<span
+				class="
+					peer-checked:bg-cerise-light
+					absolute inset-0.5
+					flex rounded-full
+				"
+			></span>
+		</div>
+		{ children... }
+	</label>
+}
+
 templ base64Helpers() {
 	<script>
 /**

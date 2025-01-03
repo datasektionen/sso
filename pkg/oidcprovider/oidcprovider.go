@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/config"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/pls"
@@ -355,32 +356,8 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 		return errors.New("SetUserinfoFromScopes, no user but pretty sure that should have been handled in this request???")
 	}
 
-	if userinfo.Claims == nil {
-		userinfo.Claims = make(map[string]any)
-	}
-
-	for _, scope := range scopes {
-		switch scope {
-		case oidc.ScopeOpenID:
-			userinfo.Subject = kthid
-		case oidc.ScopeProfile:
-			userinfo.Name = user.FirstName + " " + user.FamilyName
-			userinfo.GivenName = user.FirstName
-			userinfo.FamilyName = user.FamilyName
-		case oidc.ScopeEmail:
-			userinfo.Email = user.Email
-			userinfo.EmailVerified = true
-		}
-
-		if group, ok := strings.CutPrefix(scope, "pls_"); ok {
-			perms, err := pls.GetUserPermissionsForGroup(ctx, kthid, group)
-			if err != nil {
-				slog.Error("SetUserinfoFromScopes: error getting permissions", "err", err)
-				return err
-			}
-
-			userinfo.Claims[scope] = perms
-		}
+	if err := setUserinfo(ctx, userinfo, *user, scopes); err != nil {
+		return err
 	}
 	slog.Info("oidcprovider.*service.SetUserinfoFromScopes", "userinfo", userinfo)
 	return nil
@@ -410,33 +387,45 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 		return errors.New("SetUserinfoFromToken, no user but pretty sure that should have been handled in this request???")
 	}
 
+	if err := setUserinfo(ctx, userinfo, *user, token.scopes); err != nil {
+		return err
+	}
+
+	slog.Info("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo)
+	return nil
+}
+
+func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User, scopes []string) error {
 	if userinfo.Claims == nil {
 		userinfo.Claims = make(map[string]any)
 	}
 
-	for _, scope := range token.scopes {
+	for _, scope := range scopes {
 		switch scope {
 		case oidc.ScopeOpenID:
-			userinfo.Subject = kthid
+			userinfo.Subject = user.KTHID
+
 		case oidc.ScopeProfile:
+			userinfo.Name = user.FirstName + " " + user.FamilyName
 			userinfo.GivenName = user.FirstName
 			userinfo.FamilyName = user.FamilyName
+
 		case oidc.ScopeEmail:
 			userinfo.Email = user.Email
 			userinfo.EmailVerified = true
-		}
 
-		if group, ok := strings.CutPrefix(scope, "pls_"); ok {
-			perms, err := pls.GetUserPermissionsForGroup(ctx, kthid, group)
-			if err != nil {
-				slog.Error("SetUserinfoFromScopes: error getting permissions", "err", err)
-				return err
+		default:
+			if group, ok := strings.CutPrefix(scope, "pls_"); ok {
+				perms, err := pls.GetUserPermissionsForGroup(ctx, user.KTHID, group)
+				if err != nil {
+					slog.Error("setUserinfo: error getting permissions", "err", err)
+					return err
+				}
+				userinfo.Claims[scope] = perms
 			}
-
-			userinfo.Claims[scope] = perms
 		}
 	}
-	slog.Info("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo)
+
 	return nil
 }
 

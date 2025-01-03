@@ -1,0 +1,17 @@
+package templates
+
+templ MissingAccount() {
+	@modal() {
+		<div class="p-4 flex flex-col gap-4">
+			<p>
+				Your KTH account is not connected to a Datasektionen account. This should happen
+				automatically if you are a chapter member. If not, make sure you have paid the THS
+				membership fee (but even then, it may take a while for us to get updated about that).
+			</p>
+			<p>
+				You may in any case request an account using the button below:
+			</p>
+			<a class={ button } href="/request-account">Request an account</a>
+		</div>
+	}
+}

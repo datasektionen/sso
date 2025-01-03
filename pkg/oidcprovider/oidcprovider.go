@@ -37,10 +37,17 @@ type provider struct {
 	s        *service.Service
 }
 
+// TODO: these should maybe not be stored in just a few hashmaps. One possible problem is that we never free them, which isn't optimal.
 type dotabase struct {
+	mu              sync.Mutex
 	reqByID         map[uuid.UUID]authRequest
 	reqIdByAuthCode map[string]uuid.UUID
-	mu              sync.Mutex
+	tokenByID       map[uuid.UUID]accessToken
+}
+
+type accessToken struct {
+	kthid  string
+	scopes []string
 }
 
 var _ op.Storage = &provider{}
@@ -51,6 +58,9 @@ func MountRoutes(s *service.Service) error {
 	// privateKey.Validate() should catch that. I didn't find a nice way to
 	// initialize a private key from p and q and it is unneccesary to also
 	// store d, so I guess I have to calculate it 🤷.
+	// I guess one could also store a seed for a PRNG that is given to
+	// `rsa.GenerateKey`, but I'm not completely sure about the security
+	// implications of that.
 	privateKey := rsa.PrivateKey{
 		PublicKey: rsa.PublicKey{
 			N: &big.Int{},
@@ -87,6 +97,7 @@ func MountRoutes(s *service.Service) error {
 		dotabase: dotabase{
 			reqByID:         make(map[uuid.UUID]authRequest),
 			reqIdByAuthCode: make(map[string]uuid.UUID),
+			tokenByID:       make(map[uuid.UUID]accessToken),
 		},
 		rsaKey: &privateKey,
 		s:      s,
@@ -198,7 +209,14 @@ func (p *provider) CreateAccessAndRefreshTokens(ctx context.Context, request op.
 // CreateAccessToken implements op.Storage.
 func (p *provider) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
 	slog.Warn("oidcprovider.*service.CreateAccessToken", "request", request)
-	return strings.Join(request.GetScopes(), " "), time.Now().Add(time.Minute), nil
+	tokenID := uuid.New()
+	p.dotabase.mu.Lock()
+	defer p.dotabase.mu.Unlock()
+	p.dotabase.tokenByID[tokenID] = accessToken{
+		kthid:  request.GetSubject(),
+		scopes: request.GetScopes(),
+	}
+	return tokenID.String(), time.Now().Add(time.Minute), nil
 }
 
 // CreateAuthRequest implements op.Storage.
@@ -369,8 +387,20 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 }
 
 // SetUserinfoFromToken implements op.Storage.
-func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID string, kthid string, origin string) error {
+func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID, kthid, origin string) error {
 	slog.Warn("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo, "tokenID", tokenID, "subject", kthid, "origin", origin)
+	accessTokenID, err := uuid.Parse(tokenID)
+	if err != nil {
+		return httputil.BadRequest("SetUserinfoFromToken: invalid uuid syntax in token id")
+	}
+	p.dotabase.mu.Lock()
+	token := p.dotabase.tokenByID[accessTokenID]
+	p.dotabase.mu.Unlock()
+
+	if token.kthid != kthid {
+		return httputil.BadRequest("You're asking to get info about a different user than who the token is for")
+	}
+
 	user, err := p.s.GetUser(ctx, kthid)
 	if err != nil {
 		return err
@@ -384,9 +414,7 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 		userinfo.Claims = make(map[string]any)
 	}
 
-	// TODO: Putting scopes in tokenID feels cursed
-	scopes := strings.Split(tokenID, " ")
-	for _, scope := range scopes {
+	for _, scope := range token.scopes {
 		switch scope {
 		case oidc.ScopeOpenID:
 			userinfo.Subject = kthid

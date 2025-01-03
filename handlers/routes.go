@@ -18,6 +18,7 @@ func MountRoutes(s *service.Service) {
 	http.Handle("GET /logout", httputil.Route(s, logout))
 	http.Handle("GET /account", httputil.Route(s, account))
 	http.Handle("PATCH /account", httputil.Route(s, updateAccount))
+	http.Handle("GET /request-account", httputil.Route(s, requestAccount))
 	http.Handle("GET /invite/{id}", httputil.Route(s, acceptInvite))
 
 	// admin.go

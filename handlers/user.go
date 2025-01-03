@@ -137,6 +137,10 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 	return templates.AccountSettingsForm(*user, nil)
 }
 
+func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	return templates.RequestAccount()
+}
+
 func acceptInvite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	idString := r.PathValue("id")
 	if idString == "-" {

@@ -61,12 +61,16 @@ func kthCallback(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 			return
 		}
 		if user == nil {
-			ok, resp := s.FinishInvite(w, r, kthid)
-			if ok {
+			if resp := s.FinishInvite(w, r, kthid); resp != nil {
 				httputil.Respond(resp, w, r)
-			} else {
-				httputil.Respond(templates.MissingAccount(), w, r)
+				return
 			}
+			if resp := s.FinishAccountRequestKTH(w, r, kthid); resp != nil {
+				httputil.Respond(resp, w, r)
+				return
+			}
+
+			httputil.Respond(templates.MissingAccount(), w, r)
 			return
 		}
 		httputil.Respond(s.LoginUser(r.Context(), user.KTHID), w, r)

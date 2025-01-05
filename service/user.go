@@ -15,6 +15,7 @@ import (
 	"github.com/datasektionen/sso/pkg/kthldap"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func dbUserToModel(user database.User) models.User {
@@ -139,38 +140,59 @@ func (s *Service) RedirectToLogin(w http.ResponseWriter, r *http.Request, nextUR
 	http.Redirect(w, r, "/?"+url.Values{"next-url": []string{nextURL}}.Encode(), http.StatusSeeOther)
 }
 
-func (s *Service) FinishInvite(w http.ResponseWriter, r *http.Request, kthid string) (bool, httputil.ToResponse) {
+func (s *Service) FinishAccountRequestKTH(w http.ResponseWriter, r *http.Request, kthid string) httputil.ToResponse {
+	requestIDCookie, _ := r.Cookie("account-request-id")
+	if requestIDCookie == nil {
+		return nil
+	}
+	requestID, err := uuid.Parse(requestIDCookie.Value)
+	if err != nil {
+		return httputil.BadRequest("Invalid uuid")
+	}
+	if err := s.DB.FinishAccountRequestKTH(r.Context(), database.FinishAccountRequestKTHParams{
+		ID:    requestID,
+		Kthid: pgtype.Text{String: kthid, Valid: true},
+	}); err != nil {
+		return err
+	}
+	return http.RedirectHandler("/request-account/done", http.StatusSeeOther)
+}
+
+// Returns nil if there was no pending invite, so the caller should do something else.
+// Returns a non-nil response if there was a pending invite. That response should then be responded
+// with and the request should not be handeled further.
+func (s *Service) FinishInvite(w http.ResponseWriter, r *http.Request, kthid string) httputil.ToResponse {
 	idCookie, _ := r.Cookie("invite")
 	if idCookie == nil {
-		return false, nil
+		return nil
 	}
 	id, err := uuid.Parse(idCookie.Value)
 	if err != nil {
-		return true, httputil.BadRequest("Invalid uuid")
+		return httputil.BadRequest("Invalid uuid")
 	}
 	inv, err := s.DB.GetInvite(r.Context(), id)
 	if err == pgx.ErrNoRows {
-		return true, httputil.BadRequest("No such invite")
+		return httputil.BadRequest("No such invite")
 	} else if err != nil {
-		return true, err
+		return err
 	}
 	if time.Now().After(inv.ExpiresAt.Time) {
-		return true, httputil.BadRequest("Invite expired")
+		return httputil.BadRequest("Invite expired")
 	}
 	if inv.MaxUses.Valid && inv.CurrentUses >= inv.MaxUses.Int32 {
-		return true, httputil.BadRequest("This invite has reached its usage limit")
+		return httputil.BadRequest("This invite has reached its usage limit")
 	}
 	person, err := kthldap.Lookup(r.Context(), kthid)
 	if err != nil {
-		return true, err
+		return err
 	}
 	if person == nil {
 		slog.Error("Could not find user in ldap", "kthid", kthid, "invite id", id)
-		return true, errors.New("Could not find user in ldap")
+		return errors.New("Could not find user in ldap")
 	}
 	tx, err := s.DB.Begin(r.Context())
 	if err != nil {
-		return true, err
+		return err
 	}
 	defer tx.Rollback(r.Context())
 	if err := tx.CreateUser(r.Context(), database.CreateUserParams{
@@ -180,15 +202,15 @@ func (s *Service) FinishInvite(w http.ResponseWriter, r *http.Request, kthid str
 		FirstName:  person.FirstName,
 		FamilyName: person.FamilyName,
 	}); err != nil {
-		return true, err
+		return err
 	}
 	if err := tx.IncrementInviteUses(r.Context(), id); err != nil {
-		return true, err
+		return err
 	}
 	if err := tx.Commit(r.Context()); err != nil {
-		return true, err
+		return err
 	}
 	http.SetCookie(w, &http.Cookie{Name: "invite", MaxAge: -1})
 	slog.Info("User invite link used", "kthid", kthid, "invite-id", inv.ID)
-	return true, s.LoginUser(r.Context(), kthid)
+	return s.LoginUser(r.Context(), kthid)
 }

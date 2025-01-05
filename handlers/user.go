@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
@@ -137,8 +138,55 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 	return templates.AccountSettingsForm(*user, nil)
 }
 
-func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func requestAccountPage(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return templates.RequestAccount()
+}
+
+func requestAccountNoKTHAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	panic("unimplemented")
+}
+
+func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	var hasKTHAccount bool
+	switch r.FormValue("have-kth-account") {
+	case "yes":
+		hasKTHAccount = true
+	case "no":
+		hasKTHAccount = false
+	default:
+		return httputil.BadRequest("Invalid `have-kth-account`. Must be `yes` or `no`")
+	}
+
+	reference := r.FormValue("reference")
+	reason := r.FormValue("reason")
+	yearTag := r.FormValue("year-tag")
+
+	if hasKTHAccount {
+		id, err := s.DB.CreateAccountRequest(r.Context(), database.CreateAccountRequestParams{
+			Reference: reference,
+			Reason:    reason,
+			YearTag:   yearTag,
+		})
+		if err != nil {
+			return err
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:     "account-request-id",
+			Value:    id.String(),
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+		return httputil.Redirect("/oidc/kth/login")
+	} else {
+		panic("todo")
+	}
+
+	// TODO: send email to admins
+}
+
+func requestAccountDone(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	return templates.AccountRequestDone()
 }
 
 func acceptInvite(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

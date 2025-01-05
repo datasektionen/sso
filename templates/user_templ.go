@@ -46,7 +46,7 @@ func Index(devLogin func() templ.Component) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/login/oidc/kth\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-cerise-strong hover:border-cerise-light\n\t\t\t\t\">Log In with KTH</a>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/oidc/kth/login\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-cerise-strong hover:border-cerise-light\n\t\t\t\t\">Log In with KTH</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -473,7 +473,7 @@ func RequestAccount() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form class=\"p-6 flex flex-col gap-4\"><label for=\"reference\">Reference: <span class=\"text-sm\">(a person)</span></label> ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header class=\"p-12 max-w-xl mx-auto\"><h1 class=\"text-2xl font-bold text-center capitalize pb-4\">Request account</h1><p class=\"text-justify\">Bla bla Datasektionen account is used for all systems by Datasektionen bla bla. You can have it even if you don't be the Datasektionen member if you request one here. You can get it removed or some shit if you email the god damn Dr. Ek.</p></header><form class=\"p-6 flex flex-col gap-4\" hx-post=\"/request-account\"><label for=\"reference\">Reference: <span class=\"text-sm\">(a person)</span></label> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -482,7 +482,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<input type=\"text\" id=\"reference\" name=\"reference\" class=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<input type=\"text\" id=\"reference\" name=\"reference\" required class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -495,7 +495,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <label for=\"reason\">Why do you need an account?<br>I.e. which system(s) do you plan to interact with. Why? Is it related to some specific event?</label> ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <label for=\"reason\">Why do you need an account?<br>I.e. which system(s) do you plan to interact with. Is it related to some specific event?</label> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -504,7 +504,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<textarea name=\"reason\" id=\"reason\" class=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<textarea name=\"reason\" id=\"reason\" required class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -526,7 +526,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<input type=\"text\" id=\"year-tag\" name=\"year-tag\" placeholder=\"e.g. D-21\" class=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<input type=\"text\" id=\"year-tag\" name=\"year-tag\" placeholder=\"e.g. D-21\" required class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -562,9 +562,12 @@ func RequestAccount() templ.Component {
 				return templ_7745c5c3_Err
 			})
 			templ_7745c5c3_Err = radioButton(templ.Attributes{
-				"_":            "on click show <#kth-login/> then hide <#manual/>",
+				// Since the input fields in #manual are required, we set their type to hidden
+				// because otherwise you can't submit the form
+				"_":            "on click show <#kth-login/> then hide <#manual/> then set <#manual input/>'s type to 'hidden'",
 				"autocomplete": "off",
-				"name":         "have-account",
+				"name":         "have-kth-account",
+				"value":        "yes",
 			}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var34), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -592,10 +595,10 @@ func RequestAccount() templ.Component {
 				return templ_7745c5c3_Err
 			})
 			templ_7745c5c3_Err = radioButton(templ.Attributes{
-				"_":            "on click show <#manual/> then hide <#kth-login/>",
+				"_":            "on click show <#manual/> then set <#manual input/>'s type to 'text' then hide <#kth-login/>",
 				"autocomplete": "off",
-				"name":         "have-account",
-				"id":           "no-account",
+				"name":         "have-kth-account",
+				"value":        "no",
 			}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var35), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -688,13 +691,90 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><p>todo: passkeys</p></div></form>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div class=\"flex flex-col gap-2\"><template shadowrootmode=\"open\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Var44 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
+						}
+					}()
+				}
+				ctx = templ.InitializeContext(ctx)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<label for=\"passkey-name\">Register a passkey. This will be your only login method in your account, but you will be able to add more once you get it.</label>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = AddPasskeyForm(nil).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				return templ_7745c5c3_Err
+			})
+			templ_7745c5c3_Err = base().Render(templ.WithChildren(ctx, templ_7745c5c3_Var44), templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</template></div></div></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return templ_7745c5c3_Err
 		})
 		templ_7745c5c3_Err = page(templ.NopComponent).Render(templ.WithChildren(ctx, templ_7745c5c3_Var27), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return templ_7745c5c3_Err
+	})
+}
+
+func AccountRequestDone() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var45 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var45 == nil {
+			templ_7745c5c3_Var45 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Var46 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8 flex flex-col gap-4\"><h1 class=\"text-2xl font-bold text-center capitalize pb-4\">Account request complete</h1><p>Thank you for requesting an account. You will receive an E-mail when your request has been accepted or denied.</p></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return templ_7745c5c3_Err
+		})
+		templ_7745c5c3_Err = modal().Render(templ.WithChildren(ctx, templ_7745c5c3_Var46), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -718,12 +798,12 @@ func AcceptInvite() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var44 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var44 == nil {
-			templ_7745c5c3_Var44 = templ.NopComponent
+		templ_7745c5c3_Var47 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var47 == nil {
+			templ_7745c5c3_Var47 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var45 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var48 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -735,13 +815,13 @@ func AcceptInvite() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/login/oidc/kth\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-cerise-strong hover:border-cerise-light\n\t\t\t\t\">Continue with KTH</a><p>Pressing the button above will create a Datasektionen account using your KTH account.</p></div><script>\n\t\t\thistory.replaceState(null, \"\", \"/invite/-\");\n\t\t</script>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/oidc/kth/login\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-cerise-strong hover:border-cerise-light\n\t\t\t\t\">Continue with KTH</a><p>Pressing the button above will create a Datasektionen account using your KTH account.</p></div><script>\n\t\t\thistory.replaceState(null, \"\", \"/invite/-\");\n\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return templ_7745c5c3_Err
 		})
-		templ_7745c5c3_Err = modal().Render(templ.WithChildren(ctx, templ_7745c5c3_Var45), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = modal().Render(templ.WithChildren(ctx, templ_7745c5c3_Var48), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

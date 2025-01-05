@@ -12,6 +12,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createAccountRequest = `-- name: CreateAccountRequest :one
+insert into account_requests (reference, reason, year_tag)
+values ($1, $2, $3)
+returning id
+`
+
+type CreateAccountRequestParams struct {
+	Reference string
+	Reason    string
+	YearTag   string
+}
+
+func (q *Queries) CreateAccountRequest(ctx context.Context, arg CreateAccountRequestParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createAccountRequest, arg.Reference, arg.Reason, arg.YearTag)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createSession = `-- name: CreateSession :one
 insert into sessions (kthid)
 values ($1)
@@ -58,6 +77,22 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.YearTag,
 		arg.MemberTo,
 	)
+	return err
+}
+
+const finishAccountRequestKTH = `-- name: FinishAccountRequestKTH :exec
+update account_requests
+set kthid = $2
+where id = $1
+`
+
+type FinishAccountRequestKTHParams struct {
+	ID    uuid.UUID
+	Kthid pgtype.Text
+}
+
+func (q *Queries) FinishAccountRequestKTH(ctx context.Context, arg FinishAccountRequestKTHParams) error {
+	_, err := q.db.Exec(ctx, finishAccountRequestKTH, arg.ID, arg.Kthid)
 	return err
 }
 

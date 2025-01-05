@@ -9,6 +9,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AccountRequest struct {
+	ID        uuid.UUID
+	CreatedAt pgtype.Timestamp
+	Reference string
+	Reason    string
+	YearTag   string
+	Kthid     pgtype.Text
+}
+
 type Invite struct {
 	ID          uuid.UUID
 	Name        string

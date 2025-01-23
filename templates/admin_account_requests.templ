@@ -14,13 +14,12 @@ templ AccountRequests(requests []database.AccountRequest) {
 				<p>Reason</p>
 				<p>Request Date</p>
 				<p>Year</p>
-				<p></p>
 			</li>
 			for _, request := range requests {
 				<li class="grid grid-cols-subgrid col-span-full odd:bg-white/5 p-1">
 					<p>{ request.Kthid.String }</p>
 					<p>{ request.Reference }</p>
-					<p class="whitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-normal">{ request.Reason }</p>
+					<p class="whitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-pre-line">{ request.Reason }</p>
 					<p>{ request.CreatedAt.Time.Format(time.DateOnly) }</p>
 					<p>{ request.YearTag }</p>
 					<div class="flex gap-2 justify-stretch">
@@ -28,13 +27,17 @@ templ AccountRequests(requests []database.AccountRequest) {
 							class={ button }
 							hx-post={ "/admin/account-requests/" + request.ID.String() }
 							hx-target="closest div"
-						>Approve</button>
+						>
+							Approve
+						</button>
 						<button
 							class={ button }
 							hx-delete={ "/admin/account-requests/" + request.ID.String() }
 							hx-target="closest li"
 							hx-swap="outerHTML"
-						>Deny</button>
+						>
+							Deny
+						</button>
 					</div>
 				</li>
 			}

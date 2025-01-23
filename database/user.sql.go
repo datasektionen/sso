@@ -88,6 +88,18 @@ func (q *Queries) GetAllYears(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
+const getLastSheetUploadTime = `-- name: GetLastSheetUploadTime :one
+select uploaded_at
+from last_membership_sheet
+`
+
+func (q *Queries) GetLastSheetUploadTime(ctx context.Context) (pgtype.Timestamp, error) {
+	row := q.db.QueryRow(ctx, getLastSheetUploadTime)
+	var uploaded_at pgtype.Timestamp
+	err := row.Scan(&uploaded_at)
+	return uploaded_at, err
+}
+
 const getSession = `-- name: GetSession :one
 update sessions
 set last_used_at = now()
@@ -187,6 +199,19 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const markSheetUploadedNow = `-- name: MarkSheetUploadedNow :exec
+insert into last_membership_sheet (uploaded_at)
+values (now())
+on conflict (unique_marker)
+do update
+set uploaded_at = now()
+`
+
+func (q *Queries) MarkSheetUploadedNow(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, markSheetUploadedNow)
+	return err
 }
 
 const removeSession = `-- name: RemoveSession :exec

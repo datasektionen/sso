@@ -18,13 +18,13 @@ templ AdminPage() {
 	}
 }
 
-templ Members() {
+templ Members(lastUpdatedAt time.Time) {
 	@AdminPage() {
 		<div class="p-8">
 			<section hx-get="/admin/users" hx-trigger="load" hx-swap="morph:innerHTML">
 				@MemberList([]models.User{}, "", 0, false, []string{}, "")
 			</section>
-			@uploadForm()
+			@uploadForm(lastUpdatedAt)
 			@UploadStatus(false)
 		</div>
 	}
@@ -102,7 +102,7 @@ templ MemberList(users []models.User, search string, offset int, more bool, year
 	</div>
 }
 
-templ uploadForm() {
+templ uploadForm(lastUpdatedAt time.Time) {
 	<form
 		class="py-2 flex gap-2 items-center"
 		hx-post="/admin/members/upload-sheet"
@@ -110,7 +110,7 @@ templ uploadForm() {
 		hx-swap="outerHTML"
 		hx-target="#upload-status"
 	>
-		<p class="shrink-0">Upload THS membership sheet</p>
+		<p class="shrink-0">Upload THS membership sheet. Last upload at {lastUpdatedAt.Format(time.DateOnly)}</p>
 		<input
 			name="sheet"
 			type="file"

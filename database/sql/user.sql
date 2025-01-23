@@ -72,3 +72,14 @@ set first_name_change_request = $2,
     family_name_change_request = $3
 where kthid = $1
 returning *;
+
+-- name: GetLastSheetUploadTime :one
+select uploaded_at
+from last_membership_sheet;
+
+-- name: MarkSheetUploadedNow :exec
+insert into last_membership_sheet (uploaded_at)
+values (now())
+on conflict (unique_marker)
+do update
+set uploaded_at = now();

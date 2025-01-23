@@ -18,6 +18,11 @@ type Invite struct {
 	CurrentUses int32
 }
 
+type LastMembershipSheet struct {
+	UniqueMarker string
+	UploadedAt   pgtype.Timestamp
+}
+
 type LegacyapiToken struct {
 	ID         uuid.UUID
 	Kthid      string

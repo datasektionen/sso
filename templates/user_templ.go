@@ -625,7 +625,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\">Log in with KTH and submit request</button></div><div id=\"manual\" style=\"display: none\" class=\"flex flex-col gap-4\"><div class=\"flex items-center gap-2\"><label for=\"first-name\">First name</label> ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\">Log in with KTH and submit request</button></div><div id=\"manual\" style=\"display: none\" class=\"flex flex-col gap-4\"><p>Unfortunately, this is not yet implemented, but the plan is to allow you to fill in your name and register a passkey.</p><div class=\"grayscale brightness-75 bg-neutral-800 p-4 rounded-md pointer-events-none select-none flex flex-col gap-4\"><div class=\"flex items-center gap-2\"><label for=\"first-name\">First name</label> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -691,7 +691,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div class=\"flex flex-col gap-2\"><template shadowrootmode=\"open\">")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div class=\"flex flex-col gap-2\" id=\"shadowroothost\"><template shadowrootmode=\"open\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -721,7 +721,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</template></div></div></form>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</template></div></div></div></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

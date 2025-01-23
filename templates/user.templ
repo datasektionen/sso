@@ -196,30 +196,33 @@ templ RequestAccount() {
 				<button class={ button }>Log in with KTH and submit request</button>
 			</div>
 			<div id="manual" style="display: none" class="flex flex-col gap-4">
-				<div class="flex items-center gap-2">
-					<label for="first-name">First name</label>
-					<input type="text" id="first-name" name="first-name" required class={ input }/>
-				</div>
-				<div class="flex items-center gap-2">
-					<label for="family-name">Family name</label>
-					<input type="text" id="family-name" name="family-name" required class={ input }/>
-				</div>
-				<div class="flex items-center gap-2">
-					<label for="email">Email address</label>
-					<input type="text" id="email" name="email" required class={ input }/>
-				</div>
-				<div class="flex flex-col gap-2">
-					// This is in a shadow DOM because otherwise little HTML gets confused that
-					// there is a form in a form.
-					<template shadowrootmode="open">
-						@base() {
-							<label for="passkey-name">
-								Register a passkey. This will be your only login method
-								in your account, but you will be able to add more once you get it.
-							</label>
-							@AddPasskeyForm(nil)
-						}
-					</template>
+				<p>Unfortunately, this is not yet implemented, but the plan is to allow you to fill in your name and register a passkey.</p>
+				<div class="grayscale brightness-75 bg-neutral-800 p-4 rounded-md pointer-events-none select-none flex flex-col gap-4">
+					<div class="flex items-center gap-2">
+						<label for="first-name">First name</label>
+						<input type="text" id="first-name" name="first-name" required class={ input }/>
+					</div>
+					<div class="flex items-center gap-2">
+						<label for="family-name">Family name</label>
+						<input type="text" id="family-name" name="family-name" required class={ input }/>
+					</div>
+					<div class="flex items-center gap-2">
+						<label for="email">Email address</label>
+						<input type="text" id="email" name="email" required class={ input }/>
+					</div>
+					<div class="flex flex-col gap-2" id="shadowroothost">
+						// This is in a shadow DOM because otherwise little HTML gets confused that
+						// there is a form in a form.
+						<template shadowrootmode="open">
+							@base() {
+								<label for="passkey-name">
+									Register a passkey. This will be your only login method
+									in your account, but you will be able to add more once you get it.
+								</label>
+								@AddPasskeyForm(nil)
+							}
+						</template>
+					</div>
 				</div>
 			</div>
 		</form>

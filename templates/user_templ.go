@@ -473,7 +473,7 @@ func RequestAccount() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header class=\"p-12 max-w-xl mx-auto\"><h1 class=\"text-2xl font-bold text-center capitalize pb-4\">Request account</h1><p class=\"text-justify\">Bla bla Datasektionen account is used for all systems by Datasektionen bla bla. You can have it even if you don't be the Datasektionen member if you request one here. You can get it removed or some shit if you email the god damn Dr. Ek.</p></header><form class=\"p-6 flex flex-col gap-4\" hx-post=\"/request-account\"><label for=\"reference\">Reference: <span class=\"text-sm\">(a person)</span></label> ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header class=\"p-12 max-w-2xl mx-auto\"><h1 class=\"text-2xl font-bold text-center capitalize pb-4\">Request account</h1><p class=\"text-justify\">A Datasektionen account is used for all systems by Datasektionen. You should have one automatically if you are a member of Datasektionen (i.e. study the computer science 5-year programme or a master programme mapped to the chapter), but otherwise you may still get an account by requesting one using the form below.</p></header><form class=\"p-6 flex flex-col gap-4\" hx-post=\"/request-account\"><label for=\"reference\">Reference: <span class=\"text-sm\">(a person)</span></label> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -517,7 +517,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></textarea> <label for=\"year-tag\"><i>Årskurs</i> (optional)</label> ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></textarea> <label for=\"year-tag\"><i>Year</i> (optional)</label> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -526,7 +526,7 @@ func RequestAccount() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<input type=\"text\" id=\"year-tag\" name=\"year-tag\" placeholder=\"e.g. D-21\" required class=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<input type=\"text\" id=\"year-tag\" name=\"year-tag\" placeholder=\"e.g. D-21\" class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

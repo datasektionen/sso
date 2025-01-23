@@ -552,3 +552,75 @@ func removeRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Reques
 
 	return nil
 }
+
+func accountRequests(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	requests, err := s.DB.ListAccountRequests(r.Context())
+	if err != nil {
+		return err
+	}
+
+	requests = slices.DeleteFunc(requests, func(req database.AccountRequest) bool { return !req.Kthid.Valid })
+
+	return templates.AccountRequests(requests)
+}
+
+func denyAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid uuid")
+	}
+	if _, err := s.DB.DeleteAccountRequest(r.Context(), id); err != nil {
+		return err
+	}
+	return templ.NopComponent
+}
+
+func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		return httputil.BadRequest("Invalid uuid")
+	}
+
+	tx, err := s.DB.Begin(r.Context())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(r.Context())
+
+	accountRequest, err := tx.DeleteAccountRequest(r.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	kthid := accountRequest.Kthid.String
+	if kthid == "" {
+		return httputil.BadRequest("No KTH ID - approval not implemented for that")
+	}
+
+	person, err := kthldap.Lookup(r.Context(), accountRequest.Kthid.String)
+	if err != nil {
+		return err
+	}
+	if person == nil {
+		return fmt.Errorf("Could not find user with kthid '%s' in KTH's ldap", kthid)
+	}
+	if err := tx.CreateUser(r.Context(), database.CreateUserParams{
+		Kthid:      kthid,
+		UgKthid:    person.UGKTHID,
+		Email:      person.KTHID + "@kth.se",
+		FirstName:  person.FirstName,
+		FamilyName: person.FamilyName,
+	}); err != nil {
+		var pgerr *pgconn.PgError
+		if errors.As(err, &pgerr) && pgerr.Code == "23505" /* unique_violation */ {
+			return httputil.BadRequest("User already exists")
+		}
+		return err
+	}
+
+	if err := tx.Commit(r.Context()); err != nil {
+		return err
+	}
+
+	return "Approved ✅"
+}

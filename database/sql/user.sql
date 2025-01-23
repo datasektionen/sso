@@ -93,3 +93,13 @@ returning id;
 update account_requests
 set kthid = $2
 where id = $1;
+
+-- name: ListAccountRequests :many
+select *
+from account_requests
+order by created_at;
+
+-- name: DeleteAccountRequest :one
+delete from account_requests
+where id = $1
+returning *;

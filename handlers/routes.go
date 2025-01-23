@@ -19,7 +19,6 @@ func MountRoutes(s *service.Service) {
 	http.Handle("GET /account", httputil.Route(s, account))
 	http.Handle("PATCH /account", httputil.Route(s, updateAccount))
 	http.Handle("GET /request-account", httputil.Route(s, requestAccountPage))
-	http.Handle("GET /request-account/no-kth-account", httputil.Route(s, requestAccountNoKTHAccount))
 	http.Handle("POST /request-account", httputil.Route(s, requestAccount))
 	http.Handle("GET /request-account/done", httputil.Route(s, requestAccountDone))
 	http.Handle("GET /invite/{id}", httputil.Route(s, acceptInvite))
@@ -44,6 +43,10 @@ func MountRoutes(s *service.Service) {
 	http.Handle("DELETE /admin/invites/{id}", authAdmin(s, httputil.Route(s, deleteInvite)))
 	http.Handle("GET /admin/invites/{id}/edit", authAdmin(s, httputil.Route(s, editInviteForm)))
 	http.Handle("PUT /admin/invites/{id}", authAdmin(s, httputil.Route(s, updateInvite)))
+
+	http.Handle("GET /admin/account-requests", authAdmin(s, httputil.Route(s, accountRequests)))
+	http.Handle("DELETE /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, denyAccountRequest)))
+	http.Handle("POST /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, approveAccountRequest)))
 
 	// dev.go
 	if config.Config.Dev {

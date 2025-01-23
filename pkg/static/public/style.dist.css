@@ -704,16 +704,16 @@ html {
   width: max-content;
 }
 
+.max-w-2xl {
+  max-width: 42rem;
+}
+
 .max-w-\[calc\(100vw-2rem\)\] {
   max-width: calc(100vw - 2rem);
 }
 
 .max-w-lg {
   max-width: 32rem;
-}
-
-.max-w-xl {
-  max-width: 36rem;
 }
 
 .shrink-0 {
@@ -746,6 +746,26 @@ html {
   grid-template-columns: subgrid;
 }
 
+.grid-cols-\[auto\2c auto\2c 1fr\2c auto\2c auto\2c auto\] {
+  grid-template-columns: auto auto 1fr auto auto auto;
+}
+
+.grid-cols-7 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.grid-cols-\[repeat\(6\2c auto\)_max-content\] {
+  grid-template-columns: repeat(6,auto) max-content;
+}
+
+.grid-cols-\[repeat\(6\2c auto\)repeat\(2\2c max-content\)\] {
+  grid-template-columns: repeat(6,auto)repeat(2,max-content);
+}
+
+.grid-cols-\[repeat\(6\2c auto\)_repeat\(2\2c max-content\)\] {
+  grid-template-columns: repeat(6,auto) repeat(2,max-content);
+}
+
 .flex-col {
   flex-direction: column;
 }
@@ -756,6 +776,10 @@ html {
 
 .place-items-center {
   place-items: center;
+}
+
+.content-stretch {
+  align-content: stretch;
 }
 
 .items-start {
@@ -772,6 +796,10 @@ html {
 
 .justify-center {
   justify-content: center;
+}
+
+.justify-stretch {
+  justify-content: stretch;
 }
 
 .gap-1 {
@@ -797,6 +825,22 @@ html {
 
 .overflow-auto {
   overflow: auto;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+
+.text-ellipsis {
+  text-overflow: ellipsis;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
 }
 
 .rounded {
@@ -1164,6 +1208,14 @@ html {
   background-color: rgb(255 255 255 / 0.05);
 }
 
+.hover\:overflow-visible:hover {
+  overflow: visible;
+}
+
+.hover\:whitespace-normal:hover {
+  white-space: normal;
+}
+
 .hover\:border-cerise-light:hover {
   --tw-border-opacity: 1;
   border-color: rgb(236 95 153 / var(--tw-border-opacity));
@@ -1173,9 +1225,17 @@ html {
   text-decoration-line: underline;
 }
 
+.focus\:whitespace-normal:focus {
+  white-space: normal;
+}
+
 .focus\:border-cerise-strong:focus {
   --tw-border-opacity: 1;
   border-color: rgb(238 42 123 / var(--tw-border-opacity));
+}
+
+.active\:whitespace-normal:active {
+  white-space: normal;
 }
 
 .enabled\:hover\:border-cerise-light:hover:enabled {

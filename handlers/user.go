@@ -142,10 +142,6 @@ func requestAccountPage(s *service.Service, w http.ResponseWriter, r *http.Reque
 	return templates.RequestAccount()
 }
 
-func requestAccountNoKTHAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	panic("unimplemented")
-}
-
 func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	var hasKTHAccount bool
 	switch r.FormValue("have-kth-account") {

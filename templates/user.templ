@@ -142,12 +142,13 @@ templ AccountSettingsForm(user models.User, errors map[string]string) {
 
 templ RequestAccount() {
 	@page(templ.NopComponent) {
-		<header class="p-12 max-w-xl mx-auto">
+		<header class="p-12 max-w-2xl mx-auto">
 			<h1 class="text-2xl font-bold text-center capitalize pb-4">Request account</h1>
 			<p class="text-justify">
-				Bla bla Datasektionen account is used for all systems by Datasektionen bla bla. You
-				can have it even if you don't be the Datasektionen member if you request one here.
-				You can get it removed or some shit if you email the god damn Dr. Ek.
+				A Datasektionen account is used for all systems by Datasektionen. You should have
+				one automatically if you are a member of Datasektionen (i.e. study the computer
+				science 5-year programme or a master programme mapped to the chapter), but otherwise
+				you may still get an account by requesting one using the form below.
 			</p>
 		</header>
 		<form class="p-6 flex flex-col gap-4" hx-post="/request-account">
@@ -161,13 +162,12 @@ templ RequestAccount() {
 				I.e. which system(s) do you plan to interact with. Is it related to some specific event?
 			</label>
 			<textarea name="reason" id="reason" required class={ input }></textarea>
-			<label for="year-tag"><i>Årskurs</i> (optional)</label>
+			<label for="year-tag"><i>Year</i> (optional)</label>
 			<input
 				type="text"
 				id="year-tag"
 				name="year-tag"
 				placeholder="e.g. D-21"
-				required
 				class={ input }
 			/>
 			<p>Do you have a KTH account?</p>

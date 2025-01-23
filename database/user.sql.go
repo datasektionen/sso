@@ -80,6 +80,26 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
+const deleteAccountRequest = `-- name: DeleteAccountRequest :one
+delete from account_requests
+where id = $1
+returning id, created_at, reference, reason, year_tag, kthid
+`
+
+func (q *Queries) DeleteAccountRequest(ctx context.Context, id uuid.UUID) (AccountRequest, error) {
+	row := q.db.QueryRow(ctx, deleteAccountRequest, id)
+	var i AccountRequest
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.Reference,
+		&i.Reason,
+		&i.YearTag,
+		&i.Kthid,
+	)
+	return i, err
+}
+
 const finishAccountRequestKTH = `-- name: FinishAccountRequestKTH :exec
 update account_requests
 set kthid = $2
@@ -172,6 +192,39 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 		&i.FamilyNameChangeRequest,
 	)
 	return i, err
+}
+
+const listAccountRequests = `-- name: ListAccountRequests :many
+select id, created_at, reference, reason, year_tag, kthid
+from account_requests
+order by created_at
+`
+
+func (q *Queries) ListAccountRequests(ctx context.Context) ([]AccountRequest, error) {
+	rows, err := q.db.Query(ctx, listAccountRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AccountRequest
+	for rows.Next() {
+		var i AccountRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.Reference,
+			&i.Reason,
+			&i.YearTag,
+			&i.Kthid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUsers = `-- name: ListUsers :many

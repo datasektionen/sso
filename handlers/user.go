@@ -130,7 +130,7 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 	}
 	if doNameChangeRequest {
 		var err error
-		*user, err = s.UserSetNameChangeRequest(r.Context(), user.KTHID, firstNameChangeRequest, familyNameChangeRequest)
+		*user, err = s.UserSetNameChangeRequest(r.Context(), *user, firstNameChangeRequest, familyNameChangeRequest)
 		if err != nil {
 			return err
 		}

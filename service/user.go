@@ -71,16 +71,21 @@ func (s *Service) UserSetYear(ctx context.Context, kthid string, yearTag string)
 	return dbUserToModel(user), nil
 }
 
-func (s *Service) UserSetNameChangeRequest(ctx context.Context, kthid string, firstName string, familyName string) (models.User, error) {
-	user, err := s.DB.UserSetNameChangeRequest(ctx, database.UserSetNameChangeRequestParams{
-		Kthid:                   kthid,
+func (s *Service) UserSetNameChangeRequest(ctx context.Context, user models.User, firstName string, familyName string) (models.User, error) {
+	newUser, err := s.DB.UserSetNameChangeRequest(ctx, database.UserSetNameChangeRequestParams{
+		Kthid:                   user.KTHID,
 		FirstNameChangeRequest:  firstName,
 		FamilyNameChangeRequest: familyName,
 	})
 	if err != nil {
 		return models.User{}, err
 	}
-	return dbUserToModel(user), nil
+	if err := email.Send(ctx, "d-sys@datasektionen.se", "SSO - Name change requested", strings.TrimSpace(`
+The user `+user.FirstName+` `+user.FamilyName+` (`+user.KTHID+`) has requested to change their name to `+"`"+firstName+"`"+` `+"`"+familyName+"`"+`.
+	`)); err != nil {
+		return models.User{}, err
+	}
+	return dbUserToModel(newUser), nil
 }
 
 func (s *Service) LoginUser(ctx context.Context, kthid string) httputil.ToResponse {

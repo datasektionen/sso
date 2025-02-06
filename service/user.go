@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/auth"
+	"github.com/datasektionen/sso/pkg/email"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/kthldap"
 	"github.com/google/uuid"
@@ -155,6 +157,22 @@ func (s *Service) FinishAccountRequestKTH(w http.ResponseWriter, r *http.Request
 	}); err != nil {
 		return err
 	}
+
+	person, err := kthldap.Lookup(r.Context(), kthid)
+	if err != nil {
+		return err
+	}
+	if err := email.Send(
+		r.Context(),
+		"d-sys@datasektionen.se",
+		"Datasektionen Account Requested by "+person.KTHID,
+		fmt.Sprintf(`
+			A new account request has been made by %s %s (%s). <a href="https://sso.datasektionen.se/admin/account-requests">sso.datasektionen.se/admin/account-requests</a>.
+		`, person.FirstName, person.FamilyName, person.KTHID),
+	); err != nil {
+		return err
+	}
+
 	return http.RedirectHandler("/request-account/done", http.StatusSeeOther)
 }
 

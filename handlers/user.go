@@ -177,8 +177,6 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	} else {
 		panic("todo")
 	}
-
-	// TODO: send email to admins
 }
 
 func requestAccountDone(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

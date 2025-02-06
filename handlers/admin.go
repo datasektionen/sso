@@ -570,10 +570,22 @@ func denyAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	if _, err := s.DB.DeleteAccountRequest(r.Context(), id); err != nil {
+	req, err := s.DB.DeleteAccountRequest(r.Context(), id)
+	if err != nil {
 		return err
 	}
-	return templ.NopComponent
+
+	if kthid := req.Kthid.String; req.Kthid.Valid && kthid != "" {
+		if err := email.Send(r.Context(), kthid+"@kth.se", "Datasektionen account request denied", fmt.Sprintf(`
+		Your Datasektionen account request has been denied.
+	`)); err != nil {
+			slog.Error("Could not send email", "error", err)
+			return "Denied, but could not send email!"
+		}
+		return "Denied ❌ and sent email!"
+	}
+
+	return "Denied ❌"
 }
 
 func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

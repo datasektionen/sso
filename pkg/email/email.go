@@ -30,6 +30,7 @@ func Send(ctx context.Context, recipient, subject, contents string) error {
 		"to":      []string{recipient},
 		"subject": subject,
 		"content": contents,
+		"replyTo": "d-sys@datasektionen.se",
 	}); err != nil {
 		return err
 	}

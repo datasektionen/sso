@@ -634,12 +634,11 @@ func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	if err := email.Send(r.Context(), emailAddress, "Datasektionen account request approved", fmt.Sprintf(`
-		Hello %s, your Datasektionen account request has been approved!
+	if err := email.Send(r.Context(), emailAddress, "Datasektionen account request approved", strings.TrimSpace(fmt.Sprintf(`
+Hello %s, your Datasektionen account request has been approved!
 
-		You can go to [sso.datasektionen.se](https://sso.datasektionen.se/) to log in and see your
-		account, or simply go directly to a system you want to log in to.
-	`, person.FirstName)); err != nil {
+You can go to [sso.datasektionen.se](https://sso.datasektionen.se/) to log in and see your account, or simply go directly to a system you want to log in to.
+	`, person.FirstName))); err != nil {
 		slog.Error("Could not send email", "error", err)
 		return "Approved, but could not send email!"
 	}

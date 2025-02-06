@@ -83,3 +83,23 @@ values (now())
 on conflict (unique_marker)
 do update
 set uploaded_at = now();
+
+-- name: CreateAccountRequest :one
+insert into account_requests (reference, reason, year_tag)
+values ($1, $2, $3)
+returning id;
+
+-- name: FinishAccountRequestKTH :exec
+update account_requests
+set kthid = $2
+where id = $1;
+
+-- name: ListAccountRequests :many
+select *
+from account_requests
+order by created_at;
+
+-- name: DeleteAccountRequest :one
+delete from account_requests
+where id = $1
+returning *;

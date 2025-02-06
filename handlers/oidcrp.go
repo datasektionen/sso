@@ -7,6 +7,7 @@ import (
 
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
+	"github.com/datasektionen/sso/templates"
 	"github.com/google/uuid"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
@@ -23,6 +24,20 @@ func kthLogin(s *service.Service, w http.ResponseWriter, r *http.Request) httput
 func kthCallback(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	if s.RelyingParty == nil {
 		return errors.New("KTH OIDC is not reachable at the moment")
+	}
+
+	var errMsg string
+	if e := r.FormValue("errors"); e != "" {
+		errMsg += "\n\n" + e
+	}
+	if e := r.FormValue("error"); e != "" {
+		errMsg += "\n\n" + e
+	}
+	if errMsg != "" {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Uh oh! Got an error from KTH:" + errMsg + "\nMaybe try again?"))
+		return nil
 	}
 
 	return rp.CodeExchangeHandler(func(
@@ -46,17 +61,16 @@ func kthCallback(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 			return
 		}
 		if user == nil {
-			ok, resp := s.FinishInvite(w, r, kthid)
-			if ok {
+			if resp := s.FinishInvite(w, r, kthid); resp != nil {
 				httputil.Respond(resp, w, r)
-			} else {
-				// TODO: show a better user creation request note/thingie
-				httputil.Respond(httputil.Forbidden(
-					"Your KTH account is not connected to a Datasektionen account. This should happen "+
-						"automatically if you are a chapter member and otherwise you must receive an invitation. If "+
-						"you believe this is a mistake, please contact head of IT at d-sys@datasektionen.se",
-				), w, r)
+				return
 			}
+			if resp := s.FinishAccountRequestKTH(w, r, kthid); resp != nil {
+				httputil.Respond(resp, w, r)
+				return
+			}
+
+			httputil.Respond(templates.MissingAccount(), w, r)
 			return
 		}
 		httputil.Respond(s.LoginUser(r.Context(), user.KTHID), w, r)

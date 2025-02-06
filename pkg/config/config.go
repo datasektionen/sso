@@ -19,6 +19,8 @@ type Cfg struct {
 	OIDCProviderIssuerURL *url.URL
 	OIDCProviderKey       string
 	PlsURL                *url.URL
+	SpamURL               *url.URL
+	SpamAPIKey            string
 }
 
 var Config Cfg
@@ -37,6 +39,8 @@ func init() {
 		OIDCProviderIssuerURL: getURL("OIDC_PROVIDER_ISSUER_URL", false),
 		OIDCProviderKey:       os.Getenv("OIDC_PROVIDER_KEY"),
 		PlsURL:                getURL("PLS_URL", true),
+		SpamURL:               getURL("SPAM_URL", true),
+		SpamAPIKey:            os.Getenv("SPAM_API_KEY"),
 	}
 }
 

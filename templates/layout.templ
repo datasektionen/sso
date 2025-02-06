@@ -17,7 +17,6 @@ templ base() {
 			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js" integrity="sha384-fw+eTlCc7suMV/1w/7fr2/PmwElUIt5i82bi+qTiLXvjRXZ2/FkiTNA/w0MhXnGI" crossorigin="anonymous"></script>
 			<script src="https://unpkg.com/hyperscript.org@0.9.13" integrity="sha384-5yQ5JTatiFEgeiEB4mfkRI3oTGtaNpbJGdcciZ4IEYFpLGt8yDsGAd7tKiMwnX9b" crossorigin="anonymous"></script>
 			<script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js" integrity="sha384-01awMgY2Qxoo57dFZwehcB4wqi9TunC6fiF9hpPaDsLu+ayOG+WvoatvgPWquZh8" crossorigin="anonymous"></script>
-			<!--script src="https://unpkg.com/morphdom@2.7.4/dist/morphdom-esm.js" integrity="sha384-32uSq+5CkJEgC7ZSxezdvE0+W6PeidDHEZi4Nh/Wm7EkCDcULeQVKes4llhG/Yyl" crossorigin="anonymous" type="module"></script-->
 			@base64Helpers()
 			if config.Config.Dev {
 				@devAutoReload()
@@ -96,6 +95,33 @@ var selectStyle = `
 	outline-none focus:border-cerise-strong hover:border-cerise-light
 	bg-slate-800 p-1.5 rounded leading-tight
 `
+
+templ radioButton(attrs templ.Attributes) {
+	<label>
+		<div
+			class="
+				w-4 h-4 bg-slate-800 border border-neutral-500
+				rounded-full cursor-pointer relative inline-block
+				has-[:checked]:border-cerise-strong hover:border-cerise-light
+				mr-1
+			"
+		>
+			<input
+				type="radio"
+				class="absolute opacity-0 pointer-events-none peer h-4 w-4"
+				{ attrs ... }
+			/>
+			<span
+				class="
+					peer-checked:bg-cerise-light
+					absolute inset-0.5
+					flex rounded-full
+				"
+			></span>
+		</div>
+		{ children... }
+	</label>
+}
 
 templ base64Helpers() {
 	<script>

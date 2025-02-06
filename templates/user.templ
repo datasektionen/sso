@@ -11,7 +11,7 @@ templ Index(devLogin func() templ.Component) {
 			<img class="h-40 pb-4 block" src="/public/skold_vit.svg"/>
 			<a
 				autofocus
-				href="/login/oidc/kth"
+				href="/oidc/kth/login"
 				class="
 					bg-[#3f4c66] p-1.5 block rounded border text-center
 					select-none border-transparent outline-none
@@ -20,6 +20,10 @@ templ Index(devLogin func() templ.Component) {
 			>Log In with KTH</a>
 			@PasskeyLoginForm("", nil)
 			@devLogin()
+			<a
+				class="text-right italic cursor-pointer hover:underline text-sm w-max ml-auto"
+				href="/request-account"
+			>Request account</a>
 		</div>
 	}
 }
@@ -136,13 +140,113 @@ templ AccountSettingsForm(user models.User, errors map[string]string) {
 	</section>
 }
 
+templ RequestAccount() {
+	@page(templ.NopComponent) {
+		<header class="p-12 max-w-2xl mx-auto">
+			<h1 class="text-2xl font-bold text-center capitalize pb-4">Request account</h1>
+			<p class="text-justify">
+				A Datasektionen account is used for all systems by Datasektionen. You should have
+				one automatically if you are a member of Datasektionen (i.e. study the computer
+				science 5-year programme or a master programme mapped to the chapter), but otherwise
+				you may still get an account by requesting one using the form below.
+			</p>
+		</header>
+		<form class="p-6 flex flex-col gap-4" hx-post="/request-account">
+			<label for="reference">
+				Reference: <span class="text-sm">(a person)</span>
+			</label>
+			<input type="text" id="reference" name="reference" required class={ input }/>
+			<label for="reason">
+				Why do you need an account?
+				<br/>
+				I.e. which system(s) do you plan to interact with. Is it related to some specific event?
+			</label>
+			<textarea name="reason" id="reason" required class={ input }></textarea>
+			<label for="year-tag"><i>Year</i> (optional)</label>
+			<input
+				type="text"
+				id="year-tag"
+				name="year-tag"
+				placeholder="e.g. D-21"
+				class={ input }
+			/>
+			<p>Do you have a KTH account?</p>
+			<div>
+				@radioButton(templ.Attributes{
+					// Since the input fields in #manual are required, we set their type to hidden
+					// because otherwise you can't submit the form
+					"_":            "on click show <#kth-login/> then hide <#manual/> then set <#manual input/>'s type to 'hidden'",
+					"autocomplete": "off",
+					"name":         "have-kth-account",
+					"value":        "yes",
+				}) {
+					Yes
+				}
+				<br/>
+				@radioButton(templ.Attributes{
+					"_":            "on click show <#manual/> then set <#manual input/>'s type to 'text' then hide <#kth-login/>",
+					"autocomplete": "off",
+					"name":         "have-kth-account",
+					"value":        "no",
+				}) {
+					No
+				}
+			</div>
+			<div id="kth-login" style="display: none">
+				<button class={ button }>Log in with KTH and submit request</button>
+			</div>
+			<div id="manual" style="display: none" class="flex flex-col gap-4">
+				<p>Unfortunately, this is not yet implemented, but the plan is to allow you to fill in your name and register a passkey.</p>
+				<div class="grayscale brightness-75 bg-neutral-800 p-4 rounded-md pointer-events-none select-none flex flex-col gap-4">
+					<div class="flex items-center gap-2">
+						<label for="first-name">First name</label>
+						<input type="text" id="first-name" name="first-name" required class={ input }/>
+					</div>
+					<div class="flex items-center gap-2">
+						<label for="family-name">Family name</label>
+						<input type="text" id="family-name" name="family-name" required class={ input }/>
+					</div>
+					<div class="flex items-center gap-2">
+						<label for="email">Email address</label>
+						<input type="text" id="email" name="email" required class={ input }/>
+					</div>
+					<div class="flex flex-col gap-2" id="shadowroothost">
+						// This is in a shadow DOM because otherwise little HTML gets confused that
+						// there is a form in a form.
+						<template shadowrootmode="open">
+							@base() {
+								<label for="passkey-name">
+									Register a passkey. This will be your only login method
+									in your account, but you will be able to add more once you get it.
+								</label>
+								@AddPasskeyForm(nil)
+							}
+						</template>
+					</div>
+				</div>
+			</div>
+		</form>
+	}
+}
+
+templ AccountRequestDone() {
+	@modal() {
+		<div class="p-8 flex flex-col gap-4">
+			<h1 class="text-2xl font-bold text-center capitalize pb-4">Account request complete</h1>
+			<p>
+				Thank you for requesting an account. You will receive an E-mail when your request has been accepted or denied.
+			</p>
+		</div>
+	}
+}
+
 templ AcceptInvite() {
 	@modal() {
 		<div class="p-8 flex flex-col gap-4">
 			<img class="h-40 pb-4 block" src="/public/skold_vit.svg"/>
 			<a
 				autofocus
-				href="/login/oidc/kth"
+				href="/oidc/kth/login"
 				class="
 					bg-[#3f4c66] p-1.5 block rounded border text-center
 					select-none border-transparent outline-none

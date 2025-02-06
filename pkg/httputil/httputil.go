@@ -43,6 +43,12 @@ func Respond(resp ToResponse, w http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(w).Encode(j); err != nil {
 			slog.Error("Error writing json", "value", j)
 		}
+	case redirect:
+		if r.Header.Get("HX-Request") == "true" {
+			w.Header().Set("HX-Redirect", resp.url)
+		} else {
+			http.Redirect(w, r, resp.url, http.StatusSeeOther)
+		}
 	default:
 		slog.Error("Got invalid response type when serving request", "url", r.URL.String(), "response", resp)
 	}
@@ -88,4 +94,14 @@ func Unauthorized() error {
 
 func Forbidden(message string) error {
 	return HttpError{Message: message, StatusCode: http.StatusForbidden}
+}
+
+type redirect struct {
+	url string
+}
+
+// A temporary redirect that will result in a full page redirect even when HTMX initiated the
+// request
+func Redirect(url string) ToResponse {
+	return redirect{url}
 }

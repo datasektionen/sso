@@ -18,6 +18,9 @@ func MountRoutes(s *service.Service) {
 	http.Handle("GET /logout", httputil.Route(s, logout))
 	http.Handle("GET /account", httputil.Route(s, account))
 	http.Handle("PATCH /account", httputil.Route(s, updateAccount))
+	http.Handle("GET /request-account", httputil.Route(s, requestAccountPage))
+	http.Handle("POST /request-account", httputil.Route(s, requestAccount))
+	http.Handle("GET /request-account/done", httputil.Route(s, requestAccountDone))
 	http.Handle("GET /invite/{id}", httputil.Route(s, acceptInvite))
 
 	// admin.go
@@ -41,6 +44,10 @@ func MountRoutes(s *service.Service) {
 	http.Handle("GET /admin/invites/{id}/edit", authAdmin(s, httputil.Route(s, editInviteForm)))
 	http.Handle("PUT /admin/invites/{id}", authAdmin(s, httputil.Route(s, updateInvite)))
 
+	http.Handle("GET /admin/account-requests", authAdmin(s, httputil.Route(s, accountRequests)))
+	http.Handle("DELETE /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, denyAccountRequest)))
+	http.Handle("POST /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, approveAccountRequest)))
+
 	// dev.go
 	if config.Config.Dev {
 		http.Handle("POST /login/dev", httputil.Route(s, devLogin))
@@ -56,7 +63,7 @@ func MountRoutes(s *service.Service) {
 	http.Handle("DELETE /passkey/{id}", httputil.Route(s, removePasskey))
 
 	// oidcrp.go
-	http.Handle("GET /login/oidc/kth", httputil.Route(s, kthLogin))
+	http.Handle("GET /oidc/kth/login", httputil.Route(s, kthLogin))
 	http.Handle("GET /oidc/kth/callback", httputil.Route(s, kthCallback))
 
 	// legacyapi.go

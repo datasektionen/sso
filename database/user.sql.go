@@ -12,6 +12,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createAccountRequest = `-- name: CreateAccountRequest :one
+insert into account_requests (reference, reason, year_tag)
+values ($1, $2, $3)
+returning id
+`
+
+type CreateAccountRequestParams struct {
+	Reference string
+	Reason    string
+	YearTag   string
+}
+
+func (q *Queries) CreateAccountRequest(ctx context.Context, arg CreateAccountRequestParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createAccountRequest, arg.Reference, arg.Reason, arg.YearTag)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createSession = `-- name: CreateSession :one
 insert into sessions (kthid)
 values ($1)
@@ -58,6 +77,42 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.YearTag,
 		arg.MemberTo,
 	)
+	return err
+}
+
+const deleteAccountRequest = `-- name: DeleteAccountRequest :one
+delete from account_requests
+where id = $1
+returning id, created_at, reference, reason, year_tag, kthid
+`
+
+func (q *Queries) DeleteAccountRequest(ctx context.Context, id uuid.UUID) (AccountRequest, error) {
+	row := q.db.QueryRow(ctx, deleteAccountRequest, id)
+	var i AccountRequest
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.Reference,
+		&i.Reason,
+		&i.YearTag,
+		&i.Kthid,
+	)
+	return i, err
+}
+
+const finishAccountRequestKTH = `-- name: FinishAccountRequestKTH :exec
+update account_requests
+set kthid = $2
+where id = $1
+`
+
+type FinishAccountRequestKTHParams struct {
+	ID    uuid.UUID
+	Kthid pgtype.Text
+}
+
+func (q *Queries) FinishAccountRequestKTH(ctx context.Context, arg FinishAccountRequestKTHParams) error {
+	_, err := q.db.Exec(ctx, finishAccountRequestKTH, arg.ID, arg.Kthid)
 	return err
 }
 
@@ -137,6 +192,39 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 		&i.FamilyNameChangeRequest,
 	)
 	return i, err
+}
+
+const listAccountRequests = `-- name: ListAccountRequests :many
+select id, created_at, reference, reason, year_tag, kthid
+from account_requests
+order by created_at
+`
+
+func (q *Queries) ListAccountRequests(ctx context.Context) ([]AccountRequest, error) {
+	rows, err := q.db.Query(ctx, listAccountRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AccountRequest
+	for rows.Next() {
+		var i AccountRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.Reference,
+			&i.Reason,
+			&i.YearTag,
+			&i.Kthid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUsers = `-- name: ListUsers :many

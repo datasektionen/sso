@@ -33,8 +33,7 @@ templ AccountRequests(requests []database.AccountRequest) {
 						<button
 							class={ button }
 							hx-delete={ "/admin/account-requests/" + request.ID.String() }
-							hx-target="closest li"
-							hx-swap="outerHTML"
+							hx-target="closest div"
 						>
 							Deny
 						</button>

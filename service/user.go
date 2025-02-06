@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/datasektionen/sso/database"
@@ -164,11 +165,11 @@ func (s *Service) FinishAccountRequestKTH(w http.ResponseWriter, r *http.Request
 	}
 	if err := email.Send(
 		r.Context(),
-		"d-sys@datasektionen.se",
+		"hej@snygg.ing", // "d-sys@datasektionen.se",
 		"Datasektionen Account Requested by "+person.KTHID,
-		fmt.Sprintf(`
-			A new account request has been made by %s %s (%s). <a href="https://sso.datasektionen.se/admin/account-requests">sso.datasektionen.se/admin/account-requests</a>.
-		`, person.FirstName, person.FamilyName, person.KTHID),
+		strings.TrimSpace(fmt.Sprintf(`
+			<p>A new account request has been made by %s %s (%s).</p><a href="https://sso.datasektionen.se/admin/account-requests">sso.datasektionen.se/admin/account-requests</a>
+		`, person.FirstName, person.FamilyName, person.KTHID)),
 	); err != nil {
 		return err
 	}

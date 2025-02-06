@@ -575,7 +575,7 @@ func denyAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	if kthid := req.Kthid.String; req.Kthid.Valid && kthid != "" {
+	if kthid := req.Kthid.String; r.URL.Query().Has("email") && req.Kthid.Valid && kthid != "" {
 		if err := email.Send(r.Context(), kthid+"@kth.se", "Datasektionen account request denied", "<p>Your Datasektionen account request has been denied.</p>"); err != nil {
 			slog.Error("Could not send email", "error", err)
 			return "Denied, but could not send email!"

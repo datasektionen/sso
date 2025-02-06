@@ -37,6 +37,15 @@ templ AccountRequests(requests []database.AccountRequest) {
 						>
 							Deny
 						</button>
+						if request.Kthid.Valid {
+							<button
+								class={ button }
+								hx-delete={ "/admin/account-requests/" + request.ID.String() + "?email" }
+								hx-target="closest div"
+							>
+								Deny & Email
+							</button>
+						}
 					</div>
 				</li>
 			}

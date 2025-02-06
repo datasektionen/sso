@@ -165,7 +165,7 @@ func (s *Service) FinishAccountRequestKTH(w http.ResponseWriter, r *http.Request
 	}
 	if err := email.Send(
 		r.Context(),
-		"hej@snygg.ing", // "d-sys@datasektionen.se",
+		"d-sys@datasektionen.se",
 		"Datasektionen Account Requested by "+person.KTHID,
 		strings.TrimSpace(fmt.Sprintf(`
 			<p>A new account request has been made by %s %s (%s).</p><a href="https://sso.datasektionen.se/admin/account-requests">sso.datasektionen.se/admin/account-requests</a>

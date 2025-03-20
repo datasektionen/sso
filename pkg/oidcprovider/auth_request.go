@@ -1,9 +1,11 @@
 package oidcprovider
 
 import (
+	"encoding/json"
 	"log/slog"
 	"time"
 
+	"github.com/datasektionen/sso/database"
 	"github.com/google/uuid"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
@@ -14,6 +16,19 @@ type authRequest struct {
 	authCode string
 	inner    *oidc.AuthRequest
 	kthid    string
+}
+
+func authRequestFromDB(r database.OidcproviderAuthRequest) authRequest {
+	inner := &oidc.AuthRequest{}
+	if err := json.Unmarshal(r.Data, inner); err != nil {
+		panic(err)
+	}
+	return authRequest{
+		id:       r.ID,
+		authCode: r.AuthCode,
+		inner:    inner,
+		kthid:    r.Kthid,
+	}
 }
 
 var _ op.AuthRequest = authRequest{}

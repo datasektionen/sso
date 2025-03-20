@@ -44,6 +44,19 @@ type OidcClient struct {
 	ID           string
 }
 
+type OidcproviderAccessToken struct {
+	ID     uuid.UUID
+	Kthid  string
+	Scopes []string
+}
+
+type OidcproviderAuthRequest struct {
+	ID       uuid.UUID
+	AuthCode string
+	Kthid    string
+	Data     []byte
+}
+
 type Passkey struct {
 	ID    uuid.UUID
 	Name  string

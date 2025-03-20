@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"math/big"
@@ -15,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/config"
 	"github.com/datasektionen/sso/pkg/httputil"
@@ -33,9 +35,9 @@ import (
 
 type provider struct {
 	provider *op.Provider
-	dotabase dotabase
-	rsaKey   *rsa.PrivateKey
-	s        *service.Service
+	// dotabase dotabase
+	rsaKey *rsa.PrivateKey
+	s      *service.Service
 }
 
 // TODO: these should maybe not be stored in just a few hashmaps. One possible problem is that we never free them, which isn't optimal.
@@ -94,15 +96,7 @@ func MountRoutes(s *service.Service) error {
 		return err
 	}
 
-	p := &provider{
-		dotabase: dotabase{
-			reqByID:         make(map[uuid.UUID]authRequest),
-			reqIdByAuthCode: make(map[string]uuid.UUID),
-			tokenByID:       make(map[uuid.UUID]accessToken),
-		},
-		rsaKey: &privateKey,
-		s:      s,
-	}
+	p := &provider{rsaKey: &privateKey, s: s}
 	var opts []op.Option
 	if config.Config.Dev {
 		opts = append(opts, op.WithAllowInsecure())
@@ -151,21 +145,23 @@ func (p *provider) callback(_ any, w http.ResponseWriter, r *http.Request) httpu
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	p.dotabase.mu.Lock()
-	defer p.dotabase.mu.Unlock()
-	req, ok := p.dotabase.reqByID[id]
-	if !ok {
-		return httputil.BadRequest("No request with that id")
-	}
 
-	req.kthid, err = p.s.GetLoggedInKTHID(r)
+	kthid, err := p.s.GetLoggedInKTHID(r)
 	if err != nil {
 		return err
 	}
-	if req.kthid == "" {
+	if kthid == "" {
 		return httputil.BadRequest("User did not seem to get logged in")
 	}
-	p.dotabase.reqByID[id] = req
+
+	if rows, err := p.s.DB.AuthRequestSetKTHID(r.Context(), database.AuthRequestSetKTHIDParams{
+		ID:    id,
+		Kthid: kthid,
+	}); err != nil {
+		return err
+	} else if rows == 0 {
+		return httputil.BadRequest("No request with that id")
+	}
 
 	http.Redirect(w, r, "/op"+op.AuthCallbackURL(p.provider)(r.Context(), authRequestID), http.StatusSeeOther)
 	return nil
@@ -173,17 +169,13 @@ func (p *provider) callback(_ any, w http.ResponseWriter, r *http.Request) httpu
 
 // AuthRequestByCode implements op.Storage.
 func (p *provider) AuthRequestByCode(ctx context.Context, code string) (op.AuthRequest, error) {
-	p.dotabase.mu.Lock()
-	defer p.dotabase.mu.Unlock()
-	id, ok := p.dotabase.reqIdByAuthCode[code]
-	if !ok {
+	req, err := p.s.DB.GetAuthRequestByAuthCode(ctx, code)
+	if err == pgx.ErrNoRows {
 		return nil, httputil.BadRequest("Invalid code")
+	} else if err != nil {
+		return nil, err
 	}
-	req, ok := p.dotabase.reqByID[id]
-	if !ok {
-		return nil, errors.New("Valid code but omg i lost the request")
-	}
-	return req, nil
+	return authRequestFromDB(req), nil
 }
 
 // AuthRequestByID implements op.Storage.
@@ -192,13 +184,15 @@ func (p *provider) AuthRequestByID(ctx context.Context, authRequestID string) (o
 	if err != nil {
 		return nil, httputil.BadRequest("Invalid uuid")
 	}
-	p.dotabase.mu.Lock()
-	req, ok := p.dotabase.reqByID[id]
-	p.dotabase.mu.Unlock()
-	if !ok {
+
+	req, err := p.s.DB.GetAuthRequest(ctx, id)
+	if err == pgx.ErrNoRows {
 		return nil, httputil.BadRequest("No request with that id")
+	} else if err != nil {
+		return nil, err
 	}
-	return req, nil
+
+	return authRequestFromDB(req), nil
 }
 
 // CreateAccessAndRefreshTokens implements op.Storage.
@@ -210,14 +204,14 @@ func (p *provider) CreateAccessAndRefreshTokens(ctx context.Context, request op.
 // CreateAccessToken implements op.Storage.
 func (p *provider) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
 	slog.Warn("oidcprovider.*service.CreateAccessToken", "request", request)
-	tokenID := uuid.New()
-	p.dotabase.mu.Lock()
-	defer p.dotabase.mu.Unlock()
-	p.dotabase.tokenByID[tokenID] = accessToken{
-		kthid:  request.GetSubject(),
-		scopes: request.GetScopes(),
+	id, err := p.s.DB.CreateAccessToken(ctx, database.CreateAccessTokenParams{
+		Kthid:  request.GetSubject(),
+		Scopes: request.GetScopes(),
+	})
+	if err != nil {
+		return "", time.Time{}, err
 	}
-	return tokenID.String(), time.Now().Add(time.Minute), nil
+	return id.String(), time.Now().Add(time.Minute), nil
 }
 
 // CreateAuthRequest implements op.Storage.
@@ -226,12 +220,12 @@ func (p *provider) CreateAuthRequest(ctx context.Context, r *oidc.AuthRequest, u
 		slog.Info("oidcprovider.*service.CreateAuthRequest: we got a userID!!!", "userID", userID)
 	}
 
-	id := uuid.New()
-	req := authRequest{id: id, authCode: "", inner: r}
-	p.dotabase.mu.Lock()
-	p.dotabase.reqByID[id] = req
-	p.dotabase.mu.Unlock()
-	return req, nil
+	rr, _ := json.Marshal(r)
+	req, err := p.s.DB.CreateAuthRequest(ctx, rr)
+	if err != nil {
+		return nil, err
+	}
+	return authRequestFromDB(req), nil
 }
 
 // DeleteAuthRequest implements op.Storage.
@@ -242,8 +236,6 @@ func (p *provider) DeleteAuthRequest(ctx context.Context, authRequestID string) 
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	p.dotabase.mu.Lock()
-	defer p.dotabase.mu.Unlock()
 	req, ok := p.dotabase.reqByID[id]
 	if !ok {
 		return httputil.BadRequest("No request with that id")

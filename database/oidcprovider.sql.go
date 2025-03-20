@@ -7,7 +7,64 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
+
+const authRequestSetKTHID = `-- name: AuthRequestSetKTHID :execrows
+update oidcprovider_auth_requests
+set kthid = $2
+where id = $1
+`
+
+type AuthRequestSetKTHIDParams struct {
+	ID    uuid.UUID
+	Kthid string
+}
+
+func (q *Queries) AuthRequestSetKTHID(ctx context.Context, arg AuthRequestSetKTHIDParams) (int64, error) {
+	result, err := q.db.Exec(ctx, authRequestSetKTHID, arg.ID, arg.Kthid)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const createAccessToken = `-- name: CreateAccessToken :one
+insert into oidcprovider_access_tokens (kthid, scopes)
+values ($1, $2)
+returning id
+`
+
+type CreateAccessTokenParams struct {
+	Kthid  string
+	Scopes []string
+}
+
+func (q *Queries) CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createAccessToken, arg.Kthid, arg.Scopes)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createAuthRequest = `-- name: CreateAuthRequest :one
+insert into oidcprovider_auth_requests (data, auth_code)
+values ($1, '')
+returning id, auth_code, kthid, data
+`
+
+func (q *Queries) CreateAuthRequest(ctx context.Context, data []byte) (OidcproviderAuthRequest, error) {
+	row := q.db.QueryRow(ctx, createAuthRequest, data)
+	var i OidcproviderAuthRequest
+	err := row.Scan(
+		&i.ID,
+		&i.AuthCode,
+		&i.Kthid,
+		&i.Data,
+	)
+	return i, err
+}
 
 const createClient = `-- name: CreateClient :one
 insert into oidc_clients (id, secret_hash, redirect_uris)
@@ -35,6 +92,42 @@ where id = $1
 func (q *Queries) DeleteClient(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, deleteClient, id)
 	return err
+}
+
+const getAuthRequest = `-- name: GetAuthRequest :one
+select id, auth_code, kthid, data
+from oidcprovider_auth_requests
+where id = $1
+`
+
+func (q *Queries) GetAuthRequest(ctx context.Context, id uuid.UUID) (OidcproviderAuthRequest, error) {
+	row := q.db.QueryRow(ctx, getAuthRequest, id)
+	var i OidcproviderAuthRequest
+	err := row.Scan(
+		&i.ID,
+		&i.AuthCode,
+		&i.Kthid,
+		&i.Data,
+	)
+	return i, err
+}
+
+const getAuthRequestByAuthCode = `-- name: GetAuthRequestByAuthCode :one
+select id, auth_code, kthid, data
+from oidcprovider_auth_requests
+where auth_code = $1
+`
+
+func (q *Queries) GetAuthRequestByAuthCode(ctx context.Context, authCode string) (OidcproviderAuthRequest, error) {
+	row := q.db.QueryRow(ctx, getAuthRequestByAuthCode, authCode)
+	var i OidcproviderAuthRequest
+	err := row.Scan(
+		&i.ID,
+		&i.AuthCode,
+		&i.Kthid,
+		&i.Data,
+	)
+	return i, err
 }
 
 const getClient = `-- name: GetClient :one

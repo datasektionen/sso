@@ -365,7 +365,7 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 
 // SetUserinfoFromToken implements op.Storage.
 func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID, kthid, origin string) error {
-	slog.Warn("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo, "tokenID", tokenID, "subject", kthid, "origin", origin)
+	slog.Warn("oidcprovider.*service.SetUserinfoFromToken", "tokenID", tokenID, "subject", kthid, "origin", origin)
 	accessTokenID, err := uuid.Parse(tokenID)
 	if err != nil {
 		return httputil.BadRequest("SetUserinfoFromToken: invalid uuid syntax in token id")
@@ -391,7 +391,7 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 		return err
 	}
 
-	slog.Info("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo)
+	slog.Info("oidcprovider.*service.SetUserinfoFromToken", "userinfo", userinfo, "scopes", token.scopes)
 	return nil
 }
 

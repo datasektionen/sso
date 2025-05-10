@@ -8,68 +8,68 @@ import (
 	"github.com/datasektionen/sso/service"
 )
 
-func MountRoutes(s *service.Service) {
-	http.HandleFunc("GET /ping", func(w http.ResponseWriter, r *http.Request) {
+func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
+	mux.HandleFunc("GET /ping", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("Pong! Regards, SSO"))
 	})
 
 	// user.go
-	http.Handle("GET /{$}", httputil.Route(s, index))
-	http.Handle("GET /logout", httputil.Route(s, logout))
-	http.Handle("GET /account", httputil.Route(s, account))
-	http.Handle("PATCH /account", httputil.Route(s, updateAccount))
-	http.Handle("GET /request-account", httputil.Route(s, requestAccountPage))
-	http.Handle("POST /request-account", httputil.Route(s, requestAccount))
-	http.Handle("GET /request-account/done", httputil.Route(s, requestAccountDone))
-	http.Handle("GET /invite/{id}", httputil.Route(s, acceptInvite))
+	mux.Handle("GET /{$}", httputil.Route(s, index))
+	mux.Handle("GET /logout", httputil.Route(s, logout))
+	mux.Handle("GET /account", httputil.Route(s, account))
+	mux.Handle("PATCH /account", httputil.Route(s, updateAccount))
+	mux.Handle("GET /request-account", httputil.Route(s, requestAccountPage))
+	mux.Handle("POST /request-account", httputil.Route(s, requestAccount))
+	mux.Handle("GET /request-account/done", httputil.Route(s, requestAccountDone))
+	mux.Handle("GET /invite/{id}", httputil.Route(s, acceptInvite))
 
 	// admin.go
-	http.Handle("GET /admin", authAdmin(s, httputil.Route(s, admin)))
+	mux.Handle("GET /admin", authAdmin(s, httputil.Route(s, admin)))
 
-	http.Handle("GET /admin/members", authAdmin(s, httputil.Route(s, membersPage)))
-	http.Handle("GET /admin/users", authAdmin(s, httputil.Route(s, adminUsersForm)))
-	http.Handle("POST /admin/members/upload-sheet", authAdmin(s, httputil.Route(s, uploadSheet)))
-	http.Handle("GET /admin/members/upload-sheet", authAdmin(s, httputil.Route(s, processSheet)))
+	mux.Handle("GET /admin/members", authAdmin(s, httputil.Route(s, membersPage)))
+	mux.Handle("GET /admin/users", authAdmin(s, httputil.Route(s, adminUsersForm)))
+	mux.Handle("POST /admin/members/upload-sheet", authAdmin(s, httputil.Route(s, uploadSheet)))
+	mux.Handle("GET /admin/members/upload-sheet", authAdmin(s, httputil.Route(s, processSheet)))
 
-	http.Handle("GET /admin/oidc-clients", authAdmin(s, httputil.Route(s, oidcClients)))
-	http.Handle("POST /admin/oidc-clients", authAdmin(s, httputil.Route(s, createOIDCClient)))
-	http.Handle("DELETE /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, deleteOIDCClient)))
-	http.Handle("POST /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, addRedirectURI)))
-	http.Handle("DELETE /admin/oidc-clients/{id}/{uri}", authAdmin(s, httputil.Route(s, removeRedirectURI)))
+	mux.Handle("GET /admin/oidc-clients", authAdmin(s, httputil.Route(s, oidcClients)))
+	mux.Handle("POST /admin/oidc-clients", authAdmin(s, httputil.Route(s, createOIDCClient)))
+	mux.Handle("DELETE /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, deleteOIDCClient)))
+	mux.Handle("POST /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, addRedirectURI)))
+	mux.Handle("DELETE /admin/oidc-clients/{id}/{uri}", authAdmin(s, httputil.Route(s, removeRedirectURI)))
 
-	http.Handle("GET /admin/invites", authAdmin(s, httputil.Route(s, invites)))
-	http.Handle("GET /admin/invites/{id}", authAdmin(s, httputil.Route(s, invite)))
-	http.Handle("POST /admin/invites", authAdmin(s, httputil.Route(s, createInvite)))
-	http.Handle("DELETE /admin/invites/{id}", authAdmin(s, httputil.Route(s, deleteInvite)))
-	http.Handle("GET /admin/invites/{id}/edit", authAdmin(s, httputil.Route(s, editInviteForm)))
-	http.Handle("PUT /admin/invites/{id}", authAdmin(s, httputil.Route(s, updateInvite)))
+	mux.Handle("GET /admin/invites", authAdmin(s, httputil.Route(s, invites)))
+	mux.Handle("GET /admin/invites/{id}", authAdmin(s, httputil.Route(s, invite)))
+	mux.Handle("POST /admin/invites", authAdmin(s, httputil.Route(s, createInvite)))
+	mux.Handle("DELETE /admin/invites/{id}", authAdmin(s, httputil.Route(s, deleteInvite)))
+	mux.Handle("GET /admin/invites/{id}/edit", authAdmin(s, httputil.Route(s, editInviteForm)))
+	mux.Handle("PUT /admin/invites/{id}", authAdmin(s, httputil.Route(s, updateInvite)))
 
-	http.Handle("GET /admin/account-requests", authAdmin(s, httputil.Route(s, accountRequests)))
-	http.Handle("DELETE /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, denyAccountRequest)))
-	http.Handle("POST /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, approveAccountRequest)))
+	mux.Handle("GET /admin/account-requests", authAdmin(s, httputil.Route(s, accountRequests)))
+	mux.Handle("DELETE /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, denyAccountRequest)))
+	mux.Handle("POST /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, approveAccountRequest)))
 
 	// dev.go
 	if config.Config.Dev {
-		http.Handle("POST /login/dev", httputil.Route(s, devLogin))
-		http.Handle("GET /dev/auto-reload", httputil.Route(s, autoReload))
+		mux.Handle("POST /login/dev", httputil.Route(s, devLogin))
+		mux.Handle("GET /dev/auto-reload", httputil.Route(s, autoReload))
 	}
 
 	// passkey.go
-	http.Handle("POST /login/passkey/begin", httputil.Route(s, beginLoginPasskey))
-	http.Handle("POST /login/passkey/finish", httputil.Route(s, finishLoginPasskey))
+	mux.Handle("POST /login/passkey/begin", httputil.Route(s, beginLoginPasskey))
+	mux.Handle("POST /login/passkey/finish", httputil.Route(s, finishLoginPasskey))
 
-	http.Handle("GET /passkey/add-form", httputil.Route(s, addPasskeyForm))
-	http.Handle("POST /passkey", httputil.Route(s, addPasskey))
-	http.Handle("DELETE /passkey/{id}", httputil.Route(s, removePasskey))
+	mux.Handle("GET /passkey/add-form", httputil.Route(s, addPasskeyForm))
+	mux.Handle("POST /passkey", httputil.Route(s, addPasskey))
+	mux.Handle("DELETE /passkey/{id}", httputil.Route(s, removePasskey))
 
 	// oidcrp.go
-	http.Handle("GET /oidc/kth/login", httputil.Route(s, kthLogin))
-	http.Handle("GET /oidc/kth/callback", httputil.Route(s, kthCallback))
+	mux.Handle("GET /oidc/kth/login", httputil.Route(s, kthLogin))
+	mux.Handle("GET /oidc/kth/callback", httputil.Route(s, kthCallback))
 
 	// legacyapi.go
-	http.Handle("/legacyapi/hello", httputil.Route(s, legacyAPIHello))
-	http.Handle("/legacyapi/login", httputil.Route(s, legacyAPILogin))
-	http.Handle("/legacyapi/callback", httputil.Route(s, legacyAPICallback))
-	http.Handle("/legacyapi/verify/{token}", httputil.Route(s, legacyAPIVerify))
-	http.Handle("/legacyapi/logout", httputil.Route(s, legacyAPILogout))
+	mux.Handle("/legacyapi/hello", httputil.Route(s, legacyAPIHello))
+	mux.Handle("/legacyapi/login", httputil.Route(s, legacyAPILogin))
+	mux.Handle("/legacyapi/callback", httputil.Route(s, legacyAPICallback))
+	mux.Handle("/legacyapi/verify/{token}", httputil.Route(s, legacyAPIVerify))
+	mux.Handle("/legacyapi/logout", httputil.Route(s, legacyAPILogout))
 }

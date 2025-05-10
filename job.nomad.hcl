@@ -4,12 +4,13 @@ job "sso" {
 
   group "sso" {
     network {
-      port "http" { }
+      port "http_external" { }
+      port "http_internal" { }
     }
 
     service {
       name     = "sso"
-      port     = "http"
+      port     = "http_external"
       provider = "nomad"
       tags = [
         "traefik.enable=true",
@@ -21,7 +22,15 @@ job "sso" {
         "traefik.http.routers.sso-login2.middlewares=redirect-to-sso",
         "traefik.http.middlewares.redirect-to-sso.redirectregex.regex=^https://[^.]*.datasektionen.se/(.*)$",
         "traefik.http.middlewares.redirect-to-sso.redirectregex.replacement=https://sso.datasektionen.se/$${1}",
+      ]
+    }
 
+    service {
+      name     = "sso-internal"
+      port     = "http_internal"
+      provider = "nomad"
+      tags = [
+        "traefik.enable=true",
         "traefik.http.routers.sso-internal.rule=Host(`sso.nomad.dsekt.internal`)",
         "traefik.http.routers.sso-internal.entrypoints=web-internal",
       ]
@@ -37,7 +46,8 @@ job "sso" {
 
       template {
         data        = <<ENV
-PORT={{ env "NOMAD_PORT_http" }}
+PORT_EXTERNAL={{ env "NOMAD_PORT_http_external" }}
+PORT={{ env "NOMAD_PORT_http_internal" }}
 
 {{ with nomadVar "nomad/jobs/sso" }}
 KTH_CLIENT_SECRET={{ .kth_client_secret }}

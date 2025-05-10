@@ -12,7 +12,8 @@ type Cfg struct {
 	KTHOIDCClientSecret   string
 	KTHOIDCRPOrigin       *url.URL
 	Origin                *url.URL
-	Port                  int
+	PortExternal          int
+	PortInternal          int
 	DatabaseURL           *url.URL
 	Dev                   bool
 	LDAPProxyURL          *url.URL
@@ -32,7 +33,8 @@ func init() {
 		KTHOIDCClientSecret:   os.Getenv("KTH_CLIENT_SECRET"),
 		KTHOIDCRPOrigin:       getOrigin("KTH_RP_ORIGIN", false),
 		Origin:                getOrigin("ORIGIN", false),
-		Port:                  getInt("PORT", 7000),
+		PortExternal:          getInt("PORT_EXTERNAL", 0),
+		PortInternal:          getInt("PORT", 7000),
 		DatabaseURL:           getURL("DATABASE_URL", false),
 		Dev:                   os.Getenv("DEV") == "true",
 		LDAPProxyURL:          getURL("LDAP_PROXY_URL", true),

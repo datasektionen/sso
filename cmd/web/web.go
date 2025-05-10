@@ -34,17 +34,28 @@ func main() {
 	}
 	cancel()
 
-	handlers.MountRoutes(s)
+	if config.Config.PortExternal != 0 {
+		go serve(s, false, config.Config.PortExternal)
+	}
+	serve(s, true, config.Config.PortInternal)
+}
 
-	static.Mount()
+func serve(s *service.Service, internal bool, p int) {
+	mux := http.NewServeMux()
+	handlers.MountRoutes(s, mux, internal)
+	static.Mount(mux)
 
-	port := strconv.Itoa(config.Config.Port)
+	port := strconv.Itoa(p)
 	l, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		slog.Error("Could not start listening for connections", "port", port, "error", err)
 		os.Exit(1)
 	}
-	slog.Info("Server started", "address", "http://localhost:"+port)
-	slog.Error("Failed serving http server", "error", http.Serve(l, nil))
+	started := "External server started"
+	if internal {
+		started = "Internal server started"
+	}
+	slog.Info(started, "address", "http://localhost:"+port)
+	slog.Error("Failed serving http server", "error", http.Serve(l, mux))
 	os.Exit(1)
 }

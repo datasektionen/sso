@@ -8,8 +8,8 @@ import (
 //go:embed public/*
 var public embed.FS
 
-func Mount() {
-	http.Handle("GET /public/", http.FileServerFS(public))
+func Mount(mux *http.ServeMux) {
+	mux.Handle("GET /public/", http.FileServerFS(public))
 }
 
 func PublicAsString(name string) string {

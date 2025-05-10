@@ -4,6 +4,34 @@
 grep -r 'http.Handle''(' --no-filename . | sed 's/^\s\+//'
 ```
 
+### API
+
+An OpenID Connect provider is available at `/op`, (so the production configuration endpoint is at
+`https://sso.datasektionen.se/op/.well-known/openid-configuration`). In addition to some standard
+user info stuff, a relying party can request the claim `pls_SYSTEM` for some system, which will make
+the returned claims have a key of the same name which is an array of strings which are the
+permissions in [pls](https://github.com/datasektionen/pls) for the given system the user has.
+
+`/legacyapi`: follows the same API as [login2](https://github.com/datasektionen/login).
+
+#### Internal API
+
+These are only reachable from other systems, on the domain name `sso.nomad.dsekt.internal`. This
+means that you cannot call these from code that runs in the browser.
+
+`GET /api/users`: Retrieves user information (email, first name, family name, year tag) by their
+usernames. The url query parameter `u`, which can be repeted, determines which users to retreive.
+The url query parameter `format` determines how the users are returned:
+- `single`: exactly one must be requested. If it is not found, the status code will be 404,
+  otherwise the response body will contain a json object with the keys `email`, `firstName`,
+  `familyName`, `yearTag`. If any key (mostly this will be `yearTag`) is missing/empty, it will not
+  be present.
+- `array`: The response body will contain a json array with objects as explained in `single`. Their
+  order will always be the same as the usernames in the request (which must not be repeated).
+  Requested non-existing users are represented by empty json objects.
+- `map`: The response body will contain a json object with keys being usernames and values being
+  objects as explained in `single`. Requested non-existing users will not be present in the response.
+
 ## Development
 
 ### Install dependencies

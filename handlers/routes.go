@@ -72,4 +72,9 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 	mux.Handle("/legacyapi/callback", httputil.Route(s, legacyAPICallback))
 	mux.Handle("/legacyapi/verify/{token}", httputil.Route(s, legacyAPIVerify))
 	mux.Handle("/legacyapi/logout", httputil.Route(s, legacyAPILogout))
+
+	// internalapi.go
+	if includeInternal {
+		mux.Handle("GET /api/users", httputil.Route(s, apiListUsers))
+	}
 }

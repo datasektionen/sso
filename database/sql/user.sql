@@ -31,6 +31,11 @@ select *
 from users
 where kthid = $1;
 
+-- name: GetUsersByIDs :many
+select *
+from users
+where kthid = any(@ids::text[]);
+
 -- name: ListUsers :many
 select *
 from users

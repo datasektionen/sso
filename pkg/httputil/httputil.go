@@ -96,6 +96,10 @@ func Forbidden(message string) error {
 	return HttpError{Message: message, StatusCode: http.StatusForbidden}
 }
 
+func NotFound() error {
+	return HttpError{Message: "Not Found", StatusCode: http.StatusNotFound}
+}
+
 type redirect struct {
 	url string
 }

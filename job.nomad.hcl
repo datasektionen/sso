@@ -41,7 +41,7 @@ job "sso" {
 
       config {
         image = var.image_tag
-        ports = ["http"]
+        ports = ["http_external", "http_internal"]
       }
 
       template {

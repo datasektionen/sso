@@ -1,7 +1,7 @@
 ## Routes
 
 ```sh
-grep -r 'http.Handle''(' --no-filename . | sed 's/^\s\+//'
+grep -r 'mux.Handle''(' --no-filename . | sed 's/^\s\+//'
 ```
 
 ### API

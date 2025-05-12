@@ -53,7 +53,7 @@ type accessToken struct {
 
 var _ op.Storage = &provider{}
 
-func MountRoutes(s *service.Service) error {
+func Init(s *service.Service) (http.Handler, error) {
 	// Yes, the initialization of this key does indeed seem very shady. I do
 	// however hope that if anything is done incorrectly, the
 	// privateKey.Validate() should catch that. I didn't find a nice way to
@@ -73,7 +73,7 @@ func MountRoutes(s *service.Service) error {
 	{
 		parts := strings.SplitN(config.Config.OIDCProviderKey, ",", 3)
 		if len(parts) != 2 {
-			return errors.New("Expected $OIDC_PROVIDER_KEY to have two comma-separated prime numbers in base 62")
+			return nil, errors.New("Expected $OIDC_PROVIDER_KEY to have two comma-separated prime numbers in base 62")
 		}
 		var p, q big.Int
 		p.SetString(parts[0], 62)
@@ -86,12 +86,12 @@ func MountRoutes(s *service.Service) error {
 		phi := (&big.Int{}).Mul(pMinus1, qMinus1)
 		privateKey.D.ModInverse(e, phi)
 		if err := privateKey.Validate(); err != nil {
-			return err
+			return nil, err
 		}
 		privateKey.Precompute()
 	}
 	if err := privateKey.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	p := &provider{
@@ -110,7 +110,7 @@ func MountRoutes(s *service.Service) error {
 	var key [32]byte
 
 	if _, err := rand.Read(key[:]); err != nil {
-		return err
+		return nil, err
 	}
 	var err error
 	p.provider, err = op.NewProvider(&op.Config{
@@ -132,17 +132,24 @@ func MountRoutes(s *service.Service) error {
 		opts...,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if config.Config.OIDCProviderIssuerURL.Path != "/op" {
-		return errors.New("The path of $OIDC_PROVIDER_ISSUER_URL must be `/`")
+		return nil, errors.New("The path of $OIDC_PROVIDER_ISSUER_URL must be `/`")
 	}
 
-	http.Handle("/op/", http.StripPrefix("/op", p.provider.Handler))
-	http.Handle("/op-callback", httputil.Route(nil, p.callback))
+	return p, nil
+}
 
-	return nil
+func (p *provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var next http.Handler
+	if r.URL.Path == "/op/sso-done" {
+		next = httputil.Route(nil, p.callback)
+	} else {
+		next = http.StripPrefix("/op", p.provider.Handler)
+	}
+	next.ServeHTTP(w, r)
 }
 
 func (p *provider) callback(_ any, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

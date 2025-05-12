@@ -77,7 +77,7 @@ func (c client) IsScopeAllowed(scope string) bool {
 
 // LoginURL implements op.Client.
 func (c client) LoginURL(authRequestID string) string {
-	return "/?" + url.Values{"next-url": []string{"/op-callback?auth-request-id=" + authRequestID}}.Encode()
+	return "/?" + url.Values{"next-url": []string{"/op/sso-done?auth-request-id=" + authRequestID}}.Encode()
 }
 
 // PostLogoutRedirectURIs implements op.Client.

@@ -29,20 +29,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	if err := oidcprovider.MountRoutes(s); err != nil {
+	op, err := oidcprovider.Init(s)
+	if err != nil {
 		panic(err)
 	}
 	cancel()
 
 	if config.Config.PortExternal != 0 {
-		go serve(s, false, config.Config.PortExternal)
+		go serve(s, op, false, config.Config.PortExternal)
 	}
-	serve(s, true, config.Config.PortInternal)
+	serve(s, op, true, config.Config.PortInternal)
 }
 
-func serve(s *service.Service, internal bool, p int) {
+func serve(s *service.Service, op http.Handler, internal bool, p int) {
 	mux := http.NewServeMux()
 	handlers.MountRoutes(s, mux, internal)
+	mux.Handle("/op/", op)
 	static.Mount(mux)
 
 	port := strconv.Itoa(p)

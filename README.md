@@ -36,7 +36,7 @@ The url query parameter `format` determines how the users are returned:
 
 ### Install dependencies
 
-Download a go compiler, at least version 1.22
+Download a go compiler, at least version 1.24
 
 If you will modify any `.sql` files, download [sqlc](https://sqlc.dev/). It's
 probably best to get the latest version, using:
@@ -67,7 +67,7 @@ and then move it to a directory in your `$PATH` or set `$TAILWIND_PATH` to it's 
 
 Start a postgresql database, using e.g.:
 ```sh
-docker run -d --name sso-db -p 5432:5432 -e POSTGRES_PASSWORD=sso -e POSTGRES_DB=sso -e POSTGRES_USER=sso postgres:16-alpine3.19
+docker run -d --name sso-db -p 5432:5432 -e POSTGRES_PASSWORD=sso -e POSTGRES_DB=sso -e POSTGRES_USER=sso docker.io/postgres:16-alpine3.21
 ```
 ...or add a user and database to an existing instance:
 ```sql

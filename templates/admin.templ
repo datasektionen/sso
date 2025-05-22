@@ -32,7 +32,7 @@ templ Members(lastUpdatedAt time.Time) {
 }
 
 templ MemberList(users []models.User, search string, offset int, more bool, years []string, selectedYear string) {
-	<div class="grid grid-cols-[repeat(4,auto)] gap-x-2 [&>*]:h-7">
+	<div class="grid grid-cols-[repeat(4,auto)] gap-x-2 *:h-7">
 		<div class="grid grid-cols-subgrid col-span-full">
 			<span>Username</span>
 			<span>Name</span>
@@ -118,7 +118,7 @@ templ uploadForm(lastUpdatedAt time.Time) {
 			required
 			class="
 				bg-[#3f4c66] rounded p-1 grid place-items-center pointer w-full
-				border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+				border border-transparent outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light) relative
 			"
 		/>
 		<button
@@ -144,7 +144,7 @@ templ UploadStatus(withStuff bool) {
 }
 
 templ UploadProgress(progress float64) {
-	<div class="bg-cerise-regular h-full" { templ.Attributes{"style": fmt.Sprint("width: ", progress * 100, "%")}... }></div>
+	<div class="bg-(--cerise-regular) h-full" { templ.Attributes{"style": fmt.Sprint("width: ", progress * 100, "%")}... }></div>
 }
 
 templ UploadMessage(message string, isErr bool) {

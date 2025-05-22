@@ -76,7 +76,7 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 				value={ kthid }
 				class="
 					border border-neutral-500 grow
-					outline-none focus:border-cerise-strong hover:border-cerise-light
+					outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light)
 					bg-slate-800 p-1.5 rounded h-8
 				"
 			/>
@@ -85,7 +85,7 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 				class={ `
 					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
 					grid place-items-center pointer
-					border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+					border border-transparent outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light) relative
 				`+bigIfTrue(credAss != nil, "spinner", "") }
 			>
 				<img src="/public/key_icon.svg" class="w-3/5 h-3/5 invert"/>
@@ -101,7 +101,7 @@ templ ShowPasskey(passkey models.Passkey) {
 			class="
 				bg-[#3f4c66] shrink-0 h-5 w-5 rounded-full
 				grid place-items-center pointer
-				border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light relative
+				border border-transparent outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light) relative
 			"
 			hx-delete={ "/passkey/" + passkey.ID.String() }
 			hx-target="closest li"
@@ -114,7 +114,7 @@ templ ShowPasskey(passkey models.Passkey) {
 
 templ PasskeySettings(passkeys []models.Passkey) {
 	<section class="flex flex-col max-w-lg">
-		<h2 class="text-xl text-cerise-light">Passkeys:</h2>
+		<h2 class="text-xl text-(--cerise-light)">Passkeys:</h2>
 		<ul id="passkey-list">
 			for _, passkey := range passkeys {
 				@ShowPasskey(passkey)
@@ -128,7 +128,7 @@ templ PasskeySettings(passkeys []models.Passkey) {
 			class="
 				bg-[#3f4c66] p-1.5 block rounded border text-center
 				select-none border-transparent outline-none
-				focus:border-cerise-strong hover:border-cerise-light
+				focus:border-(--cerise-strong) hover:border-(--cerise-light)
 				mt-1
 			"
 		>Add passkey</button>
@@ -192,7 +192,7 @@ templ AddPasskeyForm(cc *protocol.CredentialCreation) {
 				id="passkey-name"
 				class="
 					border border-neutral-500 grow
-					outline-none focus:border-cerise-strong hover:border-cerise-light
+					outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light)
 					bg-slate-800 p-1.5 rounded h-8
 				"
 			/>
@@ -200,7 +200,7 @@ templ AddPasskeyForm(cc *protocol.CredentialCreation) {
 				class="
 				bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
 				grid place-items-center pointer
-				border border-transparent outline-none focus:border-cerise-strong hover:border-cerise-light
+				border border-transparent outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light)
 			"
 			><img class="w-3/5 h-3/5 invert" src="/public/check.svg"/></button>
 		</div>

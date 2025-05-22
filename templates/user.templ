@@ -15,7 +15,7 @@ templ Index(devLogin func() templ.Component) {
 				class="
 					bg-[#3f4c66] p-1.5 block rounded border text-center
 					select-none border-transparent outline-none
-					focus:border-cerise-strong hover:border-cerise-light
+					focus:border-(--cerise-strong) hover:border-(--cerise-light)
 				"
 			>Log in with KTH</a>
 			@PasskeyLoginForm("", nil)
@@ -40,7 +40,7 @@ templ Account(user models.User, passkeys []models.Passkey, isAdmin bool) {
 templ AccountSettingsForm(user models.User, errors map[string]string) {
 	<section class="grid gap-4 text-lg">
 		<div>
-			<p class="text-xl text-cerise-light">Name</p>
+			<p class="text-xl text-(--cerise-light)">Name</p>
 			<div class="flex gap-2 items-center">
 				<p>{ user.FirstName } { user.FamilyName }</p>
 				<button
@@ -63,7 +63,7 @@ templ AccountSettingsForm(user models.User, errors map[string]string) {
 							class="
 								bg-[#3f4c66] px-1.5 block rounded border text-center
 								select-none border-transparent outline-none
-								focus:border-cerise-strong hover:border-cerise-light
+								focus:border-(--cerise-strong) hover:border-(--cerise-light)
 							"
 						>Cancel</button>
 					</form>
@@ -89,29 +89,29 @@ templ AccountSettingsForm(user models.User, errors map[string]string) {
 					class="
 						bg-[#3f4c66] px-1.5 block rounded border text-center
 						select-none border-transparent outline-none
-						focus:border-cerise-strong hover:border-cerise-light
+						focus:border-(--cerise-strong) hover:border-(--cerise-light)
 					"
 				>Request to change name</button>
 				<button
 					class="
 						bg-[#3f4c66] px-1.5 block rounded border text-center
 						select-none border-transparent outline-none
-						focus:border-cerise-strong hover:border-cerise-light
+						focus:border-(--cerise-strong) hover:border-(--cerise-light)
 					"
 					_="on click hide closest <form/> then halt"
 				>Cancel</button>
 			</form>
 		</div>
 		<div>
-			<p class="text-xl text-cerise-light">Username</p>
+			<p class="text-xl text-(--cerise-light)">Username</p>
 			<p>{ user.KTHID }</p>
 		</div>
 		<div>
-			<p class="text-xl text-cerise-light">Email address</p>
+			<p class="text-xl text-(--cerise-light)">Email address</p>
 			<p>{ user.Email }</p>
 		</div>
 		<form hx-patch="/account" hx-swap="outerHTML" hx-target="closest section" class="flex flex-col items-start">
-			<label for="year-tag" class="text-xl text-cerise-light">Year</label>
+			<label for="year-tag" class="text-xl text-(--cerise-light)">Year</label>
 			<div class="flex items-stretch gap-2">
 				<input
 					class={ input + " w-16" }
@@ -250,7 +250,7 @@ templ AcceptInvite() {
 				class="
 					bg-[#3f4c66] p-1.5 block rounded border text-center
 					select-none border-transparent outline-none
-					focus:border-cerise-strong hover:border-cerise-light
+					focus:border-(--cerise-strong) hover:border-(--cerise-light)
 				"
 			>Continue with KTH</a>
 			<p>Pressing the button above will create a Datasektionen account using your KTH account.</p>

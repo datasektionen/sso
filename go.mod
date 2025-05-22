@@ -13,7 +13,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/xuri/excelize/v2 v2.9.1
-	github.com/zitadel/oidc/v3 v3.38.1
+	github.com/zitadel/oidc/v3 v3.33.1
 	golang.org/x/text v0.25.0
 )
 

@@ -67,7 +67,7 @@ func PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) templ
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<label class=\"text-sm\" for=\"pk-kthid\">Log In using a Passkey</label><div class=\"flex gap-2\"><input id=\"pk-kthid\" name=\"kthid\" type=\"text\" required placeholder=\"KTH ID\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<label class=\"text-sm\" for=\"pk-kthid\">Log in using a Passkey</label><div class=\"flex gap-2\"><input id=\"pk-kthid\" name=\"kthid\" type=\"text\" required placeholder=\"KTH ID\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -53,9 +53,9 @@ func (a authRequest) GetClientID() string {
 }
 
 // GetCodeChallenge implements op.AuthRequest.
+// Code challenge refers to PKCE, which seems to be some thing for *public clients* which is completely stupid (okay maybe not but completely irrelevant for us).
 func (a authRequest) GetCodeChallenge() *oidc.CodeChallenge {
-	slog.Warn("oidcprovider.authRequest.GetCodeChallenge")
-	panic("unimplemented")
+	return nil
 }
 
 // GetID implements op.AuthRequest.

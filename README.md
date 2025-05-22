@@ -85,6 +85,12 @@ The best way (objectively, of course) to load them is by installing
 If you don't want to do that, you'll have to figure it out on your own. The
 application will not load the file `.env`.
 
+### Creating a first user
+
+```sh
+go run ./cmd/manage add-user turetek
+```
+
 ### Running with automatic recompiling & rerunning
 
 ```sh

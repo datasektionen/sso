@@ -67,13 +67,16 @@ and then move it to a directory in your `$PATH` or set `$TAILWIND_PATH` to it's 
 
 Start a postgresql database, using e.g.:
 ```sh
-docker run -d --name sso-db -p 5432:5432 -e POSTGRES_PASSWORD=sso -e POSTGRES_DB=sso -e POSTGRES_USER=sso docker.io/postgres:16-alpine3.21
+docker run -d --name sso-db -p 5432:5432 -e POSTGRES_PASSWORD=sso -e POSTGRES_DB=sso -e POSTGRES_USER=sso docker.io/postgres:16-alpine3
 ```
 ...or add a user and database to an existing instance:
 ```sql
 CREATE USER sso WITH PASSWORD 'sso';
 CREATE DATABASE sso WITH OWNER sso;
 ```
+
+Then you need to run the migrations on the database, which can be done by running
+`go run ./cmd/manage goose up`, or just starting the application.
 
 ### Environment variables
 
@@ -83,7 +86,7 @@ The best way (objectively, of course) to load them is by installing
 [direnv](https://direnv.net/).
 
 If you don't want to do that, you'll have to figure it out on your own. The
-application will not load the file `.env`.
+application will not care about the `.env` file itself.
 
 ### Creating a first user
 

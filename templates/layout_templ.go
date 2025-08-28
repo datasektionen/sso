@@ -97,7 +97,7 @@ func page(navItems templ.Component) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<nav class=\"\n\t\t\t\tw-full h-12 bg-gray-700 flex uppercase\n\t\t\t\toverflow-auto\n\t\t\t\t[&amp;&gt;a:not(:first-child)]:flex [&amp;&gt;a]:items-center [&amp;&gt;a:not(:first-child)]:px-3 [&amp;&gt;a]:hover:bg-gray-600 [&amp;&gt;a]:transition-colors\n\t\t\t\t[&amp;&gt;a]:shrink-0\n\t\t\t\"><a href=\"/\" class=\"h-full block aspect-square grid place-items-center fill-(--cerise-regular) bg-gray-600\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<nav class=\"\n\t\t\t\tw-full h-12 bg-gray-700 flex uppercase\n\t\t\t\toverflow-auto\n\t\t\t\t[&amp;&gt;a:not(:first-child)]:flex [&amp;&gt;a]:items-center [&amp;&gt;a:not(:first-child)]:px-3 [&amp;&gt;a]:hover:bg-gray-600 [&amp;&gt;a]:transition-colors\n\t\t\t\t[&amp;&gt;a]:shrink-0\n\t\t\t\"><a href=\"/\" class=\"h-full block aspect-square grid place-items-center fill-ceriseregular bg-gray-600\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -231,28 +231,28 @@ func modal() templ.Component {
 
 var input = `
 	border border-neutral-500 grow
-	outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light)
+	outline-none focus:border-cerisestrong hover:border-ceriselight
 	bg-slate-800 p-1.5 rounded leading-tight
 `
 
 var button = `
 	bg-[#3f4c66] p-1 leading-tight block rounded border text-center
 	select-none border-transparent outline-none
-	enabled:focus:border-(--cerise-strong) enabled:hover:border-(--cerise-light)
+	enabled:focus:border-cerisestrong enabled:hover:border-ceriselight
 	disabled:text-gray-500
 `
 
 var roundButton = `
 	bg-[#3f4c66] shrink-0 h-5 w-5 rounded-full
 	grid place-items-center pointer
-	border border-transparent outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light) relative
+	border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
 	[&>img]:w-3/5 [&>img]:h-3/5 [&>img]:invert
 	[&>p]:text-center [&>p]:leading-none
 `
 
 var selectStyle = `
 	border border-neutral-500
-	outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light)
+	outline-none focus:border-cerisestrong hover:border-ceriselight
 	bg-slate-800 p-1.5 rounded leading-tight
 `
 
@@ -277,7 +277,7 @@ func radioButton(attrs templ.Attributes) templ.Component {
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<label><div class=\"\n\t\t\t\tw-4 h-4 bg-slate-800 border border-neutral-500\n\t\t\t\trounded-full cursor-pointer relative inline-block\n\t\t\t\thas-[:checked]:border-(--cerise-strong) hover:border-(--cerise-light)\n\t\t\t\tmr-1\n\t\t\t\"><input type=\"radio\" class=\"absolute opacity-0 pointer-events-none peer h-4 w-4\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<label><div class=\"\n\t\t\t\tw-4 h-4 bg-slate-800 border border-neutral-500\n\t\t\t\trounded-full cursor-pointer relative inline-block\n\t\t\t\thas-[:checked]:border-cerisestrong hover:border-ceriselight\n\t\t\t\tmr-1\n\t\t\t\"><input type=\"radio\" class=\"absolute opacity-0 pointer-events-none peer h-4 w-4\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -285,7 +285,7 @@ func radioButton(attrs templ.Attributes) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "> <span class=\"\n\t\t\t\t\tpeer-checked:bg-(--cerise-light)\n\t\t\t\t\tabsolute inset-0.5\n\t\t\t\t\tflex rounded-full\n\t\t\t\t\"></span></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "> <span class=\"\n\t\t\t\t\tpeer-checked:bg-ceriselight\n\t\t\t\t\tabsolute inset-0.5\n\t\t\t\t\tflex rounded-full\n\t\t\t\t\"></span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

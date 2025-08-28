@@ -46,7 +46,7 @@ func Index(devLogin func() templ.Component) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/oidc/kth/login\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-(--cerise-strong) hover:border-(--cerise-light)\n\t\t\t\t\">Log in with KTH</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/oidc/kth/login\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-cerisestrong hover:border-ceriselight\n\t\t\t\t\">Log in with KTH</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -152,7 +152,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<section class=\"grid gap-4 text-lg\"><div><p class=\"text-xl text-(--cerise-light)\">Name</p><div class=\"flex gap-2 items-center\"><p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<section class=\"grid gap-4 text-lg\"><div><p class=\"text-xl text-ceriselight\">Name</p><div class=\"flex gap-2 items-center\"><p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -231,7 +231,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</p><form hx-target=\"closest section\" hx-swap=\"outerHTML\" hx-patch=\"/account\"><input type=\"hidden\" name=\"first-name\"> <input type=\"hidden\" name=\"family-name\"> <button class=\"\n\t\t\t\t\t\t\t\tbg-[#3f4c66] px-1.5 block rounded border text-center\n\t\t\t\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\t\t\t\tfocus:border-(--cerise-strong) hover:border-(--cerise-light)\n\t\t\t\t\t\t\t\">Cancel</button></form></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</p><form hx-target=\"closest section\" hx-swap=\"outerHTML\" hx-patch=\"/account\"><input type=\"hidden\" name=\"first-name\"> <input type=\"hidden\" name=\"family-name\"> <button class=\"\n\t\t\t\t\t\t\t\tbg-[#3f4c66] px-1.5 block rounded border text-center\n\t\t\t\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\t\t\t\tfocus:border-cerisestrong hover:border-ceriselight\n\t\t\t\t\t\t\t\">Cancel</button></form></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -280,7 +280,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" type=\"text\" id=\"family-name\" name=\"family-name\" autocomplete=\"off\"></div><button class=\"\n\t\t\t\t\t\tbg-[#3f4c66] px-1.5 block rounded border text-center\n\t\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\t\tfocus:border-(--cerise-strong) hover:border-(--cerise-light)\n\t\t\t\t\t\">Request to change name</button> <button class=\"\n\t\t\t\t\t\tbg-[#3f4c66] px-1.5 block rounded border text-center\n\t\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\t\tfocus:border-(--cerise-strong) hover:border-(--cerise-light)\n\t\t\t\t\t\" _=\"on click hide closest &lt;form/&gt; then halt\">Cancel</button></form></div><div><p class=\"text-xl text-(--cerise-light)\">Username</p><p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" type=\"text\" id=\"family-name\" name=\"family-name\" autocomplete=\"off\"></div><button class=\"\n\t\t\t\t\t\tbg-[#3f4c66] px-1.5 block rounded border text-center\n\t\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\t\tfocus:border-cerisestrong hover:border-ceriselight\n\t\t\t\t\t\">Request to change name</button> <button class=\"\n\t\t\t\t\t\tbg-[#3f4c66] px-1.5 block rounded border text-center\n\t\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\t\tfocus:border-cerisestrong hover:border-ceriselight\n\t\t\t\t\t\" _=\"on click hide closest &lt;form/&gt; then halt\">Cancel</button></form></div><div><p class=\"text-xl text-ceriselight\">Username</p><p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -293,7 +293,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</p></div><div><p class=\"text-xl text-(--cerise-light)\">Email address</p><p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</p></div><div><p class=\"text-xl text-ceriselight\">Email address</p><p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -306,7 +306,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</p></div><form hx-patch=\"/account\" hx-swap=\"outerHTML\" hx-target=\"closest section\" class=\"flex flex-col items-start\"><label for=\"year-tag\" class=\"text-xl text-(--cerise-light)\">Year</label><div class=\"flex items-stretch gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</p></div><form hx-patch=\"/account\" hx-swap=\"outerHTML\" hx-target=\"closest section\" class=\"flex flex-col items-start\"><label for=\"year-tag\" class=\"text-xl text-ceriselight\">Year</label><div class=\"flex items-stretch gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -815,7 +815,7 @@ func AcceptInvite() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/oidc/kth/login\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-(--cerise-strong) hover:border-(--cerise-light)\n\t\t\t\t\">Continue with KTH</a><p>Pressing the button above will create a Datasektionen account using your KTH account.</p></div><script>\n\t\t\thistory.replaceState(null, \"\", \"/invite/-\");\n\t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<div class=\"p-8 flex flex-col gap-4\"><img class=\"h-40 pb-4 block\" src=\"/public/skold_vit.svg\"> <a autofocus href=\"/oidc/kth/login\" class=\"\n\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\tfocus:border-cerisestrong hover:border-ceriselight\n\t\t\t\t\">Continue with KTH</a><p>Pressing the button above will create a Datasektionen account using your KTH account.</p></div><script>\n\t\t\thistory.replaceState(null, \"\", \"/invite/-\");\n\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

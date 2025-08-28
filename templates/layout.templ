@@ -38,7 +38,7 @@ templ page(navItems templ.Component) {
 				[&>a]:shrink-0
 			"
 		>
-			<a href="/" class="h-full block aspect-square grid place-items-center fill-(--cerise-regular) bg-gray-600">
+			<a href="/" class="h-full block aspect-square grid place-items-center fill-ceriseregular bg-gray-600">
 				@templ.Raw(static.PublicAsString("delta.svg"))
 			</a>
 			@navItems
@@ -71,28 +71,28 @@ templ modal() {
 
 var input = `
 	border border-neutral-500 grow
-	outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light)
+	outline-none focus:border-cerisestrong hover:border-ceriselight
 	bg-slate-800 p-1.5 rounded leading-tight
 `
 
 var button = `
 	bg-[#3f4c66] p-1 leading-tight block rounded border text-center
 	select-none border-transparent outline-none
-	enabled:focus:border-(--cerise-strong) enabled:hover:border-(--cerise-light)
+	enabled:focus:border-cerisestrong enabled:hover:border-ceriselight
 	disabled:text-gray-500
 `
 
 var roundButton = `
 	bg-[#3f4c66] shrink-0 h-5 w-5 rounded-full
 	grid place-items-center pointer
-	border border-transparent outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light) relative
+	border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
 	[&>img]:w-3/5 [&>img]:h-3/5 [&>img]:invert
 	[&>p]:text-center [&>p]:leading-none
 `
 
 var selectStyle = `
 	border border-neutral-500
-	outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light)
+	outline-none focus:border-cerisestrong hover:border-ceriselight
 	bg-slate-800 p-1.5 rounded leading-tight
 `
 
@@ -102,7 +102,7 @@ templ radioButton(attrs templ.Attributes) {
 			class="
 				w-4 h-4 bg-slate-800 border border-neutral-500
 				rounded-full cursor-pointer relative inline-block
-				has-[:checked]:border-(--cerise-strong) hover:border-(--cerise-light)
+				has-[:checked]:border-cerisestrong hover:border-ceriselight
 				mr-1
 			"
 		>
@@ -113,7 +113,7 @@ templ radioButton(attrs templ.Attributes) {
 			/>
 			<span
 				class="
-					peer-checked:bg-(--cerise-light)
+					peer-checked:bg-ceriselight
 					absolute inset-0.5
 					flex rounded-full
 				"

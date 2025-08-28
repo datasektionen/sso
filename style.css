@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 
 @theme {
-    --cerise-strong: "#ee2a7b";
-    --cerise-regular: "#e83d84";
-    --cerise-light: "#ec5f99";
+    --color-cerisestrong: "#ee2a7b";
+    --color-ceriseregular: "#e83d84";
+    --color-ceriselight: "#ec5f99";
 }
 
 @layer utilities {

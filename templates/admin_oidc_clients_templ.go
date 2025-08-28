@@ -371,7 +371,7 @@ func OidcClients(clients []database.OidcClient) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" placeholder=\"ID\" name=\"id\"> <button class=\"\n\t\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\t\tfocus:border-(--cerise-strong) hover:border-(--cerise-light)\n\t\t\t\t\t \">New client</button></form></section>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" placeholder=\"ID\" name=\"id\"> <button class=\"\n\t\t\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\t\t\tfocus:border-cerisestrong hover:border-ceriselight\n\t\t\t\t\t \">New client</button></form></section>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

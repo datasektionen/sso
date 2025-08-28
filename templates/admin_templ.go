@@ -493,7 +493,7 @@ func uploadForm(lastUpdatedAt time.Time) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</p><input name=\"sheet\" type=\"file\" required class=\"\n\t\t\t\tbg-[#3f4c66] rounded p-1 grid place-items-center pointer w-full\n\t\t\t\tborder border-transparent outline-none focus:border-(--cerise-strong) hover:border-(--cerise-light) relative\n\t\t\t\"> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</p><input name=\"sheet\" type=\"file\" required class=\"\n\t\t\t\tbg-[#3f4c66] rounded p-1 grid place-items-center pointer w-full\n\t\t\t\tborder border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative\n\t\t\t\"> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -580,7 +580,7 @@ func UploadProgress(progress float64) templ.Component {
 			templ_7745c5c3_Var29 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<div class=\"bg-(--cerise-regular) h-full\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<div class=\"bg-ceriseregular h-full\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -38,9 +38,9 @@
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
-    --cerise-strong: "#ee2a7b";
-    --cerise-regular: "#e83d84";
-    --cerise-light: "#ec5f99";
+    --color-cerisestrong: "#ee2a7b";
+    --color-ceriseregular: "#e83d84";
+    --color-ceriselight: "#ec5f99";
   }
 }
 @layer base {
@@ -413,11 +413,11 @@
   .border-transparent {
     border-color: transparent;
   }
-  .bg-\(--cerise-regular\) {
-    background-color: var(--cerise-regular);
-  }
   .bg-\[\#3f4c66\] {
     background-color: #3f4c66;
+  }
+  .bg-ceriseregular {
+    background-color: var(--color-ceriseregular);
   }
   .bg-gray-600 {
     background-color: var(--color-gray-600);
@@ -458,8 +458,8 @@
       background-color: color-mix(in oklab, var(--color-white) 10%, transparent);
     }
   }
-  .fill-\(--cerise-regular\) {
-    fill: var(--cerise-regular);
+  .fill-ceriseregular {
+    fill: var(--color-ceriseregular);
   }
   .p-1 {
     padding: calc(var(--spacing) * 1);
@@ -536,8 +536,8 @@
   .whitespace-nowrap {
     white-space: nowrap;
   }
-  .text-\(--cerise-light\) {
-    color: var(--cerise-light);
+  .text-ceriselight {
+    color: var(--color-ceriselight);
   }
   .text-neutral-100 {
     color: var(--color-neutral-100);
@@ -586,9 +586,9 @@
       height: calc(var(--spacing) * 7);
     }
   }
-  .peer-checked\:bg-\(--cerise-light\) {
+  .peer-checked\:bg-ceriselight {
     &:is(:where(.peer):checked ~ *) {
-      background-color: var(--cerise-light);
+      background-color: var(--color-ceriselight);
     }
   }
   .odd\:bg-white\/5 {
@@ -599,10 +599,10 @@
       }
     }
   }
-  .hover\:border-\(--cerise-light\) {
+  .hover\:border-ceriselight {
     &:hover {
       @media (hover: hover) {
-        border-color: var(--cerise-light);
+        border-color: var(--color-ceriselight);
       }
     }
   }
@@ -620,24 +620,24 @@
       }
     }
   }
-  .focus\:border-\(--cerise-strong\) {
+  .focus\:border-cerisestrong {
     &:focus {
-      border-color: var(--cerise-strong);
+      border-color: var(--color-cerisestrong);
     }
   }
-  .enabled\:hover\:border-\(--cerise-light\) {
+  .enabled\:hover\:border-ceriselight {
     &:enabled {
       &:hover {
         @media (hover: hover) {
-          border-color: var(--cerise-light);
+          border-color: var(--color-ceriselight);
         }
       }
     }
   }
-  .enabled\:focus\:border-\(--cerise-strong\) {
+  .enabled\:focus\:border-cerisestrong {
     &:enabled {
       &:focus {
-        border-color: var(--cerise-strong);
+        border-color: var(--color-cerisestrong);
       }
     }
   }
@@ -646,9 +646,9 @@
       color: var(--color-gray-500);
     }
   }
-  .has-\[\:checked\]\:border-\(--cerise-strong\) {
+  .has-\[\:checked\]\:border-cerisestrong {
     &:has(*:is(:checked)) {
-      border-color: var(--cerise-strong);
+      border-color: var(--color-cerisestrong);
     }
   }
   .md\:max-w-\[calc\(100vw-8rem\)\] {
@@ -700,15 +700,6 @@
     &>a {
       &:hover {
         @media (hover: hover) {
-          background-color: var(--color-gray-600);
-        }
-      }
-    }
-  }
-  .hover\:\[\&\>a\]\:bg-gray-600 {
-    &:hover {
-      @media (hover: hover) {
-        &>a {
           background-color: var(--color-gray-600);
         }
       }

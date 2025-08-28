@@ -97,7 +97,7 @@ func page(navItems templ.Component) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<nav class=\"\n\t\t\t\tw-full h-12 bg-gray-700 flex uppercase\n\t\t\t\toverflow-auto\n\t\t\t\t[&amp;&gt;a:not(:first-child)]:flex [&amp;&gt;a]:items-center [&amp;&gt;a:not(:first-child)]:px-3 hover:[&amp;&gt;a]:bg-gray-600 [&amp;&gt;a]:transition-colors\n\t\t\t\t[&amp;&gt;a]:shrink-0\n\t\t\t\"><a href=\"/\" class=\"h-full block aspect-square grid place-items-center fill-(--cerise-regular) bg-gray-600\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<nav class=\"\n\t\t\t\tw-full h-12 bg-gray-700 flex uppercase\n\t\t\t\toverflow-auto\n\t\t\t\t[&amp;&gt;a:not(:first-child)]:flex [&amp;&gt;a]:items-center [&amp;&gt;a:not(:first-child)]:px-3 [&amp;&gt;a]:hover:bg-gray-600 [&amp;&gt;a]:transition-colors\n\t\t\t\t[&amp;&gt;a]:shrink-0\n\t\t\t\"><a href=\"/\" class=\"h-full block aspect-square grid place-items-center fill-(--cerise-regular) bg-gray-600\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

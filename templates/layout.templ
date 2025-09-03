@@ -18,6 +18,11 @@ templ base() {
 			<script src="https://unpkg.com/hyperscript.org@0.9.13" integrity="sha384-5yQ5JTatiFEgeiEB4mfkRI3oTGtaNpbJGdcciZ4IEYFpLGt8yDsGAd7tKiMwnX9b" crossorigin="anonymous"></script>
 			<script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js" integrity="sha384-01awMgY2Qxoo57dFZwehcB4wqi9TunC6fiF9hpPaDsLu+ayOG+WvoatvgPWquZh8" crossorigin="anonymous"></script>
 			@base64Helpers()
+			<script>
+				function first(array) {
+					return array[0];
+				}
+			</script>
 			if config.Config.Dev {
 				@devAutoReload()
 			}

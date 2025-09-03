@@ -11,7 +11,7 @@ func b64(bytes []byte) string {
 }
 
 templ OidcClient(client database.OidcClient, secret []byte) {
-	<li class="p-2">
+	<li class="p-2" id={ "oidc-client-" + client.ID }>
 		<p class="flex gap-2 items-center">
 			ID: <code>{ client.ID }</code>
 			<button
@@ -30,6 +30,33 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 				<code>{ b64(secret) }</code>
 			</p>
 		}
+
+		<div class="flex gap-2 items-center">
+			<label for="hive-system-id">Hive System ID:</label>
+			if client.HiveSystemID != "" {
+				<div class="flex gap-2 items-center hive-system-id">
+					<p>
+						{ client.HiveSystemID }
+					</p>
+					<button
+						class={ roundButton }
+						_={`
+							on click
+								get first(<#oidc-client-`+client.ID+` div.hive-system-id/>)
+								set target to it
+								put (next <template/>).innerHTML into it
+								call htmx.process(target)
+						`}
+					><p>✎</p></button>
+					<template>
+						@hiveSystemIdForm(client.ID, client.HiveSystemID)
+					</template>
+				</div>
+			} else {
+				@hiveSystemIdForm(client.ID, "")
+			}
+		</div>
+
 		<ul class="pl-3">
 			for _, uri := range client.RedirectUris {
 				@RedirectURI(client.ID, uri)
@@ -42,7 +69,7 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 		<template>
 			<li>
 				<form
-					hx-post={ "/admin/oidc-clients/" + client.ID }
+					hx-post={ "/admin/oidc-clients/" + client.ID + "/redirect-uris" }
 					class="flex gap-2 items-center"
 				>
 					<input
@@ -67,12 +94,30 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 	</li>
 }
 
+templ hiveSystemIdForm(clientID string, initVal string) {
+	<form
+		hx-patch={ "/admin/oidc-clients/" + clientID }
+		class="flex gap-2 items-center"
+		hx-target="closest li"
+		hx-swap="outerHTML"
+	>
+		<input
+			type="text"
+			name="hive-system-id"
+			id="hive-system-id"
+			class={ input + " grow-0" }
+			value={ initVal }
+		/>
+		<button class={ roundButton }><img src="/public/check.svg"/></button>
+	</form>
+}
+
 templ RedirectURI(clientID string, uri string) {
 	<li class="flex gap-2 items-center">
 		{ uri }
 		<button
 			class={ roundButton }
-			hx-delete={ "/admin/oidc-clients/" + clientID + "/" + url.PathEscape(uri) }
+			hx-delete={ "/admin/oidc-clients/" + clientID + "/redirect-uris/" + url.PathEscape(uri) }
 			hx-target="closest li"
 			hx-swap="outerHTML"
 		>

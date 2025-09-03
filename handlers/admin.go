@@ -293,11 +293,12 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 		var dateCol, emailCol, chapterCol int = -1, -1, -1
 		for i, title := range rows[0] {
 			title = strings.TrimSpace(title)
-			if title == sheetDateCol {
+			switch title {
+			case sheetDateCol:
 				dateCol = i
-			} else if title == sheetEmailCol {
+			case sheetEmailCol:
 				emailCol = i
-			} else if title == sheetChapterCol {
+			case sheetChapterCol:
 				chapterCol = i
 			}
 		}
@@ -488,6 +489,23 @@ func createOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request
 	return templates.OidcClient(client, secret[:])
 }
 
+func updateOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id := r.PathValue("id")
+	hiveSystemID := r.FormValue("hive-system-id")
+
+	client, err := s.DB.UpdateClientHiveSystemID(r.Context(), database.UpdateClientHiveSystemIDParams{
+		ID:           id,
+		HiveSystemID: hiveSystemID,
+	})
+	if err != nil {
+		return err
+	}
+	if client.ID == "" {
+		return httputil.NotFound()
+	}
+	return templates.OidcClient(client, nil)
+}
+
 func deleteOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id := r.PathValue("id")
 
@@ -515,9 +533,9 @@ func addRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Request) 
 
 	client.RedirectUris = append(client.RedirectUris, newURI)
 
-	if _, err := s.DB.UpdateClient(
+	if _, err := s.DB.UpdateClientRedirectURIs(
 		r.Context(),
-		database.UpdateClientParams{
+		database.UpdateClientRedirectURIsParams{
 			ID:           client.ID,
 			RedirectUris: client.RedirectUris,
 		},
@@ -541,9 +559,9 @@ func removeRedirectURI(s *service.Service, w http.ResponseWriter, r *http.Reques
 
 	client.RedirectUris = slices.DeleteFunc(client.RedirectUris, func(u string) bool { return u == uri })
 
-	if _, err := s.DB.UpdateClient(
+	if _, err := s.DB.UpdateClientRedirectURIs(
 		r.Context(),
-		database.UpdateClientParams{
+		database.UpdateClientRedirectURIsParams{
 			ID:           client.ID,
 			RedirectUris: client.RedirectUris,
 		},

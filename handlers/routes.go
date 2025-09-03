@@ -33,9 +33,10 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 
 	mux.Handle("GET /admin/oidc-clients", authAdmin(s, httputil.Route(s, oidcClients)))
 	mux.Handle("POST /admin/oidc-clients", authAdmin(s, httputil.Route(s, createOIDCClient)))
+	mux.Handle("PATCH /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, updateOIDCClient)))
 	mux.Handle("DELETE /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, deleteOIDCClient)))
-	mux.Handle("POST /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, addRedirectURI)))
-	mux.Handle("DELETE /admin/oidc-clients/{id}/{uri}", authAdmin(s, httputil.Route(s, removeRedirectURI)))
+	mux.Handle("POST /admin/oidc-clients/{id}/redirect-uris", authAdmin(s, httputil.Route(s, addRedirectURI)))
+	mux.Handle("DELETE /admin/oidc-clients/{id}/redirect-uris/{uri}", authAdmin(s, httputil.Route(s, removeRedirectURI)))
 
 	mux.Handle("GET /admin/invites", authAdmin(s, httputil.Route(s, invites)))
 	mux.Handle("GET /admin/invites/{id}", authAdmin(s, httputil.Route(s, invite)))

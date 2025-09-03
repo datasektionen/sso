@@ -42,13 +42,17 @@ func base() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script>\n\t\t\t\tfunction first(array) {\n\t\t\t\t\treturn array[0];\n\t\t\t\t}\n\t\t\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		if config.Config.Dev {
 			templ_7745c5c3_Err = devAutoReload().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</head><body class=\"bg-gray-900 text-neutral-100\" hx-ext=\"morph\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</head><body class=\"bg-gray-900 text-neutral-100\" hx-ext=\"morph\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -56,7 +60,7 @@ func base() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -97,7 +101,7 @@ func page(navItems templ.Component) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<nav class=\"\n\t\t\t\tw-full h-12 bg-gray-700 flex uppercase\n\t\t\t\toverflow-auto\n\t\t\t\t[&amp;&gt;a:not(:first-child)]:flex [&amp;&gt;a]:items-center [&amp;&gt;a:not(:first-child)]:px-3 [&amp;&gt;a]:hover:bg-gray-600 [&amp;&gt;a]:transition-colors\n\t\t\t\t[&amp;&gt;a]:shrink-0\n\t\t\t\"><a href=\"/\" class=\"h-full block aspect-square grid place-items-center fill-ceriseregular bg-gray-600\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<nav class=\"\n\t\t\t\tw-full h-12 bg-gray-700 flex uppercase\n\t\t\t\toverflow-auto\n\t\t\t\t[&amp;&gt;a:not(:first-child)]:flex [&amp;&gt;a]:items-center [&amp;&gt;a:not(:first-child)]:px-3 [&amp;&gt;a]:hover:bg-gray-600 [&amp;&gt;a]:transition-colors\n\t\t\t\t[&amp;&gt;a]:shrink-0\n\t\t\t\"><a href=\"/\" class=\"h-full block aspect-square grid place-items-center fill-ceriseregular bg-gray-600\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -105,7 +109,7 @@ func page(navItems templ.Component) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -113,7 +117,7 @@ func page(navItems templ.Component) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</nav><div class=\"flex justify-center min-h-[calc(100vh-3rem)]\"><main class=\"bg-gray-800 w-[1000px] md:max-w-[calc(100vw-8rem)]\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</nav><div class=\"flex justify-center min-h-[calc(100vh-3rem)]\"><main class=\"bg-gray-800 w-[1000px] md:max-w-[calc(100vw-8rem)]\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -121,7 +125,7 @@ func page(navItems templ.Component) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</main></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -156,7 +160,7 @@ func nav(includeAdmin bool) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<a href=\"/account\">Account</a> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<a href=\"/account\">Account</a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -166,7 +170,7 @@ func nav(includeAdmin bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<a href=\"/logout\">Log out</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<a href=\"/logout\">Log out</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -207,7 +211,7 @@ func modal() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"grid place-items-center min-h-screen\"><main class=\"bg-gray-800 rounded w-88 max-w-[calc(100vw-2rem)]\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"grid place-items-center min-h-screen\"><main class=\"bg-gray-800 rounded w-88 max-w-[calc(100vw-2rem)]\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -215,7 +219,7 @@ func modal() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</main></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</main></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -277,7 +281,7 @@ func radioButton(attrs templ.Attributes) templ.Component {
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<label><div class=\"\n\t\t\t\tw-4 h-4 bg-slate-800 border border-neutral-500\n\t\t\t\trounded-full cursor-pointer relative inline-block\n\t\t\t\thas-[:checked]:border-cerisestrong hover:border-ceriselight\n\t\t\t\tmr-1\n\t\t\t\"><input type=\"radio\" class=\"absolute opacity-0 pointer-events-none peer h-4 w-4\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<label><div class=\"\n\t\t\t\tw-4 h-4 bg-slate-800 border border-neutral-500\n\t\t\t\trounded-full cursor-pointer relative inline-block\n\t\t\t\thas-[:checked]:border-cerisestrong hover:border-ceriselight\n\t\t\t\tmr-1\n\t\t\t\"><input type=\"radio\" class=\"absolute opacity-0 pointer-events-none peer h-4 w-4\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -285,7 +289,7 @@ func radioButton(attrs templ.Attributes) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "> <span class=\"\n\t\t\t\t\tpeer-checked:bg-ceriselight\n\t\t\t\t\tabsolute inset-0.5\n\t\t\t\t\tflex rounded-full\n\t\t\t\t\"></span></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "> <span class=\"\n\t\t\t\t\tpeer-checked:bg-ceriselight\n\t\t\t\t\tabsolute inset-0.5\n\t\t\t\t\tflex rounded-full\n\t\t\t\t\"></span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -293,7 +297,7 @@ func radioButton(attrs templ.Attributes) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</label>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</label>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -322,7 +326,7 @@ func base64Helpers() templ.Component {
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<script>\n/**\n * @param {string} data\n * @returns Uint8Array\n */\nlet decodebase64url = (data) =>\n    Uint8Array.from(window.atob(data.replace(/-/g, \"+\").replace(/_/g, \"/\")), v => v.charCodeAt(0));\n/**\n * @param {Uint8Array} data\n * @returns string\n */\nlet encodebase64url = (data) =>\n    base64ArrayBuffer(data).replace(/\\+/g, \"-\").replace(/\\//g, \"_\");\n\n// Taken from https://gist.github.com/jonleighton/958841 and slightly modified.\n/*\nMIT LICENSE\nCopyright 2011 Jon Leighton\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n*/\n\n/**\n * @param {ArrayBuffer} arrayBuffer\n */\nfunction base64ArrayBuffer(arrayBuffer) {\n    let base64 = \"\";\n    let encodings = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\";\n\n    let bytes = new Uint8Array(arrayBuffer);\n    let byteLength = bytes.byteLength;\n    let byteRemainder = byteLength % 3;\n    let mainLength = byteLength - byteRemainder;\n\n    // Main loop deals with bytes in chunks of 3\n    for (let i = 0; i < mainLength; i = i + 3) {\n        // Combine the three bytes into a single integer\n        let chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];\n\n        // Use bitmasks to extract 6-bit segments from the triplet\n        let a = (chunk & 16515072) >> 18; // 16515072 = (2^6 - 1) << 18\n        let b = (chunk & 258048) >> 12; // 258048   = (2^6 - 1) << 12\n        let c = (chunk & 4032) >> 6; // 4032     = (2^6 - 1) << 6\n        let d = chunk & 63;               // 63       = 2^6 - 1\n\n        // Convert the raw binary segments to the appropriate ASCII encoding\n        base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];\n    }\n\n    // Deal with the remaining bytes and padding\n    if (byteRemainder == 1) {\n        let chunk = bytes[mainLength];\n\n        let a = (chunk & 252) >> 2; // 252 = (2^6 - 1) << 2\n\n        // Set the 4 least significant bits to zero\n        let b = (chunk & 3) << 4; // 3   = 2^2 - 1\n\n        base64 += encodings[a] + encodings[b] + '==';\n    } else if (byteRemainder == 2) {\n        let chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1];\n\n        let a = (chunk & 64512) >> 10; // 64512 = (2^6 - 1) << 10\n        let b = (chunk & 1008) >> 4; // 1008  = (2^6 - 1) << 4\n\n        // Set the 2 least significant bits to zero\n        let c = (chunk & 15) << 2; // 15    = 2^4 - 1\n\n        base64 += encodings[a] + encodings[b] + encodings[c] + '=';\n    }\n\n    return base64;\n}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<script>\n/**\n * @param {string} data\n * @returns Uint8Array\n */\nlet decodebase64url = (data) =>\n    Uint8Array.from(window.atob(data.replace(/-/g, \"+\").replace(/_/g, \"/\")), v => v.charCodeAt(0));\n/**\n * @param {Uint8Array} data\n * @returns string\n */\nlet encodebase64url = (data) =>\n    base64ArrayBuffer(data).replace(/\\+/g, \"-\").replace(/\\//g, \"_\");\n\n// Taken from https://gist.github.com/jonleighton/958841 and slightly modified.\n/*\nMIT LICENSE\nCopyright 2011 Jon Leighton\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n*/\n\n/**\n * @param {ArrayBuffer} arrayBuffer\n */\nfunction base64ArrayBuffer(arrayBuffer) {\n    let base64 = \"\";\n    let encodings = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\";\n\n    let bytes = new Uint8Array(arrayBuffer);\n    let byteLength = bytes.byteLength;\n    let byteRemainder = byteLength % 3;\n    let mainLength = byteLength - byteRemainder;\n\n    // Main loop deals with bytes in chunks of 3\n    for (let i = 0; i < mainLength; i = i + 3) {\n        // Combine the three bytes into a single integer\n        let chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];\n\n        // Use bitmasks to extract 6-bit segments from the triplet\n        let a = (chunk & 16515072) >> 18; // 16515072 = (2^6 - 1) << 18\n        let b = (chunk & 258048) >> 12; // 258048   = (2^6 - 1) << 12\n        let c = (chunk & 4032) >> 6; // 4032     = (2^6 - 1) << 6\n        let d = chunk & 63;               // 63       = 2^6 - 1\n\n        // Convert the raw binary segments to the appropriate ASCII encoding\n        base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];\n    }\n\n    // Deal with the remaining bytes and padding\n    if (byteRemainder == 1) {\n        let chunk = bytes[mainLength];\n\n        let a = (chunk & 252) >> 2; // 252 = (2^6 - 1) << 2\n\n        // Set the 4 least significant bits to zero\n        let b = (chunk & 3) << 4; // 3   = 2^2 - 1\n\n        base64 += encodings[a] + encodings[b] + '==';\n    } else if (byteRemainder == 2) {\n        let chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1];\n\n        let a = (chunk & 64512) >> 10; // 64512 = (2^6 - 1) << 10\n        let b = (chunk & 1008) >> 4; // 1008  = (2^6 - 1) << 4\n\n        // Set the 2 least significant bits to zero\n        let c = (chunk & 15) << 2; // 15    = 2^4 - 1\n\n        base64 += encodings[a] + encodings[b] + encodings[c] + '=';\n    }\n\n    return base64;\n}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

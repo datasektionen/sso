@@ -10,9 +10,9 @@ import (
 )
 
 const createClient = `-- name: CreateClient :one
-insert into oidc_clients (id, secret_hash, redirect_uris)
-values ($1, $2, '{}')
-returning secret_hash, redirect_uris, id
+insert into oidc_clients (id, secret_hash, redirect_uris, hive_system_id)
+values ($1, $2, '{}', $1)
+returning secret_hash, redirect_uris, id, hive_system_id
 `
 
 type CreateClientParams struct {
@@ -23,7 +23,12 @@ type CreateClientParams struct {
 func (q *Queries) CreateClient(ctx context.Context, arg CreateClientParams) (OidcClient, error) {
 	row := q.db.QueryRow(ctx, createClient, arg.ID, arg.SecretHash)
 	var i OidcClient
-	err := row.Scan(&i.SecretHash, &i.RedirectUris, &i.ID)
+	err := row.Scan(
+		&i.SecretHash,
+		&i.RedirectUris,
+		&i.ID,
+		&i.HiveSystemID,
+	)
 	return i, err
 }
 
@@ -38,7 +43,7 @@ func (q *Queries) DeleteClient(ctx context.Context, id string) error {
 }
 
 const getClient = `-- name: GetClient :one
-select secret_hash, redirect_uris, id
+select secret_hash, redirect_uris, id, hive_system_id
 from oidc_clients
 where id = $1
 `
@@ -46,12 +51,17 @@ where id = $1
 func (q *Queries) GetClient(ctx context.Context, id string) (OidcClient, error) {
 	row := q.db.QueryRow(ctx, getClient, id)
 	var i OidcClient
-	err := row.Scan(&i.SecretHash, &i.RedirectUris, &i.ID)
+	err := row.Scan(
+		&i.SecretHash,
+		&i.RedirectUris,
+		&i.ID,
+		&i.HiveSystemID,
+	)
 	return i, err
 }
 
 const listClients = `-- name: ListClients :many
-select secret_hash, redirect_uris, id
+select secret_hash, redirect_uris, id, hive_system_id
 from oidc_clients
 `
 
@@ -64,7 +74,12 @@ func (q *Queries) ListClients(ctx context.Context) ([]OidcClient, error) {
 	var items []OidcClient
 	for rows.Next() {
 		var i OidcClient
-		if err := rows.Scan(&i.SecretHash, &i.RedirectUris, &i.ID); err != nil {
+		if err := rows.Scan(
+			&i.SecretHash,
+			&i.RedirectUris,
+			&i.ID,
+			&i.HiveSystemID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -75,21 +90,50 @@ func (q *Queries) ListClients(ctx context.Context) ([]OidcClient, error) {
 	return items, nil
 }
 
-const updateClient = `-- name: UpdateClient :one
+const updateClientHiveSystemID = `-- name: UpdateClientHiveSystemID :one
+update oidc_clients
+set hive_system_id = $2
+where id = $1
+returning secret_hash, redirect_uris, id, hive_system_id
+`
+
+type UpdateClientHiveSystemIDParams struct {
+	ID           string
+	HiveSystemID string
+}
+
+func (q *Queries) UpdateClientHiveSystemID(ctx context.Context, arg UpdateClientHiveSystemIDParams) (OidcClient, error) {
+	row := q.db.QueryRow(ctx, updateClientHiveSystemID, arg.ID, arg.HiveSystemID)
+	var i OidcClient
+	err := row.Scan(
+		&i.SecretHash,
+		&i.RedirectUris,
+		&i.ID,
+		&i.HiveSystemID,
+	)
+	return i, err
+}
+
+const updateClientRedirectURIs = `-- name: UpdateClientRedirectURIs :one
 update oidc_clients
 set redirect_uris = $2
 where id = $1
-returning secret_hash, redirect_uris, id
+returning secret_hash, redirect_uris, id, hive_system_id
 `
 
-type UpdateClientParams struct {
+type UpdateClientRedirectURIsParams struct {
 	ID           string
 	RedirectUris []string
 }
 
-func (q *Queries) UpdateClient(ctx context.Context, arg UpdateClientParams) (OidcClient, error) {
-	row := q.db.QueryRow(ctx, updateClient, arg.ID, arg.RedirectUris)
+func (q *Queries) UpdateClientRedirectURIs(ctx context.Context, arg UpdateClientRedirectURIsParams) (OidcClient, error) {
+	row := q.db.QueryRow(ctx, updateClientRedirectURIs, arg.ID, arg.RedirectUris)
 	var i OidcClient
-	err := row.Scan(&i.SecretHash, &i.RedirectUris, &i.ID)
+	err := row.Scan(
+		&i.SecretHash,
+		&i.RedirectUris,
+		&i.ID,
+		&i.HiveSystemID,
+	)
 	return i, err
 }

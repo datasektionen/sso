@@ -42,6 +42,7 @@ type OidcClient struct {
 	SecretHash   []byte
 	RedirectUris []string
 	ID           string
+	HiveSystemID string
 }
 
 type Passkey struct {

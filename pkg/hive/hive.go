@@ -14,6 +14,9 @@ import (
 // Result follows the format described in the hive documentation. E.g.:
 // [ { "id": "attest", "scope": "*" }, { "id": "view-logs", "scope": null }, { "id": "write", "scope": "/central/flag.txt" } ]
 func GetPermissionsInSystemForUser(ctx context.Context, kthid string, system string) (any, error) {
+	if config.Config.HiveURL == nil || config.Config.HiveAPIKey == "" {
+		return nil, fmt.Errorf("URL or API key to hive missing in env variables, so cannot fetch permissions from hive")
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(
 		"%s/api/v1/user/%s/permissions",
 		config.Config.HiveURL.String(),

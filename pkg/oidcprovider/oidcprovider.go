@@ -403,7 +403,11 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 		return errors.New("SetUserinfoFromToken, no user but pretty sure that should have been handled in this request???")
 	}
 
-	if err := setUserinfo(ctx, userinfo, *user, token.scopes, token.clientID); err != nil {
+	client, err := p.s.DB.GetClient(ctx, token.clientID)
+	if err != nil {
+		return err
+	}
+	if err := setUserinfo(ctx, userinfo, *user, token.scopes, client.HiveSystemID); err != nil {
 		return err
 	}
 

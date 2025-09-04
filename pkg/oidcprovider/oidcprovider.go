@@ -17,6 +17,7 @@ import (
 
 	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/pkg/hive"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
@@ -47,11 +48,14 @@ type dotabase struct {
 }
 
 type accessToken struct {
-	kthid  string
-	scopes []string
+	kthid    string
+	scopes   []string
+	clientID string
 }
 
 var _ op.Storage = &provider{}
+
+var supportedScopes = []string{"openid", "profile", "email", "offline_access", "pls_*", "permissions"}
 
 func Init(s *service.Service) (http.Handler, error) {
 	// Yes, the initialization of this key does indeed seem very shady. I do
@@ -122,10 +126,9 @@ func Init(s *service.Service) (http.Handler, error) {
 			"name", "family_name", "given_name",
 			"email", "email_verified",
 			"pls_*",
+			"permissions",
 		},
-		SupportedScopes: []string{
-			"openid", "profile", "email", "offline_access", "pls_*",
-		},
+		SupportedScopes: supportedScopes,
 	},
 		p,
 		op.StaticIssuer(config.Config.OIDCProviderIssuerURL.String()),
@@ -223,6 +226,8 @@ func (p *provider) CreateAccessToken(ctx context.Context, request op.TokenReques
 	p.dotabase.tokenByID[tokenID] = accessToken{
 		kthid:  request.GetSubject(),
 		scopes: request.GetScopes(),
+		// NOTE: our implementation of GetAudience simply returns `[]string{a.GetClientID()}`, but there are other implementations in the library, so I don't know if this is safe or can arbitrarily overwritten by a client. Conclusion: I picked a shitty library
+		clientID: request.GetAudience()[0],
 	}
 	return tokenID.String(), time.Now().Add(time.Minute), nil
 }
@@ -363,7 +368,11 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 		return errors.New("SetUserinfoFromScopes, no user but pretty sure that should have been handled in this request???")
 	}
 
-	if err := setUserinfo(ctx, userinfo, *user, scopes); err != nil {
+	client, err := p.s.DB.GetClient(ctx, clientID)
+	if err != nil {
+		return err
+	}
+	if err := setUserinfo(ctx, userinfo, *user, scopes, client.HiveSystemID); err != nil {
 		return err
 	}
 	slog.Info("oidcprovider.*service.SetUserinfoFromScopes", "userinfo", userinfo)
@@ -394,7 +403,7 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 		return errors.New("SetUserinfoFromToken, no user but pretty sure that should have been handled in this request???")
 	}
 
-	if err := setUserinfo(ctx, userinfo, *user, token.scopes); err != nil {
+	if err := setUserinfo(ctx, userinfo, *user, token.scopes, token.clientID); err != nil {
 		return err
 	}
 
@@ -402,10 +411,12 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 	return nil
 }
 
-func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User, scopes []string) error {
+func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User, scopes []string, system string) error {
 	if userinfo.Claims == nil {
 		userinfo.Claims = make(map[string]any)
 	}
+
+	slog.Info("setuserinfo", "scopes", scopes)
 
 	for _, scope := range scopes {
 		switch scope {
@@ -421,6 +432,17 @@ func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User,
 			userinfo.Email = user.Email
 			userinfo.EmailVerified = true
 
+		case "permissions":
+			if system == "" {
+				return httputil.BadRequest("Hive System ID must be set in the admin console when requesting permissions through OIDC")
+			}
+			perms, err := hive.GetPermissionsInSystemForUser(ctx, user.KTHID, system)
+			if err != nil {
+				slog.Error("setUserinfo: error getting permissions", "err", err)
+				return err
+			}
+			userinfo.Claims[scope] = perms
+
 		default:
 			if group, ok := strings.CutPrefix(scope, "pls_"); ok {
 				perms, err := pls.GetUserPermissionsForGroup(ctx, user.KTHID, group)
@@ -430,6 +452,7 @@ func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User,
 				}
 				userinfo.Claims[scope] = perms
 			}
+
 		}
 	}
 

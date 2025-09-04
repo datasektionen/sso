@@ -20,6 +20,8 @@ type Cfg struct {
 	OIDCProviderIssuerURL *url.URL
 	OIDCProviderKey       string
 	PlsURL                *url.URL
+	HiveURL               *url.URL
+	HiveAPIKey            string
 	SpamURL               *url.URL
 	SpamAPIKey            string
 }
@@ -41,6 +43,8 @@ func init() {
 		OIDCProviderIssuerURL: getURL("OIDC_PROVIDER_ISSUER_URL", false),
 		OIDCProviderKey:       os.Getenv("OIDC_PROVIDER_KEY"),
 		PlsURL:                getURL("PLS_URL", true),
+		HiveURL:               getURL("HIVE_URL", true),
+		HiveAPIKey:            os.Getenv("HIVE_API_KEY"),
 		SpamURL:               getURL("SPAM_URL", true),
 		SpamAPIKey:            os.Getenv("SPAM_API_KEY"),
 	}

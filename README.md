@@ -8,9 +8,19 @@ grep -r 'mux.Handle''(' --no-filename . | sed 's/^\s\+//'
 
 An OpenID Connect provider is available at `/op`, (so the production configuration endpoint is at
 `https://sso.datasektionen.se/op/.well-known/openid-configuration`). In addition to some standard
-user info stuff, a relying party can request the claim `pls_SYSTEM` for some system, which will make
-the returned claims have a key of the same name which is an array of strings which are the
-permissions in [pls](https://github.com/datasektionen/pls) for the given system the user has.
+user info stuff, SSO supports some custom scopes:
+
+- `pls_$SYSTEM`: will make the returned claims have a key of the same name (including `pls_`) which
+  is an array of strings which are the permissions in [pls](https://github.com/datasektionen/pls)
+  for the given system the user has. This is now considered and the `permissions` scope should be
+  fetched instead.
+- `permissions`: will make the returned claims include a key of the same name whose value is the
+  user's permissions in [Hive](https://github.com/datasektionen/hive). The system must be specified
+  for each OIDC client in SSO's admin panel. The value follows the same format as the body in the
+  [`/user/{username}/permissions`](https://hive.datasektionen.se/api/v1/docs#get-/user/-username-/permissions)
+  endpoint in Hive's API.
+
+---
 
 `/legacyapi`: follows the same API as [login2](https://github.com/datasektionen/login).
 

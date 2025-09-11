@@ -55,7 +55,7 @@ type accessToken struct {
 
 var _ op.Storage = &provider{}
 
-var supportedScopes = []string{"openid", "profile", "email", "offline_access", "pls_*", "permissions"}
+var supportedScopes = []string{"openid", "profile", "email", "offline_access", "pls_*", "permissions", "year"}
 
 func Init(s *service.Service) (http.Handler, error) {
 	// Yes, the initialization of this key does indeed seem very shady. I do
@@ -127,6 +127,7 @@ func Init(s *service.Service) (http.Handler, error) {
 			"email", "email_verified",
 			"pls_*",
 			"permissions",
+			"year_tag"
 		},
 		SupportedScopes: supportedScopes,
 	},
@@ -446,6 +447,9 @@ func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User,
 				return err
 			}
 			userinfo.Claims[scope] = perms
+
+		case "year":
+			userinfo.Claims["year_tag"] = user.YearTag
 
 		default:
 			if group, ok := strings.CutPrefix(scope, "pls_"); ok {

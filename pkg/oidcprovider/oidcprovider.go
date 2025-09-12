@@ -127,7 +127,7 @@ func Init(s *service.Service) (http.Handler, error) {
 			"email", "email_verified",
 			"pls_*",
 			"permissions",
-			"year_tag"
+			"year_tag",
 		},
 		SupportedScopes: supportedScopes,
 	},

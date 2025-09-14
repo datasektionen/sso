@@ -387,6 +387,7 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 						Email:      email,
 						FirstName:  person.FirstName,
 						FamilyName: person.FamilyName,
+						YearTag:    "D-" + time.Now().Format("06"), // Assume all new ths members are new to kth
 						MemberTo:   pgtype.Date{Valid: true, Time: memberTo},
 					}); err != nil {
 						return err

@@ -441,7 +441,7 @@ func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User,
 			if system == "" {
 				return httputil.BadRequest("Hive System ID must be set in the admin console when requesting permissions through OIDC")
 			}
-			perms, err := hive.GetPermissionsInSystemForUser(ctx, user.KTHID, system)
+			perms, err := hive.GetRawPermissionsInSystemForUser(ctx, user.KTHID, system)
 			if err != nil {
 				slog.Error("setUserinfo: error getting permissions", "err", err)
 				return err

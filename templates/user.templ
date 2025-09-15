@@ -28,8 +28,8 @@ templ Index(devLogin func() templ.Component) {
 	}
 }
 
-templ Account(user models.User, passkeys []models.Passkey, isAdmin bool) {
-	@page(nav(isAdmin)) {
+templ Account(user models.User, passkeys []models.Passkey) {
+	@page(nav()) {
 		<div class="p-8 flex flex-col gap-8">
 			@AccountSettingsForm(user, nil)
 			@PasskeySettings(passkeys)

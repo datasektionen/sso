@@ -7,16 +7,17 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 
 	"github.com/datasektionen/sso/pkg/config"
 )
 
-type ScopedPermission struct {
+type PermissionScopes struct {
 	Scopes []string
 }
 
-func (sp ScopedPermission) Matches(entity string) bool {
+func (sp PermissionScopes) Matches(entity string) bool {
 	for _, scope := range sp.Scopes {
 		if base, ok := strings.CutSuffix(scope, "*"); ok {
 			if strings.HasPrefix(entity, base) {
@@ -32,14 +33,14 @@ func (sp ScopedPermission) Matches(entity string) bool {
 }
 
 type Permissions struct {
-	ReadMembers           bool
-	WriteMembers          bool
-	ReadOIDCClients       bool
-	WriteOIDCClients      ScopedPermission
-	ReadInvites           bool
-	WriteInvites          bool
-	ReadAccountRequests   bool
-	ManageAccountRequests bool
+	ReadMembers           bool             `hive:"read-members"`
+	WriteMembers          bool             `hive:"write-members"`
+	ReadOIDCClients       bool             `hive:"read-oidc-clients"`
+	WriteOIDCClients      PermissionScopes `hive:"write-oidc-clients"`
+	ReadInvites           bool             `hive:"read-invites"`
+	WriteInvites          bool             `hive:"write-invites"`
+	ReadAccountRequests   bool             `hive:"read-account-requests"`
+	ManageAccountRequests bool             `hive:"manage-account-requests"`
 }
 
 func GetSSOPermissions(ctx context.Context, kthid string) (Permissions, error) {
@@ -49,28 +50,34 @@ func GetSSOPermissions(ctx context.Context, kthid string) (Permissions, error) {
 	}
 
 	var perms Permissions
+
+	permType := reflect.TypeFor[Permissions]()
+	permValue := reflect.ValueOf(&perms).Elem()
 	for _, perm := range rawPerms {
-		switch perm.ID {
-		case "read-members":
-			perms.ReadMembers = true
-		case "write-members":
-			perms.WriteMembers = true
-		case "read-oidc-clients":
-			perms.ReadOIDCClients = true
-		case "write-oidc-clients":
-			perms.WriteOIDCClients.Scopes = append(perms.WriteOIDCClients.Scopes, perm.Scope)
-		case "read-invites":
-			perms.ReadInvites = true
-		case "write-invites":
-			perms.WriteInvites = true
-		case "read-account-requests":
-			perms.ReadAccountRequests = true
-		case "manage-account-requests":
-			perms.ManageAccountRequests = true
+		foundField := false
+		for i := 0; i < permType.NumField(); i++ {
+			field := permType.Field(i)
+			tag := field.Tag.Get("hive")
+			if tag != perm.ID {
+				continue
+			}
+			fieldValue := permValue.Field(i)
+
+			if scopes, ok := fieldValue.Addr().Interface().(*PermissionScopes); ok {
+				scopes.Scopes = append(scopes.Scopes, perm.Scope)
+			} else if fieldValue.Type() == reflect.TypeFor[bool]() {
+				fieldValue.SetBool(true)
+			} else {
+				panic("Unknown permission type")
+			}
+			break
+		}
+		if !foundField {
+			return perms, fmt.Errorf("Got unknown permission from hive: '%s'", perm.ID)
 		}
 	}
 
-	return perms, err
+	return perms, nil
 }
 
 type RawPermission struct {

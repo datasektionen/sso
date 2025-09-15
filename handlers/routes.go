@@ -24,30 +24,30 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 	mux.Handle("GET /invite/{id}", httputil.Route(s, acceptInvite))
 
 	// admin.go
-	mux.Handle("GET /admin", authAdmin(s, httputil.Route(s, admin)))
+	mux.Handle("GET /admin", authorize(s, httputil.Route(s, admin), "read-members", nil))
 
-	mux.Handle("GET /admin/members", authAdmin(s, httputil.Route(s, membersPage)))
-	mux.Handle("GET /admin/users", authAdmin(s, httputil.Route(s, adminUsersForm)))
-	mux.Handle("POST /admin/members/upload-sheet", authAdmin(s, httputil.Route(s, uploadSheet)))
-	mux.Handle("GET /admin/members/upload-sheet", authAdmin(s, httputil.Route(s, processSheet)))
+	mux.Handle("GET /admin/members", authorize(s, httputil.Route(s, membersPage), "read-members", nil))
+	mux.Handle("GET /admin/users", authorize(s, httputil.Route(s, adminUsersForm), "read-members", nil))
+	mux.Handle("POST /admin/members/upload-sheet", authorize(s, httputil.Route(s, uploadSheet), "write-members", nil))
+	mux.Handle("GET /admin/members/upload-sheet", authorize(s, httputil.Route(s, processSheet), "write-members", nil))
 
-	mux.Handle("GET /admin/oidc-clients", authAdmin(s, httputil.Route(s, oidcClients)))
-	mux.Handle("POST /admin/oidc-clients", authAdmin(s, httputil.Route(s, createOIDCClient)))
-	mux.Handle("PATCH /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, updateOIDCClient)))
-	mux.Handle("DELETE /admin/oidc-clients/{id}", authAdmin(s, httputil.Route(s, deleteOIDCClient)))
-	mux.Handle("POST /admin/oidc-clients/{id}/redirect-uris", authAdmin(s, httputil.Route(s, addRedirectURI)))
-	mux.Handle("DELETE /admin/oidc-clients/{id}/redirect-uris/{uri}", authAdmin(s, httputil.Route(s, removeRedirectURI)))
+	mux.Handle("GET /admin/oidc-clients", authorize(s, httputil.Route(s, oidcClients), "read-oidc-clients", nil))
+	mux.Handle("POST /admin/oidc-clients", authorize(s, httputil.Route(s, createOIDCClient), "write-oidc-clients", func(r *http.Request) string { return r.FormValue("id") }))
+	mux.Handle("PATCH /admin/oidc-clients/{id}", authorize(s, httputil.Route(s, updateOIDCClient), "write-oidc-clients", func(r *http.Request) string { return r.PathValue("id") }))
+	mux.Handle("DELETE /admin/oidc-clients/{id}", authorize(s, httputil.Route(s, deleteOIDCClient), "write-oidc-clients", func(r *http.Request) string { return r.PathValue("id") }))
+	mux.Handle("POST /admin/oidc-clients/{id}/redirect-uris", authorize(s, httputil.Route(s, addRedirectURI), "write-oidc-clients", func(r *http.Request) string { return r.PathValue("id") }))
+	mux.Handle("DELETE /admin/oidc-clients/{id}/redirect-uris/{uri}", authorize(s, httputil.Route(s, removeRedirectURI), "write-oidc-clients", func(r *http.Request) string { return r.PathValue("id") }))
 
-	mux.Handle("GET /admin/invites", authAdmin(s, httputil.Route(s, invites)))
-	mux.Handle("GET /admin/invites/{id}", authAdmin(s, httputil.Route(s, invite)))
-	mux.Handle("POST /admin/invites", authAdmin(s, httputil.Route(s, createInvite)))
-	mux.Handle("DELETE /admin/invites/{id}", authAdmin(s, httputil.Route(s, deleteInvite)))
-	mux.Handle("GET /admin/invites/{id}/edit", authAdmin(s, httputil.Route(s, editInviteForm)))
-	mux.Handle("PUT /admin/invites/{id}", authAdmin(s, httputil.Route(s, updateInvite)))
+	mux.Handle("GET /admin/invites", authorize(s, httputil.Route(s, invites), "read-invites", nil))
+	mux.Handle("GET /admin/invites/{id}", authorize(s, httputil.Route(s, invite), "read-invites", nil))
+	mux.Handle("POST /admin/invites", authorize(s, httputil.Route(s, createInvite), "write-invites", nil))
+	mux.Handle("DELETE /admin/invites/{id}", authorize(s, httputil.Route(s, deleteInvite), "write-invites", nil))
+	mux.Handle("GET /admin/invites/{id}/edit", authorize(s, httputil.Route(s, editInviteForm), "write-invites", nil))
+	mux.Handle("PUT /admin/invites/{id}", authorize(s, httputil.Route(s, updateInvite), "write-invites", nil))
 
-	mux.Handle("GET /admin/account-requests", authAdmin(s, httputil.Route(s, accountRequests)))
-	mux.Handle("DELETE /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, denyAccountRequest)))
-	mux.Handle("POST /admin/account-requests/{id}", authAdmin(s, httputil.Route(s, approveAccountRequest)))
+	mux.Handle("GET /admin/account-requests", authorize(s, httputil.Route(s, accountRequests), "read-account-requests", nil))
+	mux.Handle("DELETE /admin/account-requests/{id}", authorize(s, httputil.Route(s, denyAccountRequest), "manage-account-requests", nil))
+	mux.Handle("POST /admin/account-requests/{id}", authorize(s, httputil.Route(s, approveAccountRequest), "manage-account, requests", nil))
 
 	// dev.go
 	if config.Config.Dev {

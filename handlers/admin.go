@@ -22,7 +22,6 @@ import (
 	"github.com/datasektionen/sso/pkg/email"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/kthldap"
-	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
 	"github.com/google/uuid"
@@ -31,45 +30,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/xuri/excelize/v2"
 )
-
-func authAdmin(s *service.Service, h http.Handler) http.Handler {
-	return httputil.Route(s, func(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-
-		kthid, err := s.GetLoggedInKTHID(r)
-		if err != nil {
-			return err
-		}
-		if kthid == "" {
-			s.RedirectToLogin(w, r, r.URL.Path)
-			return nil
-		}
-		perm := "admin-write"
-		if r.Method == http.MethodGet {
-			perm = "admin-read"
-		}
-		allowed, err := pls.CheckUser(r.Context(), kthid, perm)
-		if err != nil {
-			return err
-		}
-		if !allowed {
-			return httputil.Forbidden("Missing admin permission in pls")
-		}
-
-		h.ServeHTTP(w, r)
-
-		if r.Method != http.MethodGet {
-			args := []any{"kthid", kthid, "method", r.Method, "path", r.URL.Path}
-			if id := r.PathValue("id"); id != "" {
-				args = append(args, "id", id)
-			} else if r.Form != nil && r.Form.Has("id") {
-				args = append(args, "id", r.Form.Get("id"))
-			}
-			slog.InfoContext(r.Context(), "Admin action taken", args...)
-		}
-
-		return nil
-	})
-}
 
 func admin(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	return templates.AdminPage()
@@ -439,7 +399,7 @@ func processSheet(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		if event.component != nil {
 			_ = event.component.Render(r.Context(), &buf)
 		}
-		for _, line := range strings.Split(buf.String(), "\n") {
+		for line := range strings.SplitSeq(buf.String(), "\n") {
 			_, _ = w.Write([]byte("data: " + line + "\n"))
 		}
 		_, _ = w.Write([]byte("\n"))

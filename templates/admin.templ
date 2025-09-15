@@ -3,18 +3,28 @@ package templates
 import (
 	"fmt"
 	"github.com/datasektionen/sso/models"
+	"github.com/datasektionen/sso/pkg/hive"
 	"time"
 )
 
 templ adminNav() {
-	<a href="/admin/members">Members</a>
-	<a href="/admin/oidc-clients">OIDC Clients</a>
-	<a href="/admin/invites">Invites</a>
-	<a href="/admin/account-requests">Account Requests</a>
+	{{ perms := ctx.Value(hive.Permissions{}).(hive.Permissions) }}
+	if perms.ReadMembers {
+		<a href="/admin/members">Members</a>
+	}
+	if perms.ReadOIDCClients {
+		<a href="/admin/oidc-clients">OIDC Clients</a>
+	}
+	if perms.ReadInvites {
+		<a href="/admin/invites">Invites</a>
+	}
+	if perms.ReadAccountRequests {
+		<a href="/admin/account-requests">Account Requests</a>
+	}
 }
 
 templ AdminPage() {
-	@page(nav(true)) {
+	@page(nav()) {
 		{ children... }
 	}
 }
@@ -111,7 +121,7 @@ templ uploadForm(lastUpdatedAt time.Time) {
 		hx-swap="outerHTML"
 		hx-target="#upload-status"
 	>
-		<p class="shrink-0">Upload THS membership sheet. Last upload at {lastUpdatedAt.Format(time.DateOnly)}</p>
+		<p class="shrink-0">Upload THS membership sheet. Last upload at { lastUpdatedAt.Format(time.DateOnly) }</p>
 		<input
 			name="sheet"
 			type="file"

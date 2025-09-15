@@ -7,7 +7,6 @@ import (
 
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/pkg/httputil"
-	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
 	"github.com/google/uuid"
@@ -86,11 +85,12 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	if err != nil {
 		return err
 	}
-	isAdmin, err := pls.CheckUser(r.Context(), user.KTHID, "admin-read")
-	if err != nil {
-		return err
-	}
-	return templates.Account(*user, passkeys, isAdmin)
+	// TODO:
+	// perms, err := hive.GetSSOPermissions(r.Context(), user.KTHID)
+	// if err != nil {
+	// 	return err
+	// }
+	return templates.Account(*user, passkeys)
 }
 
 var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z][A-Za-z]{0,3}-\d{2}$`)

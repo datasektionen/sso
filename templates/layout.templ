@@ -56,11 +56,9 @@ templ page(navItems templ.Component) {
 	}
 }
 
-templ nav(includeAdmin bool) {
+templ nav() {
 	<a href="/account">Account</a>
-	if includeAdmin {
-		@adminNav()
-	}
+	@adminNav()
 	<a href="/logout">Log out</a>
 }
 

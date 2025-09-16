@@ -3,6 +3,7 @@ package templates
 import (
 	"encoding/base64"
 	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/pkg/hive"
 	"net/url"
 )
 
@@ -11,18 +12,21 @@ func b64(bytes []byte) string {
 }
 
 templ OidcClient(client database.OidcClient, secret []byte) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	<li class="p-2" id={ "oidc-client-" + client.ID }>
 		<p class="flex gap-2 items-center">
 			ID: <code>{ client.ID }</code>
-			<button
-				class={ roundButton }
-				hx-delete={ "/admin/oidc-clients/" + client.ID }
-				hx-target="closest li"
-				hx-swap="outerHTML"
-				hx-confirm="Want to delete OIDC client? This action is irreversible!"
-			>
-				<img class="w-3/5 h-3/5 invert" src="/public/x.svg"/>
-			</button>
+			if perms.WriteOIDCClients.Matches(client.ID) {
+				<button
+					class={ roundButton }
+					hx-delete={ "/admin/oidc-clients/" + client.ID }
+					hx-target="closest li"
+					hx-swap="outerHTML"
+					hx-confirm="Want to delete OIDC client? This action is irreversible!"
+				>
+					<img class="w-3/5 h-3/5 invert" src="/public/x.svg"/>
+				</button>
+			}
 		</p>
 		if secret != nil {
 			<p>
@@ -30,65 +34,78 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 				<code>{ b64(secret) }</code>
 			</p>
 		}
-		<div class="flex gap-2 items-center">
-			<label for={ "hive-system-id-" + client.ID }>Hive System ID:</label>
-			if client.HiveSystemID != "" {
-				<div class="flex gap-2 items-center hive-system-id">
-					<p>
-						{ client.HiveSystemID }
-					</p>
-					<button
-						class={ roundButton }
-						_={ `
-							on click
-								get first(<#oidc-client-`+client.ID+` div.hive-system-id/>)
-								set target to it
-								put (next <template/>).innerHTML into it
-								call htmx.process(target)
-						` }
-					><p>✎</p></button>
-					<template>
-						@hiveSystemIdForm(client.ID, client.HiveSystemID)
-					</template>
-				</div>
-			} else {
-				@hiveSystemIdForm(client.ID, "")
-			}
-		</div>
+		if perms.WriteOIDCClients.Matches(client.ID) {
+			<div class="flex gap-2 items-center">
+				<label for={ "hive-system-id-" + client.ID }>Hive System ID:</label>
+				if client.HiveSystemID != "" {
+					<div class="flex gap-2 items-center hive-system-id">
+						<p>
+							{ client.HiveSystemID }
+						</p>
+						<button
+							class={ roundButton }
+							_={ `
+								on click
+									get first(<#oidc-client-`+client.ID+` div.hive-system-id/>)
+									set target to it
+									put (next <template/>).innerHTML into it
+									call htmx.process(target)
+							` }
+						><p>✎</p></button>
+						<template>
+							@hiveSystemIdForm(client.ID, client.HiveSystemID)
+						</template>
+					</div>
+				} else {
+					@hiveSystemIdForm(client.ID, "")
+				}
+			</div>
+		} else {
+			<div class="flex gap-2 items-center">
+				<label for={ "hive-system-id-" + client.ID }>Hive System ID:</label>
+				if client.HiveSystemID != "" {
+					<p>{ client.HiveSystemID }</p>
+				} else {
+					<p><i>not set</i></p>
+				}
+			</div>
+		}
 		<ul class="pl-3">
 			for _, uri := range client.RedirectUris {
 				@RedirectURI(client.ID, uri)
 			}
 		</ul>
-		<button
-			class={ button }
-			_="on click put (next <template/>).innerHTML at end of previous <ul/> then call htmx.process(previous <li/>)"
-		>Add redirect URI</button>
-		<template>
-			<li>
-				<form
-					hx-post={ "/admin/oidc-clients/" + client.ID + "/redirect-uris" }
-					class="flex gap-2 items-center"
-				>
-					<input
-						type="text"
-						name="redirect-uri"
-						required
-						class={ input }
-						autofocus
-					/>
-					<button class={ roundButton }>
-						<img src="/public/check.svg"/>
-					</button>
-					<button
-						class={ roundButton }
-						_="on click remove closest <li/>"
+		if perms.WriteOIDCClients.Matches(client.ID) {
+			<button
+				class={ button }
+				_="on click put (next <template/>).innerHTML at end of previous <ul/> then call htmx.process(previous <li/>)"
+			>Add redirect URI</button>
+			<template>
+				<li>
+					<form
+						hx-post={ "/admin/oidc-clients/" + client.ID + "/redirect-uris" }
+						class="flex gap-2 items-center"
 					>
-						<img src="/public/x.svg"/>
-					</button>
-				</form>
-			</li>
-		</template>
+						<input
+							type="text"
+							name="redirect-uri"
+							required
+							class={ input }
+							autofocus
+						/>
+						<button class={ roundButton }>
+							<img src="/public/check.svg"/>
+						</button>
+						<button
+							class={ roundButton }
+							_="on click remove closest <li/>"
+						>
+							<img src="/public/x.svg"/>
+						</button>
+					</form>
+				</li>
+			</template>
+		}
 	</li>
 }
 
@@ -111,20 +128,24 @@ templ hiveSystemIdForm(clientID string, initVal string) {
 }
 
 templ RedirectURI(clientID string, uri string) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	<li class="flex gap-2 items-center">
 		{ uri }
-		<button
-			class={ roundButton }
-			hx-delete={ "/admin/oidc-clients/" + clientID + "/redirect-uris/" + url.PathEscape(uri) }
-			hx-target="closest li"
-			hx-swap="outerHTML"
-		>
-			<img src="/public/x.svg"/>
-		</button>
+		if perms.WriteOIDCClients.Matches(clientID) {
+			<button
+				class={ roundButton }
+				hx-delete={ "/admin/oidc-clients/" + clientID + "/redirect-uris/" + url.PathEscape(uri) }
+				hx-target="closest li"
+				hx-swap="outerHTML"
+			>
+				<img src="/public/x.svg"/>
+			</button>
+		}
 	</li>
 }
 
 templ OidcClients(clients []database.OidcClient) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	@AdminPage() {
 		<section class="flex flex-col p-8">
 			<h2 class="text-lg">OIDC Clients:</h2>
@@ -133,27 +154,29 @@ templ OidcClients(clients []database.OidcClient) {
 					@OidcClient(client, nil)
 				}
 			</ul>
-			<form
-				class="flex gap-4 items-stretch"
-				hx-post="/admin/oidc-clients"
-				hx-swap="beforeend"
-				hx-target="#oidc-client-list"
-			>
-				<input
-					type="text"
-					pattern="^[a-z\-0-1]+$"
-					class={ input }
-					placeholder="ID"
-					name="id"
-				/>
-				<button
-					class="
-						bg-[#3f4c66] p-1.5 block rounded border text-center
-						select-none border-transparent outline-none
-						focus:border-cerisestrong hover:border-ceriselight
-					 "
-				>New client</button>
-			</form>
+			if perms.WriteOIDCClients.Exists() {
+				<form
+					class="flex gap-4 items-stretch"
+					hx-post="/admin/oidc-clients"
+					hx-swap="beforeend"
+					hx-target="#oidc-client-list"
+				>
+					<input
+						type="text"
+						pattern="^[a-z\-0-1]+$"
+						class={ input }
+						placeholder="ID"
+						name="id"
+					/>
+					<button
+						class="
+							bg-[#3f4c66] p-1.5 block rounded border text-center
+							select-none border-transparent outline-none
+							focus:border-cerisestrong hover:border-ceriselight
+						 "
+					>New client</button>
+				</form>
+			}
 		</section>
 	}
 }

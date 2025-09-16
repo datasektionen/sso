@@ -30,13 +30,16 @@ templ AdminPage() {
 }
 
 templ Members(lastUpdatedAt time.Time) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	@AdminPage() {
 		<div class="p-8">
 			<section hx-get="/admin/users" hx-trigger="load" hx-swap="morph:innerHTML">
 				@MemberList([]models.User{}, "", 0, false, []string{}, "")
 			</section>
-			@uploadForm(lastUpdatedAt)
-			@UploadStatus(false)
+			if perms.WriteMembers {
+				@uploadForm(lastUpdatedAt)
+				@UploadStatus(false)
+			}
 		</div>
 	}
 }

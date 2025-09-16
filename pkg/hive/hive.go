@@ -31,6 +31,10 @@ func (sp PermissionScopes) Matches(entity string) bool {
 	return false
 }
 
+func (sp PermissionScopes) Exists() bool {
+	return len(sp.Scopes) > 0
+}
+
 type Permissions struct {
 	ReadMembers           bool             `hive:"read-members"`
 	WriteMembers          bool             `hive:"write-members"`

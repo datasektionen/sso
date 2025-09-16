@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,18 +13,12 @@ import (
 
 func authorize(s *service.Service, h http.Handler, permID string, scopeGetter func(*http.Request) string) http.Handler {
 	return httputil.Route(s, func(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-		kthid, err := s.GetLoggedInKTHID(r)
-		if err != nil {
-			return err
-		}
-		if kthid == "" {
+		user := s.GetLoggedInUser(r)
+		if user == nil {
 			s.RedirectToLogin(w, r, r.URL.Path)
 			return nil
 		}
-		perms, err := hive.GetSSOPermissions(r.Context(), kthid)
-		if err != nil {
-			return err
-		}
+		perms := r.Context().Value(hive.PermissionsCtxKey{}).(hive.Permissions)
 		permType := reflect.TypeFor[hive.Permissions]()
 		permValue := reflect.ValueOf(&perms).Elem()
 		var allowed, foundPerm bool
@@ -53,12 +46,10 @@ func authorize(s *service.Service, h http.Handler, permID string, scopeGetter fu
 			return httputil.Forbidden("Missing Hive permission " + permID)
 		}
 
-		r = r.WithContext(context.WithValue(r.Context(), hive.Permissions{}, perms))
-
 		h.ServeHTTP(w, r)
 
 		if r.Method != http.MethodGet {
-			args := []any{"kthid", kthid, "method", r.Method, "path", r.URL.Path}
+			args := []any{"kthid", user.KTHID, "method", r.Method, "path", r.URL.Path}
 			if id := r.PathValue("id"); id != "" {
 				args = append(args, "id", id)
 			} else if r.Form != nil && r.Form.Has("id") {

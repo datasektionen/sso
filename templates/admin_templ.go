@@ -36,7 +36,7 @@ func adminNav() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		perms := ctx.Value(hive.Permissions{}).(hive.Permissions)
+		perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions)
 		if perms.ReadMembers {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a href=\"/admin/members\">Members</a> ")
 			if templ_7745c5c3_Err != nil {

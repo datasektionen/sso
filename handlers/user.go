@@ -46,9 +46,8 @@ func index(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.
 	if nextURL == "" {
 		nextURL = "/account"
 	}
-	if kthid, err := s.GetLoggedInKTHID(r); err != nil {
-		return err
-	} else if kthid != "" {
+	user := s.GetLoggedInUser(r)
+	if user != nil {
 		if hasCookie {
 			http.SetCookie(w, &http.Cookie{Name: nextUrlCookie, MaxAge: -1})
 		}
@@ -65,7 +64,7 @@ func index(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.
 			SameSite: http.SameSiteLaxMode,
 		})
 	}
-	return templates.Index(s.DevLoginForm)
+	return templates.Index(s.DevLoginFormOrNilComp)
 }
 
 func logout(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -73,10 +72,7 @@ func logout(s *service.Service, w http.ResponseWriter, r *http.Request) httputil
 }
 
 func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
-	}
+	user := s.GetLoggedInUser(r)
 	if user == nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return nil
@@ -96,10 +92,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z][A-Za-z]{0,3}-\d{2}$`)
 
 func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
-	}
+	user := s.GetLoggedInUser(r)
 	if user == nil {
 		return httputil.Unauthorized()
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/datasektionen/sso/templates"
 )
 
-func (s *Service) DevLoginForm() templ.Component {
+func (s *Service) DevLoginFormOrNilComp() templ.Component {
 	if !config.Config.Dev {
 		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return nil

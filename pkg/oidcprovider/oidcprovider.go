@@ -149,14 +149,14 @@ func Init(s *service.Service) (http.Handler, error) {
 func (p *provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var next http.Handler
 	if r.URL.Path == "/op/sso-done" {
-		next = httputil.Route(nil, p.callback)
+		next = httputil.Route(p.s, p.callback)
 	} else {
 		next = http.StripPrefix("/op", p.provider.Handler)
 	}
 	next.ServeHTTP(w, r)
 }
 
-func (p *provider) callback(_ any, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	authRequestID := r.FormValue("auth-request-id")
 	id, err := uuid.Parse(authRequestID)
 	if err != nil {
@@ -169,13 +169,11 @@ func (p *provider) callback(_ any, w http.ResponseWriter, r *http.Request) httpu
 		return httputil.BadRequest("No request with that id")
 	}
 
-	req.kthid, err = p.s.GetLoggedInKTHID(r)
-	if err != nil {
-		return err
-	}
-	if req.kthid == "" {
+	user := p.s.GetLoggedInUser(r)
+	if user == nil {
 		return httputil.BadRequest("User did not seem to get logged in")
 	}
+	req.kthid = user.KTHID
 	p.dotabase.reqByID[id] = req
 
 	http.Redirect(w, r, "/op"+op.AuthCallbackURL(p.provider)(r.Context(), authRequestID), http.StatusSeeOther)

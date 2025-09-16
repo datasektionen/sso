@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -14,6 +15,7 @@ import (
 	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/auth"
 	"github.com/datasektionen/sso/pkg/email"
+	"github.com/datasektionen/sso/pkg/hive"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/kthldap"
 	"github.com/google/uuid"
@@ -89,7 +91,19 @@ The user `+user.FirstName+` `+user.FamilyName+` (`+user.KTHID+`) has requested t
 }
 
 func (s *Service) LoginUser(ctx context.Context, kthid string) httputil.ToResponse {
-	sessionID, err := s.DB.CreateSession(ctx, kthid)
+	perms, err := hive.GetSSOPermissions(ctx, kthid)
+	if err != nil {
+		return err
+	}
+	jsonPerms, err := json.Marshal(perms)
+	if err != nil {
+		slog.Error("LoginUser: could not marshal permissions. Resorting to empty permissions", "permissions", perms, "error", err)
+		jsonPerms = []byte(`{}`)
+	}
+	sessionID, err := s.DB.CreateSession(ctx, database.CreateSessionParams{
+		Kthid:       kthid,
+		Permissions: jsonPerms,
+	})
 	if err != nil {
 		return err
 	}
@@ -99,34 +113,49 @@ func (s *Service) LoginUser(ctx context.Context, kthid string) httputil.ToRespon
 	})
 }
 
-func (s *Service) GetLoggedInKTHID(r *http.Request) (string, error) {
+func (s *Service) WithSession(r *http.Request) (*http.Request, error) {
 	sessionCookie, _ := r.Cookie(auth.SessionCookieName)
 	if sessionCookie == nil {
-		return "", nil
+		return r, nil
 	}
 	sessionID, err := uuid.Parse(sessionCookie.Value)
 	if err != nil {
-		return "", nil
+		return r, nil
 	}
 	session, err := s.DB.GetSession(r.Context(), sessionID)
 	if err == pgx.ErrNoRows {
-		return "", nil
+		return r, nil
 	}
 	if err != nil {
-		return "", err
+		return r, err
 	}
-	return session, nil
+	user, err := s.GetUser(r.Context(), session.Kthid)
+	if err != nil {
+		return r, err
+	}
+	var permissions hive.Permissions
+	err = json.Unmarshal(session.Permissions, &permissions)
+	if err != nil {
+		slog.Error("Got invalid json in permissions in database. Defaulting to empty permission set.", "permissions", session.Permissions, "error", err)
+	}
+
+	return r.WithContext(context.WithValue(
+		context.WithValue(
+			r.Context(),
+			hive.PermissionsCtxKey{},
+			permissions,
+		),
+		models.UserCtxKey{},
+		user,
+	)), nil
 }
 
-func (s *Service) GetLoggedInUser(r *http.Request) (*models.User, error) {
-	kthid, err := s.GetLoggedInKTHID(r)
-	if err != nil {
-		return nil, err
+func (s *Service) GetLoggedInUser(r *http.Request) *models.User {
+	user := r.Context().Value(models.UserCtxKey{})
+	if user == nil {
+		return nil
 	}
-	if kthid == "" {
-		return nil, nil
-	}
-	return s.GetUser(r.Context(), kthid)
+	return user.(*models.User)
 }
 
 func (s *Service) Logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

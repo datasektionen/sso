@@ -2,10 +2,12 @@ package templates
 
 import (
 	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/pkg/hive"
 	"time"
 )
 
 templ AccountRequests(requests []database.AccountRequest) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	@AdminPage() {
 		<ul class="grid grid-cols-[repeat(6,auto)_max-content] p-2 gap-2">
 			<li class="grid grid-cols-subgrid col-span-full border-b">
@@ -23,21 +25,21 @@ templ AccountRequests(requests []database.AccountRequest) {
 					<p>{ request.CreatedAt.Time.Format(time.DateOnly) }</p>
 					<p>{ request.YearTag }</p>
 					<div class="flex gap-2 justify-stretch">
-						<button
-							class={ button }
-							hx-post={ "/admin/account-requests/" + request.ID.String() }
-							hx-target="closest div"
-						>
-							Approve
-						</button>
-						<button
-							class={ button }
-							hx-delete={ "/admin/account-requests/" + request.ID.String() }
-							hx-target="closest div"
-						>
-							Deny
-						</button>
-						if request.Kthid.Valid {
+						if perms.ManageAccountRequests {
+							<button
+								class={ button }
+								hx-post={ "/admin/account-requests/" + request.ID.String() }
+								hx-target="closest div"
+							>
+								Approve
+							</button>
+							<button
+								class={ button }
+								hx-delete={ "/admin/account-requests/" + request.ID.String() }
+								hx-target="closest div"
+							>
+								Deny
+							</button>
 							<button
 								class={ button }
 								hx-delete={ "/admin/account-requests/" + request.ID.String() + "?email" }

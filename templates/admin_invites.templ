@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/pkg/hive"
 	"strconv"
 	"time"
 )
 
 templ Invites(invites []database.Invite) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	@AdminPage() {
 		<div class="p-8">
 			<ul class="grid grid-cols-6 p-2">
@@ -24,12 +26,15 @@ templ Invites(invites []database.Invite) {
 					@Invite(inv)
 				}
 			</ul>
-			@inviteForm(nil)
+			if perms.WriteInvites {
+				@inviteForm(nil)
+			}
 		</div>
 	}
 }
 
 templ Invite(invite database.Invite) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	<li class="grid grid-cols-subgrid col-span-full odd:bg-white/5 p-1">
 		<p>{ invite.Name }</p>
 		<p>{ strconv.Itoa(int(invite.CurrentUses)) }</p>
@@ -41,12 +46,14 @@ templ Invite(invite database.Invite) {
 		<p>{ invite.CreatedAt.Time.Format(time.DateOnly) }</p>
 		<p>{ invite.ExpiresAt.Time.Format(time.DateOnly) }</p>
 		<div class="flex items-center gap-1">
-			<button
-				class={ roundButton }
-				hx-delete={ "/admin/invites/" + invite.ID.String() }
-				hx-target="closest li"
-				hx-swap="outerHTML"
-			><img src="/public/x.svg"/></button>
+			if perms.WriteInvites {
+				<button
+					class={ roundButton }
+					hx-delete={ "/admin/invites/" + invite.ID.String() }
+					hx-target="closest li"
+					hx-swap="outerHTML"
+				><img src="/public/x.svg"/></button>
+			}
 			<button
 				class={ roundButton }
 				onclick={ templ.ComponentScript{Call: templ.SafeScript(
@@ -54,12 +61,14 @@ templ Invite(invite database.Invite) {
 					config.Config.Origin.String()+"/invite/"+invite.ID.String(),
 				)} }
 			><img src="/public/clipboard.svg"/></button>
-			<button
-				class={ roundButton }
-				hx-get={ "/admin/invites/" + invite.ID.String() + "/edit" }
-				hx-target="closest li"
-				hx-swap="outerHTML"
-			><p>✎</p></button>
+			if perms.WriteInvites {
+				<button
+					class={ roundButton }
+					hx-get={ "/admin/invites/" + invite.ID.String() + "/edit" }
+					hx-target="closest li"
+					hx-swap="outerHTML"
+				><p>✎</p></button>
+			}
 		</div>
 	</li>
 }

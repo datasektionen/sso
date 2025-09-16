@@ -31,10 +31,6 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func admin(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	return templates.AdminPage()
-}
-
 func membersPage(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	uploadTime, err := s.DB.GetLastSheetUploadTime(r.Context())
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -539,7 +535,7 @@ func accountRequests(s *service.Service, w http.ResponseWriter, r *http.Request)
 		return err
 	}
 
-	requests = slices.DeleteFunc(requests, func(req database.AccountRequest) bool { return !req.Kthid.Valid })
+	requests = slices.DeleteFunc(append([]database.AccountRequest{}, requests...), func(req database.AccountRequest) bool { return !req.Kthid.Valid })
 
 	return templates.AccountRequests(requests)
 }

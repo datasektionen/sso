@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/datasektionen/sso/pkg/config"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
@@ -47,7 +48,7 @@ func legacyAPILogin(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		Value:    callback.String(),
 		Path:     "/legacyapi",
 		MaxAge:   int((time.Minute * 10).Seconds()),
-		Secure:   true,
+		Secure:   !config.Config.Dev,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})

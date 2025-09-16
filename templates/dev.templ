@@ -41,7 +41,7 @@ templ devAutoReload() {
 				const res = await fetch("/ping");
 				await res.text();
 				location.reload();
-			} catch () {
+			} catch (_) {
 				setTimeout(f, 200);
 			}
 		};

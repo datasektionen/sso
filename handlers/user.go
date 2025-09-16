@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/pkg/config"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
@@ -59,7 +60,7 @@ func index(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.
 			Name:     nextUrlCookie,
 			Value:    nextURL,
 			MaxAge:   int((time.Minute * 10).Seconds()),
-			Secure:   true,
+			Secure:   !config.Config.Dev,
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
 		})
@@ -162,7 +163,7 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		http.SetCookie(w, &http.Cookie{
 			Name:     "account-request-id",
 			Value:    id.String(),
-			Secure:   true,
+			Secure:   !config.Config.Dev,
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
 		})
@@ -204,7 +205,7 @@ func acceptInvite(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 	http.SetCookie(w, &http.Cookie{
 		Name:     "invite",
 		Value:    id.String(),
-		Secure:   true,
+		Secure:   !config.Config.Dev,
 		HttpOnly: true,
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,

@@ -14,3 +14,5 @@ type User struct {
 	FirstNameChangeRequest  string
 	FamilyNameChangeRequest string
 }
+
+type UserCtxKey struct{}

@@ -54,9 +54,15 @@ func Respond(resp ToResponse, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Route[S any](s S, f func(s S, w http.ResponseWriter, r *http.Request) ToResponse) http.Handler {
+func Route[S interface {
+	WithSession(r *http.Request) (*http.Request, error)
+}](s S, f func(s S, w http.ResponseWriter, r *http.Request) ToResponse) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		Respond(f(s, w, r), w, r)
+		r2, err := s.WithSession(r)
+		if err != nil {
+			Respond(err, w, r)
+		}
+		Respond(f(s, w, r2), w, r2)
 	})
 }
 

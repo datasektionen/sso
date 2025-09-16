@@ -60,10 +60,7 @@ func legacyAPICallback(s *service.Service, w http.ResponseWriter, r *http.Reques
 	if callback == nil {
 		return httputil.BadRequest("Idk where you came from. Maybe you took longer than 10 minutes?")
 	}
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
-	}
+	user := s.GetLoggedInUser(r)
 	if user == nil {
 		return httputil.BadRequest("You did not seem to get logged in")
 	}
@@ -105,10 +102,7 @@ func legacyAPIVerify(s *service.Service, w http.ResponseWriter, r *http.Request)
 }
 
 func legacyAPILogout(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
-	}
+	user := s.GetLoggedInUser(r)
 	if user != nil {
 		if err := s.DB.DeleteToken(r.Context(), user.KTHID); err != nil {
 			return err

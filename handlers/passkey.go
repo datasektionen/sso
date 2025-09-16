@@ -7,7 +7,6 @@ import (
 
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/models"
-	"github.com/datasektionen/sso/pkg/auth"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
@@ -89,21 +88,11 @@ func finishLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	sessionID, err := s.DB.CreateSession(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
-
-	http.SetCookie(w, auth.SessionCookie(sessionID.String()))
-
-	return nil
+	return s.LoginUser(r.Context(), user.KTHID)
 }
 
 func addPasskeyForm(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
-	}
+	user := s.GetLoggedInUser(r)
 	if user == nil {
 		return httputil.Unauthorized()
 	}
@@ -126,10 +115,7 @@ func addPasskeyForm(s *service.Service, w http.ResponseWriter, r *http.Request) 
 }
 
 func addPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
-	}
+	user := s.GetLoggedInUser(r)
 	if user == nil {
 		return httputil.Unauthorized()
 	}
@@ -178,10 +164,7 @@ func addPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) http
 }
 
 func removePasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	user, err := s.GetLoggedInUser(r)
-	if err != nil {
-		return err
-	}
+	user := s.GetLoggedInUser(r)
 	if user == nil {
 		return httputil.Unauthorized()
 	}

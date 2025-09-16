@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/datasektionen/sso/pkg/auth"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
 )
@@ -18,17 +17,7 @@ func devLogin(s *service.Service, w http.ResponseWriter, r *http.Request) httput
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	sessionID, err := s.DB.CreateSession(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
-	http.SetCookie(w, &http.Cookie{
-		Name:  auth.SessionCookieName,
-		Value: sessionID.String(),
-		Path:  "/",
-	})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-	return nil
+	return s.LoginUser(r.Context(), user.KTHID)
 }
 
 func autoReload(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

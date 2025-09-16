@@ -1,6 +1,6 @@
 -- name: CreateSession :one
-insert into sessions (kthid)
-values ($1)
+insert into sessions (kthid, permissions)
+values ($1, $2)
 returning id;
 
 -- name: GetSession :one
@@ -8,7 +8,7 @@ update sessions
 set last_used_at = now()
 where id = $1
 and last_used_at > now() - interval '8 hours'
-returning kthid;
+returning kthid, permissions;
 
 -- name: RemoveSession :exec
 delete from sessions

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -43,6 +42,8 @@ type Permissions struct {
 	ManageAccountRequests bool             `hive:"manage-account-requests"`
 }
 
+type PermissionsCtxKey struct{}
+
 func GetSSOPermissions(ctx context.Context, kthid string) (Permissions, error) {
 	rawPerms, err := GetRawPermissionsInSystemForUser(ctx, kthid, "sso")
 	if err != nil {
@@ -61,6 +62,7 @@ func GetSSOPermissions(ctx context.Context, kthid string) (Permissions, error) {
 			if tag != perm.ID {
 				continue
 			}
+			foundField = true
 			fieldValue := permValue.Field(i)
 
 			if scopes, ok := fieldValue.Addr().Interface().(*PermissionScopes); ok {
@@ -101,7 +103,6 @@ func GetRawPermissionsInSystemForUser(ctx context.Context, kthid string, system 
 	if err != nil {
 		return nil, err
 	}
-	slog.Info("hive getPermissions", "url", req)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err

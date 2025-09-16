@@ -53,9 +53,10 @@ type Passkey struct {
 }
 
 type Session struct {
-	ID         uuid.UUID
-	Kthid      string
-	LastUsedAt pgtype.Timestamp
+	ID          uuid.UUID
+	Kthid       string
+	LastUsedAt  pgtype.Timestamp
+	Permissions []byte
 }
 
 type User struct {

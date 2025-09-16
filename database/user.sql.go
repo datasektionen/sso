@@ -32,13 +32,18 @@ func (q *Queries) CreateAccountRequest(ctx context.Context, arg CreateAccountReq
 }
 
 const createSession = `-- name: CreateSession :one
-insert into sessions (kthid)
-values ($1)
+insert into sessions (kthid, permissions)
+values ($1, $2)
 returning id
 `
 
-func (q *Queries) CreateSession(ctx context.Context, kthid string) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, createSession, kthid)
+type CreateSessionParams struct {
+	Kthid       string
+	Permissions []byte
+}
+
+func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createSession, arg.Kthid, arg.Permissions)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
@@ -160,14 +165,19 @@ update sessions
 set last_used_at = now()
 where id = $1
 and last_used_at > now() - interval '8 hours'
-returning kthid
+returning kthid, permissions
 `
 
-func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (string, error) {
+type GetSessionRow struct {
+	Kthid       string
+	Permissions []byte
+}
+
+func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (GetSessionRow, error) {
 	row := q.db.QueryRow(ctx, getSession, id)
-	var kthid string
-	err := row.Scan(&kthid)
-	return kthid, err
+	var i GetSessionRow
+	err := row.Scan(&i.Kthid, &i.Permissions)
+	return i, err
 }
 
 const getUser = `-- name: GetUser :one

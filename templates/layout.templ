@@ -23,12 +23,25 @@ templ base() {
 					return array[0];
 				}
 			</script>
+			<script defer>
+				document.addEventListener("htmx:responseError", event => {
+					const el = document.createElement("p");
+					el.classList.add("bg-red-900", "text-red-300", "p-2", "transition-transform", "duration-1000");
+					el.innerText = event.detail.xhr.responseText;
+					setTimeout(() => {
+						el.classList.add("translate-x-[100vh]");
+					}, 3000);
+					document.body.querySelector("#htmx-errors").appendChild(el);
+					setTimeout(() => el.remove(), 4000);
+				});
+			</script>
 			if config.Config.Dev {
 				@devAutoReload()
 			}
 		</head>
 		<body class="bg-gray-900 text-neutral-100" hx-ext="morph">
 			{ children... }
+			<div id="htmx-errors" class="fixed bottom-3 left-1/2 -translate-x-1/2 flex flex-col gap-3"></div>
 		</body>
 	</html>
 }

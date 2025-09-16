@@ -42,7 +42,7 @@ func base() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script>\n\t\t\t\tfunction first(array) {\n\t\t\t\t\treturn array[0];\n\t\t\t\t}\n\t\t\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script>\n\t\t\t\tfunction first(array) {\n\t\t\t\t\treturn array[0];\n\t\t\t\t}\n\t\t\t</script><script defer>\n\t\t\t\tdocument.addEventListener(\"htmx:responseError\", event => {\n\t\t\t\t\tconst el = document.createElement(\"p\");\n\t\t\t\t\tel.classList.add(\"bg-red-900\", \"text-red-300\", \"p-2\", \"transition-transform\", \"duration-1000\");\n\t\t\t\t\tel.innerText = event.detail.xhr.responseText;\n\t\t\t\t\tsetTimeout(() => {\n\t\t\t\t\t\tel.classList.add(\"translate-x-[100vh]\");\n\t\t\t\t\t}, 3000);\n\t\t\t\t\tdocument.body.querySelector(\"#htmx-errors\").appendChild(el);\n\t\t\t\t\tsetTimeout(() => el.remove(), 4000);\n\t\t\t\t});\n\t\t\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -60,7 +60,7 @@ func base() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"htmx-errors\" class=\"fixed bottom-3 left-1/2 -translate-x-1/2 flex flex-col gap-3\"></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

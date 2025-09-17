@@ -367,7 +367,7 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 		return errors.New("SetUserinfoFromScopes, no user but pretty sure that should have been handled in this request???")
 	}
 
-	client, err := p.s.DB.GetClient(ctx, clientID)
+	client, err := p.s.DB.GetClientUpdateLastUse(ctx, clientID)
 	if err != nil {
 		return err
 	}
@@ -402,7 +402,7 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 		return errors.New("SetUserinfoFromToken, no user but pretty sure that should have been handled in this request???")
 	}
 
-	client, err := p.s.DB.GetClient(ctx, token.clientID)
+	client, err := p.s.DB.GetClientUpdateLastUse(ctx, token.clientID)
 	if err != nil {
 		return err
 	}

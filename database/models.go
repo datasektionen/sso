@@ -43,6 +43,7 @@ type OidcClient struct {
 	RedirectUris []string
 	ID           string
 	HiveSystemID string
+	LastUsedAt   pgtype.Timestamp
 }
 
 type Passkey struct {

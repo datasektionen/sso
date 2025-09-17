@@ -34,6 +34,13 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 				<code>{ b64(secret) }</code>
 			</p>
 		}
+		<p>
+			if client.LastUsedAt.Valid {
+				Last used at: { client.LastUsedAt.Time.Format("2006-01-02") }
+			} else {
+				Never used
+			}
+		</p>
 		if perms.WriteOIDCClients.Matches(client.ID) {
 			<div class="flex gap-2 items-center">
 				<label for={ "hive-system-id-" + client.ID }>Hive System ID:</label>

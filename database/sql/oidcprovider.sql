@@ -3,6 +3,12 @@ select *
 from oidc_clients
 where id = $1;
 
+-- name: GetClientUpdateLastUse :one
+update oidc_clients
+set last_used_at = now()
+where id = $1
+returning *;
+
 -- name: ListClients :many
 select *
 from oidc_clients;

@@ -49,6 +49,10 @@ type Permissions struct {
 type PermissionsCtxKey struct{}
 
 func GetSSOPermissions(ctx context.Context, kthid string) (Permissions, error) {
+	if config.Config.Dev && config.Config.HiveURL == nil {
+		return Permissions{true, true, true, PermissionScopes{[]string{"*"}}, true, true, true, true}, nil
+	}
+
 	rawPerms, err := GetRawPermissionsInSystemForUser(ctx, kthid, "sso")
 	if err != nil {
 		return Permissions{}, err

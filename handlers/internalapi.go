@@ -31,6 +31,8 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		}
 	}
 
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	switch r.URL.Query().Get("format") {
 	case "single":
 		if len(q) != 1 {
@@ -61,6 +63,7 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 
 		return json.NewEncoder(w).Encode(users)
 	default:
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		return httputil.BadRequest("Unknown or no data format requested")
 	}
 }

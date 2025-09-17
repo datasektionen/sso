@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/datasektionen/sso/database"
@@ -39,7 +38,7 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		if len(dbUsers) != 1 {
 			return httputil.NotFound()
 		}
-		return json.NewEncoder(w).Encode(convert(dbUsers[0]))
+		return httputil.JSON(convert(dbUsers[0]))
 	case "array":
 		indices := map[string]int{}
 		for i, username := range q {
@@ -52,14 +51,14 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		for _, user := range dbUsers {
 			users[indices[user.Kthid]] = convert(user)
 		}
-		return json.NewEncoder(w).Encode(users)
+		return httputil.JSON(users)
 	case "map":
 		users := map[string]User{}
 		for _, user := range dbUsers {
 			users[user.Kthid] = convert(user)
 		}
 
-		return json.NewEncoder(w).Encode(users)
+		return httputil.JSON(users)
 	default:
 		return httputil.BadRequest("Unknown or no data format requested")
 	}

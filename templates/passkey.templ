@@ -10,10 +10,7 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sess
 	<form
 		id="passkey-login-form"
 		hx-post="/login/passkey/begin"
-		_="
-			on load if localStorage.sso_saved_kthid then set #pk-kthid.value to localStorage.sso_saved_kthid then call #pk-init.focus() end
-			on submit remove <.error/> then if #pk-kthid.value then set localStorage.sso_saved_kthid to #pk-kthid.value
-		"
+		_="on submit remove <.error/>"
 		if credAss != nil {
 			data-cred-ass={ templ.JSONString(credAss) }
 		}

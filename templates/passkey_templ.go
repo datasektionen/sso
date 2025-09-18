@@ -35,7 +35,7 @@ func PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sessi
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form id=\"passkey-login-form\" hx-post=\"/login/passkey/begin\" _=\"\n\t\t\ton load if localStorage.sso_saved_kthid then set #pk-kthid.value to localStorage.sso_saved_kthid then call #pk-init.focus() end\n\t\t\ton submit remove &lt;.error/&gt; then if #pk-kthid.value then set localStorage.sso_saved_kthid to #pk-kthid.value\n\t\t\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form id=\"passkey-login-form\" hx-post=\"/login/passkey/begin\" _=\"on submit remove &lt;.error/&gt;\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -47,7 +47,7 @@ func PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sessi
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templ.JSONString(credAss))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 18, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 15, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -65,7 +65,7 @@ func PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sessi
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templ.JSONString(sessionID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 20, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 17, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -81,14 +81,14 @@ func PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sessi
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<label class=\"text-sm\" for=\"pk-kthid\">Log in using a Passkey</label><div class=\"flex gap-2\"><input id=\"pk-kthid\" name=\"kthid\" type=\"text\" required placeholder=\"KTH ID\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<label class=\"text-sm\" for=\"pk-kthid\">Log in using a Passkey</label><div class=\"flex gap-2\"><input id=\"pk-kthid\" name=\"kthid\" type=\"text\" placeholder=\"KTH ID\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(kthid)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 79, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 76, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -156,7 +156,7 @@ func ShowPasskey(passkey models.Passkey) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(passkey.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 102, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 99, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -169,23 +169,23 @@ func ShowPasskey(passkey models.Passkey) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs("/passkey/" + passkey.ID.String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 109, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `passkey.templ`, Line: 106, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\"><img class=\"w-3/5 h-3/5 invert\" src=\"/public/x.svg\"></button> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\"><img class=\"w-3/5 h-3/5 invert\" src=\"/public/x.svg\"></button> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if !passkey.Discoverable {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<p title=\"This is not a discoverable key! If you re-create this passkey, you will be able to log in without filling in the username field!\">☣️</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<p title=\"This is not a discoverable key! If you re-create this passkey, you will be able to log in without filling in the username field!\">☣️</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</li>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</li>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -214,7 +214,7 @@ func PasskeySettings(passkeys []models.Passkey) templ.Component {
 			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<section class=\"flex flex-col max-w-lg\"><h2 class=\"text-xl text-ceriselight\">Passkeys:</h2><ul id=\"passkey-list\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<section class=\"flex flex-col max-w-lg\"><h2 class=\"text-xl text-ceriselight\">Passkeys:</h2><ul id=\"passkey-list\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -224,7 +224,7 @@ func PasskeySettings(passkeys []models.Passkey) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</ul><button hx-get=\"/passkey/add-form\" hx-swap=\"afterend\" id=\"add-passkey-button\" _=\"on htmx:afterSwap hide me\" class=\"\n\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\tfocus:border-cerisestrong hover:border-ceriselight\n\t\t\t\tmt-1\n\t\t\t\">Add passkey</button></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</ul><button hx-get=\"/passkey/add-form\" hx-swap=\"afterend\" id=\"add-passkey-button\" _=\"on htmx:afterSwap hide me\" class=\"\n\t\t\t\tbg-[#3f4c66] p-1.5 block rounded border text-center\n\t\t\t\tselect-none border-transparent outline-none\n\t\t\t\tfocus:border-cerisestrong hover:border-ceriselight\n\t\t\t\tmt-1\n\t\t\t\">Add passkey</button></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -253,7 +253,7 @@ func AddPasskeyForm(cc *protocol.CredentialCreation, sessionID uuid.UUID) templ.
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<form data-credential-creation=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<form data-credential-creation=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -266,7 +266,7 @@ func AddPasskeyForm(cc *protocol.CredentialCreation, sessionID uuid.UUID) templ.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" data-session-id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" data-session-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -279,7 +279,7 @@ func AddPasskeyForm(cc *protocol.CredentialCreation, sessionID uuid.UUID) templ.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" onsubmit=\"addPasskey(this, event)\" class=\"[&amp;&gt;.error]:bg-red-600/50 [&amp;&gt;.error]:p-2 [&amp;&gt;.error]:mt-2 [&amp;&gt;.error]:rounded\"><script>\n\t\t\tasync function addPasskey(form, event) {\n\t\t\t\tevent.preventDefault();\n\t\t\t\tlet cc = JSON.parse(form.dataset.credentialCreation);\n\t\t\t\tcc.publicKey.challenge = decodebase64url(cc.publicKey.challenge);\n\t\t\t\tcc.publicKey.user.id = decodebase64url(cc.publicKey.user.id);\n\t\t\t\tfor (let err of form.querySelectorAll(\".error\"))\n\t\t\t\t\terr.remove();\n\n\t\t\t\ttry {\n\t\t\t\t\tlet cred = await navigator.credentials.create(await cc);\n\t\t\t\t\tlet res = await fetch(\"/passkey\", {\n\t\t\t\t\t\tmethod: \"post\",\n\t\t\t\t\t\theaders: { \"Content-Type\": \"application/json\" },\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\tname: new FormData(form).get(\"name\"),\n\t\t\t\t\t\t\tsession: form.dataset.sessionId,\n\t\t\t\t\t\t\tid: cred.id,\n\t\t\t\t\t\t\ttype: cred.type,\n\t\t\t\t\t\t\tauthenticatorAttachment: cred.authenticatorAttachment,\n\t\t\t\t\t\t\tresponse: {\n\t\t\t\t\t\t\t\tattestationObject: encodebase64url(cred.response.attestationObject),\n\t\t\t\t\t\t\t\tclientDataJSON: encodebase64url(cred.response.clientDataJSON),\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t}),\n\t\t\t\t\t});\n\t\t\t\t\tif (res.status != 200)\n\t\t\t\t\t\tthrow new Error(await res.text());\n\t\t\t\t\tlet key = await res.text();\n\t\t\t\t\tform.remove();\n\t\t\t\t\thtmx.swap(\"#passkey-list\", key, { swapStyle: \"beforeend\" });\n\t\t\t\t\tdocument.querySelector(\"#add-passkey-button\").style.display = \"\";\n\t\t\t\t} catch (err) {\n\t\t\t\t\tlet text = (err.name === \"NotAllowedError\")\n\t\t\t\t\t\t? \"Missing permission or request was cancelled\"\n\t\t\t\t\t\t: err.message;\n\t\t\t\t\tlet el = document.createElement(\"p\");\n\t\t\t\t\tel.classList.add(\"error\");\n\t\t\t\t\tel.textContent = text;\n\t\t\t\t\tform.appendChild(el);\n\t\t\t\t}\n\t\t\t}\n\t\t</script><div class=\"flex gap-2\"><input placeholder=\"passkey name\" type=\"text\" autofocus name=\"name\" id=\"passkey-name\" class=\"\n\t\t\t\t\tborder border-neutral-500 grow\n\t\t\t\t\toutline-none focus:border-cerisestrong hover:border-ceriselight\n\t\t\t\t\tbg-slate-800 p-1.5 rounded h-8\n\t\t\t\t\"> <button class=\"\n\t\t\t\tbg-[#3f4c66] shrink-0 h-8 w-8 rounded-full\n\t\t\t\tgrid place-items-center pointer\n\t\t\t\tborder border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight\n\t\t\t\"><img class=\"w-3/5 h-3/5 invert\" src=\"/public/check.svg\"></button></div></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" onsubmit=\"addPasskey(this, event)\" class=\"[&amp;&gt;.error]:bg-red-600/50 [&amp;&gt;.error]:p-2 [&amp;&gt;.error]:mt-2 [&amp;&gt;.error]:rounded\"><script>\n\t\t\tasync function addPasskey(form, event) {\n\t\t\t\tevent.preventDefault();\n\t\t\t\tlet cc = JSON.parse(form.dataset.credentialCreation);\n\t\t\t\tcc.publicKey.challenge = decodebase64url(cc.publicKey.challenge);\n\t\t\t\tcc.publicKey.user.id = decodebase64url(cc.publicKey.user.id);\n\t\t\t\tfor (let err of form.querySelectorAll(\".error\"))\n\t\t\t\t\terr.remove();\n\n\t\t\t\ttry {\n\t\t\t\t\tlet cred = await navigator.credentials.create(await cc);\n\t\t\t\t\tlet res = await fetch(\"/passkey\", {\n\t\t\t\t\t\tmethod: \"post\",\n\t\t\t\t\t\theaders: { \"Content-Type\": \"application/json\" },\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\tname: new FormData(form).get(\"name\"),\n\t\t\t\t\t\t\tsession: form.dataset.sessionId,\n\t\t\t\t\t\t\tid: cred.id,\n\t\t\t\t\t\t\ttype: cred.type,\n\t\t\t\t\t\t\tauthenticatorAttachment: cred.authenticatorAttachment,\n\t\t\t\t\t\t\tresponse: {\n\t\t\t\t\t\t\t\tattestationObject: encodebase64url(cred.response.attestationObject),\n\t\t\t\t\t\t\t\tclientDataJSON: encodebase64url(cred.response.clientDataJSON),\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t}),\n\t\t\t\t\t});\n\t\t\t\t\tif (res.status != 200)\n\t\t\t\t\t\tthrow new Error(await res.text());\n\t\t\t\t\tlet key = await res.text();\n\t\t\t\t\tform.remove();\n\t\t\t\t\thtmx.swap(\"#passkey-list\", key, { swapStyle: \"beforeend\" });\n\t\t\t\t\tdocument.querySelector(\"#add-passkey-button\").style.display = \"\";\n\t\t\t\t} catch (err) {\n\t\t\t\t\tlet text = (err.name === \"NotAllowedError\")\n\t\t\t\t\t\t? \"Missing permission or request was cancelled\"\n\t\t\t\t\t\t: err.message;\n\t\t\t\t\tlet el = document.createElement(\"p\");\n\t\t\t\t\tel.classList.add(\"error\");\n\t\t\t\t\tel.textContent = text;\n\t\t\t\t\tform.appendChild(el);\n\t\t\t\t}\n\t\t\t}\n\t\t</script><div class=\"flex gap-2\"><input placeholder=\"passkey name\" type=\"text\" autofocus name=\"name\" id=\"passkey-name\" class=\"\n\t\t\t\t\tborder border-neutral-500 grow\n\t\t\t\t\toutline-none focus:border-cerisestrong hover:border-ceriselight\n\t\t\t\t\tbg-slate-800 p-1.5 rounded h-8\n\t\t\t\t\"> <button class=\"\n\t\t\t\tbg-[#3f4c66] shrink-0 h-8 w-8 rounded-full\n\t\t\t\tgrid place-items-center pointer\n\t\t\t\tborder border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight\n\t\t\t\"><img class=\"w-3/5 h-3/5 invert\" src=\"/public/check.svg\"></button></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

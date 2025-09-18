@@ -66,7 +66,14 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sess
 				}
 			</script>
 		}
-		<label class="text-sm" for="pk-kthid">Log in using a Passkey</label>
+		<label class="text-sm" for="pk-kthid">
+			Log in using a Passkey
+			<i
+				title="The first time you log in, you must use KTH. If you then go to your account settings you can add one or multiple passkeys.
+If you registered your passkey after 2025-09-18, you don't need to provide your username."
+				class="nf nf-cod-info"
+			></i>
+		</label>
 		<div class="flex gap-2">
 			<input
 				id="pk-kthid"
@@ -86,10 +93,9 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sess
 					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
 					grid place-items-center pointer
 					border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
+					nf nf-cod-key -scale-x-100
 				`+bigIfTrue(credAss != nil, "spinner", "") }
-			>
-				<img src="/public/key_icon.svg" class="w-3/5 h-3/5 invert"/>
-			</button>
+			></button>
 		</div>
 	</form>
 }
@@ -102,13 +108,12 @@ templ ShowPasskey(passkey models.Passkey) {
 				bg-[#3f4c66] shrink-0 h-5 w-5 rounded-full
 				grid place-items-center pointer
 				border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
+				nf nf-oct-x
 			"
 			hx-delete={ "/passkey/" + passkey.ID.String() }
 			hx-target="closest li"
 			hx-swap="outerHTML"
-		>
-			<img class="w-3/5 h-3/5 invert" src="/public/x.svg"/>
-		</button>
+		></button>
 		if !passkey.Discoverable {
 			<p title="This is not a discoverable key! If you re-create this passkey, you will be able to log in without filling in the username field!">☣️</p>
 		}
@@ -206,8 +211,9 @@ templ AddPasskeyForm(cc *protocol.CredentialCreation, sessionID uuid.UUID) {
 				bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
 				grid place-items-center pointer
 				border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight
+				nf nf-oct-check
 			"
-			><img class="w-3/5 h-3/5 invert" src="/public/check.svg"/></button>
+			></button>
 		</div>
 	</form>
 }

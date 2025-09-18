@@ -201,7 +201,7 @@ func AccountSettingsForm(user models.User, errors map[string]string) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" title=\"Request to change name\" _=\"on click show next &lt;form/&gt;\"><p>✎</p></button></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" title=\"Request to change name\" _=\"on click show next &lt;form/&gt;\"><i class=\"text-sm nf nf-fa-edit\"></i></button></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

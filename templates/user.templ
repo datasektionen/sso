@@ -48,7 +48,7 @@ templ AccountSettingsForm(user models.User, errors map[string]string) {
 					class={ roundButton }
 					title="Request to change name"
 					_="on click show next <form/>"
-				><p>✎</p></button>
+				><i class="text-sm nf nf-fa-edit"></i></button>
 			</div>
 			if user.FirstNameChangeRequest != "" || user.FamilyNameChangeRequest != "" {
 				<div class="flex gap-2">

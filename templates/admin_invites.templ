@@ -48,26 +48,26 @@ templ Invite(invite database.Invite) {
 		<div class="flex items-center gap-1">
 			if perms.WriteInvites {
 				<button
-					class={ roundButton }
+					class={ roundButton + " nf nf-oct-x" }
 					hx-delete={ "/admin/invites/" + invite.ID.String() }
 					hx-target="closest li"
 					hx-swap="outerHTML"
-				><img src="/public/x.svg"/></button>
+				></button>
 			}
 			<button
-				class={ roundButton }
+				class={ roundButton + " nf nf-fa-clipboard_alt text-sm" }
 				onclick={ templ.ComponentScript{Call: templ.SafeScript(
 					"navigator.clipboard.writeText",
 					config.Config.Origin.String()+"/invite/"+invite.ID.String(),
 				)} }
-			><img src="/public/clipboard.svg"/></button>
+			></button>
 			if perms.WriteInvites {
 				<button
-					class={ roundButton }
+					class={ roundButton + " nf nf-fa-edit text-sm"}
 					hx-get={ "/admin/invites/" + invite.ID.String() + "/edit" }
 					hx-target="closest li"
 					hx-swap="outerHTML"
-				><p>✎</p></button>
+				><p></p></button>
 			}
 		</div>
 	</li>

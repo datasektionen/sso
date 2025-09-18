@@ -18,14 +18,12 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 			ID: <code>{ client.ID }</code>
 			if perms.WriteOIDCClients.Matches(client.ID) {
 				<button
-					class={ roundButton }
+					class={ roundButton + " nf nf-oct-x" }
 					hx-delete={ "/admin/oidc-clients/" + client.ID }
 					hx-target="closest li"
 					hx-swap="outerHTML"
 					hx-confirm="Want to delete OIDC client? This action is irreversible!"
-				>
-					<img class="w-3/5 h-3/5 invert" src="/public/x.svg"/>
-				</button>
+				></button>
 			}
 		</p>
 		if secret != nil {
@@ -100,15 +98,11 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 							class={ input }
 							autofocus
 						/>
-						<button class={ roundButton }>
-							<img src="/public/check.svg"/>
-						</button>
+						<button class={ roundButton + " nf nf-oct-check text-xs" }></button>
 						<button
-							class={ roundButton }
+							class={ roundButton + " nf nf-oct-x" }
 							_="on click remove closest <li/>"
-						>
-							<img src="/public/x.svg"/>
-						</button>
+						></button>
 					</form>
 				</li>
 			</template>
@@ -130,7 +124,7 @@ templ hiveSystemIdForm(clientID string, initVal string) {
 			class={ input + " grow-0" }
 			value={ initVal }
 		/>
-		<button class={ roundButton }><img src="/public/check.svg"/></button>
+		<button class={ roundButton + " nf nf-oct-check text-xs" }></button>
 	</form>
 }
 
@@ -140,13 +134,11 @@ templ RedirectURI(clientID string, uri string) {
 		{ uri }
 		if perms.WriteOIDCClients.Matches(clientID) {
 			<button
-				class={ roundButton }
+				class={ roundButton + " nf nf-oct-x" }
 				hx-delete={ "/admin/oidc-clients/" + clientID + "/redirect-uris/" + url.PathEscape(uri) }
 				hx-target="closest li"
 				hx-swap="outerHTML"
-			>
-				<img src="/public/x.svg"/>
-			</button>
+			></button>
 		}
 	</li>
 }

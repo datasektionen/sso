@@ -31,6 +31,11 @@ select *
 from users
 where kthid = $1;
 
+-- name: GetKTHIDByWebauthnID :one
+select kthid
+from users
+where webauthn_id = $1;
+
 -- name: GetUsersByIDs :many
 select *
 from users

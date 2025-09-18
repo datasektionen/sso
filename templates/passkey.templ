@@ -26,8 +26,10 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sess
 				let form = document.querySelector("#passkey-login-form");
 				let credAss = JSON.parse(form.dataset.credAss);
 				credAss.publicKey.challenge = decodebase64url(credAss.publicKey.challenge);
-				for (let ac of credAss.publicKey.allowCredentials) {
-					ac.id = decodebase64url(ac.id);
+				if ("allowCredentials" in credAss.publicKey) {
+					for (let ac of credAss.publicKey.allowCredentials) {
+						ac.id = decodebase64url(ac.id);
+					}
 				}
 				try {
 					let cred = await navigator.credentials.get(credAss);
@@ -73,7 +75,6 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sess
 				id="pk-kthid"
 				name="kthid"
 				type="text"
-				required
 				placeholder="KTH ID"
 				value={ kthid }
 				class="

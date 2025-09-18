@@ -36,6 +36,30 @@ func (q *Queries) AddPasskey(ctx context.Context, arg AddPasskeyParams) (uuid.UU
 	return id, err
 }
 
+const getPasskey = `-- name: GetPasskey :one
+select id, name, kthid, data, discoverable
+from passkeys
+where kthid = $1 and decode(data->>'id', 'base64') = $2
+`
+
+type GetPasskeyParams struct {
+	Kthid string
+	ID    []byte
+}
+
+func (q *Queries) GetPasskey(ctx context.Context, arg GetPasskeyParams) (Passkey, error) {
+	row := q.db.QueryRow(ctx, getPasskey, arg.Kthid, arg.ID)
+	var i Passkey
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Kthid,
+		&i.Data,
+		&i.Discoverable,
+	)
+	return i, err
+}
+
 const listPasskeysByUser = `-- name: ListPasskeysByUser :many
 select id, name, kthid, data, discoverable
 from passkeys

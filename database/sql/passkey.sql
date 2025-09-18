@@ -12,6 +12,11 @@ select *
 from passkeys
 where kthid = $1;
 
+-- name: GetPasskey :one
+select *
+from passkeys
+where kthid = $1 and decode(data->>'id', 'base64') = @id;
+
 -- name: StoreWebAuthnSessionData :one
 insert into webauthn_session_data (data, kthid)
 values ($1, $2)

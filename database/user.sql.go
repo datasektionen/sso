@@ -148,6 +148,19 @@ func (q *Queries) GetAllYears(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
+const getKTHIDByWebauthnID = `-- name: GetKTHIDByWebauthnID :one
+select kthid
+from users
+where webauthn_id = $1
+`
+
+func (q *Queries) GetKTHIDByWebauthnID(ctx context.Context, webauthnID []byte) (string, error) {
+	row := q.db.QueryRow(ctx, getKTHIDByWebauthnID, webauthnID)
+	var kthid string
+	err := row.Scan(&kthid)
+	return kthid, err
+}
+
 const getLastSheetUploadTime = `-- name: GetLastSheetUploadTime :one
 select uploaded_at
 from last_membership_sheet

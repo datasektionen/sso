@@ -13,30 +13,42 @@ import (
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func beginLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	kthid := r.FormValue("kthid")
-	user, err := s.GetUser(r.Context(), kthid)
-	if err != nil {
-		return err
+	var credAss *protocol.CredentialAssertion
+	var sessionData *webauthn.SessionData
+	if kthid != "" {
+		user, err := s.GetUser(r.Context(), kthid)
+		if err != nil {
+			return err
+		}
+		if user == nil {
+			w.Header().Add("HX-Reswap", "beforeend")
+			return `<p class="error">No such user</p>`
+		}
+		passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
+		if err != nil {
+			return err
+		}
+		if len(passkeys) == 0 {
+			w.Header().Add("HX-Reswap", "beforeend")
+			return `<p class="error">You have no registered passkeys</p>`
+		}
+		credAss, sessionData, err = s.WebAuthn.BeginLogin(models.WebAuthnUser{User: user, Passkeys: passkeys})
+		if err != nil {
+			return err
+		}
+	} else {
+		var err error
+		credAss, sessionData, err = s.WebAuthn.BeginDiscoverableLogin()
+		if err != nil {
+			return err
+		}
 	}
-	if user == nil {
-		w.Header().Add("HX-Reswap", "beforeend")
-		return `<p class="error">No such user</p>`
-	}
-	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
-	if len(passkeys) == 0 {
-		w.Header().Add("HX-Reswap", "beforeend")
-		return `<p class="error">You have no registered passkeys</p>`
-	}
-	credAss, sessionData, err := s.WebAuthn.BeginLogin(models.WebAuthnUser{User: user, Passkeys: passkeys})
-	if err != nil {
-		return err
-	}
+
 	sessionDataBytes, err := json.Marshal(sessionData)
 	if err != nil {
 		return err
@@ -69,25 +81,56 @@ func finishLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Reque
 	if err := json.Unmarshal(session.Data, &sessionData); err != nil {
 		return err
 	}
+	var kthid string
+	if session.Kthid != "" {
+		user, err := s.GetUser(r.Context(), session.Kthid)
+		if err != nil {
+			return err
+		}
+		if user == nil {
+			return httputil.BadRequest("No such user")
+		}
+		passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
+		if err != nil {
+			return err
+		}
+		_, err = s.WebAuthn.ValidateLogin(models.WebAuthnUser{User: user, Passkeys: passkeys}, sessionData, credAss)
+		if err != nil {
+			return err
+		}
+		kthid = user.KTHID
+	} else {
+		waUser, _, err := s.WebAuthn.ValidatePasskeyLogin(func(rawID, userHandle []byte) (user webauthn.User, err error) {
+			kthid, err := s.DB.GetKTHIDByWebauthnID(r.Context(), userHandle)
+			if err != nil {
+				return nil, err
+			}
+			passkey, err := s.GetPasskey(r.Context(), kthid, rawID)
+			if err != nil {
+				return nil, err
+			}
+			if passkey == nil {
+				return nil, httputil.BadRequest("Invalid credential")
+			}
+			// NOTE: object oriented programming is the scourge upon this earth. The only fields that
+			// ValidatePasskeyLogin will read is WebAuthnID and the passkey that has the id `rawID`.
+			// and the only field that we want is the kth id. So while some fields are not filled in:
+			// WHO CARES!??
+			return models.WebAuthnUser{
+				User:     &models.User{KTHID: kthid, WebAuthnID: userHandle},
+				Passkeys: []models.Passkey{*passkey},
+			}, nil
+		}, sessionData, credAss)
+		if err == pgx.ErrNoRows {
+			return httputil.BadRequest("Invalid credentials")
+		}
+		if err != nil {
+			return err
+		}
+		kthid = waUser.WebAuthnName()
+	}
 
-	user, err := s.GetUser(r.Context(), session.Kthid)
-	if err != nil {
-		return err
-	}
-	if user == nil {
-		return httputil.BadRequest("No such user")
-	}
-	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.WebAuthn.ValidateLogin(models.WebAuthnUser{User: user, Passkeys: passkeys}, sessionData, credAss)
-	if err != nil {
-		return err
-	}
-
-	return s.LoginUser(r.Context(), user.KTHID)
+	return s.LoginUser(r.Context(), kthid)
 }
 
 func addPasskeyForm(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

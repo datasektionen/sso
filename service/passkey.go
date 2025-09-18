@@ -25,7 +25,7 @@ func (s *Service) ListPasskeysForUser(ctx context.Context, kthid string) ([]mode
 	passkeys := make([]models.Passkey, len(dbPasskeys))
 	for i, passkey := range dbPasskeys {
 		var c webauthn.Credential
-		if err := json.Unmarshal([]byte(passkey.Data), &c); err != nil {
+		if err := json.Unmarshal(passkey.Data, &c); err != nil {
 			return nil, err
 		}
 		passkeys[i] = models.Passkey{

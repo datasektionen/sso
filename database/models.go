@@ -50,7 +50,7 @@ type Passkey struct {
 	ID    uuid.UUID
 	Name  string
 	Kthid string
-	Data  string
+	Data  []byte
 }
 
 type Session struct {

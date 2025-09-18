@@ -152,7 +152,7 @@ func addPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) http
 	id, err := s.DB.AddPasskey(r.Context(), database.AddPasskeyParams{
 		Kthid: user.KTHID,
 		Name:  name,
-		Data:  string(credRaw),
+		Data:  credRaw,
 	})
 	if err != nil {
 		return err

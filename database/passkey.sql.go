@@ -20,7 +20,7 @@ returning id
 type AddPasskeyParams struct {
 	Kthid string
 	Name  string
-	Data  string
+	Data  []byte
 }
 
 func (q *Queries) AddPasskey(ctx context.Context, arg AddPasskeyParams) (uuid.UUID, error) {

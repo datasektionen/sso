@@ -175,7 +175,17 @@ func ShowPasskey(passkey models.Passkey) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\"><img class=\"w-3/5 h-3/5 invert\" src=\"/public/x.svg\"></button></li>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\"><img class=\"w-3/5 h-3/5 invert\" src=\"/public/x.svg\"></button> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if !passkey.Discoverable {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<p title=\"This is not a discoverable key! If you re-create this passkey, you will be able to log in without filling in the username field!\">☣️</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</li>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

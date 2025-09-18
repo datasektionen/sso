@@ -111,6 +111,9 @@ templ ShowPasskey(passkey models.Passkey) {
 		>
 			<img class="w-3/5 h-3/5 invert" src="/public/x.svg"/>
 		</button>
+		if !passkey.Discoverable {
+			<p title="This is not a discoverable key! If you re-create this passkey, you will be able to log in without filling in the username field!">☣️</p>
+		}
 	</li>
 }
 

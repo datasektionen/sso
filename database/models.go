@@ -47,10 +47,11 @@ type OidcClient struct {
 }
 
 type Passkey struct {
-	ID    uuid.UUID
-	Name  string
-	Kthid string
-	Data  []byte
+	ID           uuid.UUID
+	Name         string
+	Kthid        string
+	Data         []byte
+	Discoverable bool
 }
 
 type Session struct {

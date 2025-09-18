@@ -29,9 +29,10 @@ func (s *Service) ListPasskeysForUser(ctx context.Context, kthid string) ([]mode
 			return nil, err
 		}
 		passkeys[i] = models.Passkey{
-			ID:   passkey.ID,
-			Name: passkey.Name,
-			Cred: c,
+			ID:           passkey.ID,
+			Name:         passkey.Name,
+			Cred:         c,
+			Discoverable: passkey.Discoverable,
 		}
 	}
 	return passkeys, nil

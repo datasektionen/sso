@@ -95,7 +95,7 @@ func addPasskeyForm(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	if user == nil {
 		return httputil.Unauthorized()
 	}
-	creation, sessionData, err := s.WebAuthn.BeginRegistration(models.WebAuthnUser{User: user})
+	creation, sessionData, err := s.WebAuthn.BeginRegistration(models.WebAuthnUser{User: user}, webauthn.WithAuthenticatorSelection(protocol.AuthenticatorSelection{ResidentKey: protocol.ResidentKeyRequirementRequired}))
 	if err != nil {
 		return err
 	}
@@ -150,14 +150,15 @@ func addPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) http
 	}
 	credRaw, _ := json.Marshal(cred)
 	id, err := s.DB.AddPasskey(r.Context(), database.AddPasskeyParams{
-		Kthid: user.KTHID,
-		Name:  name,
-		Data:  credRaw,
+		Kthid:        user.KTHID,
+		Name:         name,
+		Data:         credRaw,
+		Discoverable: true,
 	})
 	if err != nil {
 		return err
 	}
-	passkey := models.Passkey{ID: id, Name: name}
+	passkey := models.Passkey{ID: id, Name: name, Discoverable: true}
 	return templates.ShowPasskey(passkey)
 }
 

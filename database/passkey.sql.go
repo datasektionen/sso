@@ -12,26 +12,32 @@ import (
 )
 
 const addPasskey = `-- name: AddPasskey :one
-insert into passkeys (kthid, name, data)
-values ($1, $2, $3)
+insert into passkeys (kthid, name, data, discoverable)
+values ($1, $2, $3, $4)
 returning id
 `
 
 type AddPasskeyParams struct {
-	Kthid string
-	Name  string
-	Data  []byte
+	Kthid        string
+	Name         string
+	Data         []byte
+	Discoverable bool
 }
 
 func (q *Queries) AddPasskey(ctx context.Context, arg AddPasskeyParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, addPasskey, arg.Kthid, arg.Name, arg.Data)
+	row := q.db.QueryRow(ctx, addPasskey,
+		arg.Kthid,
+		arg.Name,
+		arg.Data,
+		arg.Discoverable,
+	)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
 }
 
 const listPasskeysByUser = `-- name: ListPasskeysByUser :many
-select id, name, kthid, data
+select id, name, kthid, data, discoverable
 from passkeys
 where kthid = $1
 `
@@ -50,6 +56,7 @@ func (q *Queries) ListPasskeysByUser(ctx context.Context, kthid string) ([]Passk
 			&i.Name,
 			&i.Kthid,
 			&i.Data,
+			&i.Discoverable,
 		); err != nil {
 			return nil, err
 		}

@@ -6,9 +6,10 @@ import (
 )
 
 type Passkey struct {
-	ID   uuid.UUID           `json:"id"`
-	Name string              `json:"name"`
-	Cred webauthn.Credential `json:"-"`
+	ID           uuid.UUID           `json:"id"`
+	Name         string              `json:"name"`
+	Cred         webauthn.Credential `json:"-"`
+	Discoverable bool                `json:"discoverable"`
 }
 
 type WebAuthnUser struct {

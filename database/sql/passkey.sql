@@ -1,6 +1,6 @@
 -- name: AddPasskey :one
-insert into passkeys (kthid, name, data)
-values ($1, $2, $3)
+insert into passkeys (kthid, name, data, discoverable)
+values ($1, $2, $3, $4)
 returning id;
 
 -- name: RemovePasskey :exec

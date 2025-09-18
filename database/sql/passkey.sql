@@ -12,13 +12,12 @@ select *
 from passkeys
 where kthid = $1;
 
--- name: StoreWebAuthnSessionData :exec
-insert into webauthn_session_data (kthid, data)
+-- name: StoreWebAuthnSessionData :one
+insert into webauthn_session_data (data, kthid)
 values ($1, $2)
-on conflict (kthid)
-do update set data = $2;
+returning id;
 
 -- name: TakeWebAuthnSessionData :one
 delete from webauthn_session_data
-where kthid = $1
-returning data;
+where id = $1
+returning data, kthid;

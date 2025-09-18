@@ -41,19 +41,17 @@ func beginLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	if err := s.DB.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{
-		Kthid: user.KTHID,
-		Data:  sessionDataBytes,
-	}); err != nil {
+	sessionID, err := s.DB.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{Data: sessionDataBytes, Kthid: kthid})
+	if err != nil {
 		return err
 	}
-	return templates.PasskeyLoginForm(kthid, credAss)
+	return templates.PasskeyLoginForm(kthid, credAss, sessionID)
 }
 
 func finishLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	var body struct {
-		KTHID string                               `json:"kthid"`
-		Cred  protocol.CredentialAssertionResponse `json:"cred"`
+		SessionID uuid.UUID                            `json:"session"`
+		Cred      protocol.CredentialAssertionResponse `json:"cred"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		return httputil.BadRequest("Invalid credential")
@@ -63,7 +61,16 @@ func finishLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Reque
 		return httputil.BadRequest("Invalid credential")
 	}
 
-	user, err := s.GetUser(r.Context(), body.KTHID)
+	session, err := s.DB.TakeWebAuthnSessionData(r.Context(), body.SessionID)
+	if err != nil {
+		return err
+	}
+	var sessionData webauthn.SessionData
+	if err := json.Unmarshal(session.Data, &sessionData); err != nil {
+		return err
+	}
+
+	user, err := s.GetUser(r.Context(), session.Kthid)
 	if err != nil {
 		return err
 	}
@@ -75,14 +82,6 @@ func finishLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	sessionDataBytes, err := s.DB.TakeWebAuthnSessionData(r.Context(), user.KTHID)
-	if err != nil {
-		return err
-	}
-	var sessionData webauthn.SessionData
-	if err := json.Unmarshal(sessionDataBytes, &sessionData); err != nil {
-		return err
-	}
 	_, err = s.WebAuthn.ValidateLogin(models.WebAuthnUser{User: user, Passkeys: passkeys}, sessionData, credAss)
 	if err != nil {
 		return err
@@ -104,14 +103,12 @@ func addPasskeyForm(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return err
 	}
-	if err := s.DB.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{
-		Kthid: user.KTHID,
-		Data:  sessionDataBytes,
-	}); err != nil {
+	sessionID, err := s.DB.StoreWebAuthnSessionData(r.Context(), database.StoreWebAuthnSessionDataParams{Data: sessionDataBytes, Kthid: user.KTHID})
+	if err != nil {
 		return err
 	}
 
-	return templates.AddPasskeyForm(creation)
+	return templates.AddPasskeyForm(creation, sessionID)
 }
 
 func addPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -121,7 +118,8 @@ func addPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) http
 	}
 
 	var body struct {
-		Name string `json:"name"`
+		Name      string    `json:"name"`
+		SessionID uuid.UUID `json:"session"`
 		protocol.CredentialCreationResponse
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -132,12 +130,12 @@ func addPasskey(s *service.Service, w http.ResponseWriter, r *http.Request) http
 		return httputil.BadRequest("Invalid credential")
 	}
 
-	sessionDataBytes, err := s.DB.TakeWebAuthnSessionData(r.Context(), user.KTHID)
+	session, err := s.DB.TakeWebAuthnSessionData(r.Context(), body.SessionID)
 	if err != nil {
 		return err
 	}
 	var sessionData webauthn.SessionData
-	if err := json.Unmarshal(sessionDataBytes, &sessionData); err != nil {
+	if err := json.Unmarshal(session.Data, &sessionData); err != nil {
 		return err
 	}
 	// Passkeys aren't retrieved from within this function, so we don't need to

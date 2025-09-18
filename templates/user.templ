@@ -3,6 +3,7 @@ package templates
 import (
 	"github.com/datasektionen/sso/models"
 	"time"
+	"github.com/google/uuid"
 )
 
 templ Index(devLogin func() templ.Component) {
@@ -18,7 +19,7 @@ templ Index(devLogin func() templ.Component) {
 					focus:border-cerisestrong hover:border-ceriselight
 				"
 			>Log in with KTH</a>
-			@PasskeyLoginForm("", nil)
+			@PasskeyLoginForm("", nil, uuid.Nil)
 			@devLogin()
 			<a
 				class="text-right italic cursor-pointer hover:underline text-sm w-max ml-auto"
@@ -219,7 +220,7 @@ templ RequestAccount() {
 									Register a passkey. This will be your only login method
 									in your account, but you will be able to add more once you get it.
 								</label>
-								@AddPasskeyForm(nil)
+								@AddPasskeyForm(nil, uuid.Nil)
 							}
 						</template>
 					</div>

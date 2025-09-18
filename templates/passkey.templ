@@ -3,9 +3,10 @@ package templates
 import (
 	"github.com/datasektionen/sso/models"
 	"github.com/go-webauthn/webauthn/protocol"
+	"github.com/google/uuid"
 )
 
-templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
+templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion, sessionID uuid.UUID) {
 	<form
 		id="passkey-login-form"
 		hx-post="/login/passkey/begin"
@@ -16,6 +17,7 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 		if credAss != nil {
 			data-cred-ass={ templ.JSONString(credAss) }
 		}
+		data-session-id={ templ.JSONString(sessionID) }
 		hx-swap="outerHTML"
 		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"
 	>
@@ -33,7 +35,7 @@ templ PasskeyLoginForm(kthid string, credAss *protocol.CredentialAssertion) {
 						method: "post",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
-							kthid: new FormData(form).get("kthid"),
+							session: form.dataset.sessionId,
 							cred: {
 								id: cred.id,
 								rawId: encodebase64url(cred.rawId),
@@ -135,9 +137,10 @@ templ PasskeySettings(passkeys []models.Passkey) {
 	</section>
 }
 
-templ AddPasskeyForm(cc *protocol.CredentialCreation) {
+templ AddPasskeyForm(cc *protocol.CredentialCreation, sessionID uuid.UUID) {
 	<form
 		data-credential-creation={ templ.JSONString(cc) }
+		data-session-id={ templ.JSONString(sessionID) }
 		onsubmit="addPasskey(this, event)"
 		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"
 	>
@@ -157,6 +160,7 @@ templ AddPasskeyForm(cc *protocol.CredentialCreation) {
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
 							name: new FormData(form).get("name"),
+							session: form.dataset.sessionId,
 							id: cred.id,
 							type: cred.type,
 							authenticatorAttachment: cred.authenticatorAttachment,

@@ -45,7 +45,7 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 
 	mux.Handle("GET /admin/account-requests", authorize(s, httputil.Route(s, accountRequests), "read-account-requests", nil))
 	mux.Handle("DELETE /admin/account-requests/{id}", authorize(s, httputil.Route(s, denyAccountRequest), "manage-account-requests", nil))
-	mux.Handle("POST /admin/account-requests/{id}", authorize(s, httputil.Route(s, approveAccountRequest), "manage-account, requests", nil))
+	mux.Handle("POST /admin/account-requests/{id}", authorize(s, httputil.Route(s, approveAccountRequest), "manage-account-requests", nil))
 
 	// dev.go
 	if config.Config.Dev {

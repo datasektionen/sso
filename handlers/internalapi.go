@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/pkg/httputil"
@@ -62,4 +63,62 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 	default:
 		return httputil.BadRequest("Unknown or no data format requested")
 	}
+}
+
+func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	limitStr := r.URL.Query().Get("limit")
+	if limitStr == "" {
+		limitStr = "5"
+	}
+	i, err := strconv.ParseInt(limitStr, 10, 32)
+	if err != nil {
+		return err
+	}
+	limit := int32(i)
+
+	offsetStr := r.URL.Query().Get("offset")
+	if offsetStr == "" {
+		offsetStr = "5"
+	}
+	i, err = strconv.ParseInt(offsetStr, 10, 32)
+	if err != nil {
+		return err
+	}
+	offset := int32(i)
+
+	search := r.URL.Query().Get("query")
+	year := r.URL.Query().Get("year")
+
+	params := database.ListUsersParams{
+		Limit:  limit,
+		Offset: offset,
+		Search: search,
+		Year:   year,
+	}
+
+	dbUsers, err := s.DB.ListUsers(r.Context(), params)
+
+	if err != nil {
+		return err
+	}
+
+	type User struct {
+		KthId      string `json:"kthid"`
+		Email      string `json:"email,omitempty"`
+		FirstName  string `json:"firstName,omitempty"`
+		FamilyName string `json:"familyName,omitempty"`
+		YearTag    string `json:"yearTag,omitempty"`
+	}
+
+	users := make([]User, len(dbUsers))
+	for i, user := range dbUsers {
+		users[i] = User{
+			KthId: user.Kthid,
+			Email: user.Email,
+			FirstName: user.FirstName,
+			FamilyName: user.FamilyName,
+			YearTag: user.YearTag,
+		}
+	}
+	return httputil.JSON(users)
 }

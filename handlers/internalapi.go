@@ -78,7 +78,7 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 
 	offsetStr := r.FormValue("offset")
 	if offsetStr == "" {
-		offsetStr = "5"
+		offsetStr = "0"
 	}
 	i, err = strconv.ParseInt(offsetStr, 10, 32)
 	if err != nil {

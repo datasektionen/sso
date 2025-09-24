@@ -66,7 +66,7 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 }
 
 func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	limitStr := r.URL.Query().Get("limit")
+	limitStr := r.FormValue("limit")
 	if limitStr == "" {
 		limitStr = "5"
 	}

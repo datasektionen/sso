@@ -43,7 +43,7 @@ The url query parameter `format` determines how the users are returned:
   objects as explained in `single`. Requested non-existing users will not be present in the response.
 
 `GET /api/search`: Retrives user information (kthid, email, first name, family name, year tag) by searching
-thier kthid, first name and family name.
+their kthid, first name and family name.
 The url paramaters:
 - `query` is used for the search term (if omited return all members)
 - `limit` for the number of entries returned (defaults to 5)

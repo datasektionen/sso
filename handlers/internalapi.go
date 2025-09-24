@@ -101,7 +101,7 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	}
 
 	type User struct {
-		KthId      string `json:"kthid"`
+		KTHID      string `json:"kthid"`
 		Email      string `json:"email,omitempty"`
 		FirstName  string `json:"firstName,omitempty"`
 		FamilyName string `json:"familyName,omitempty"`

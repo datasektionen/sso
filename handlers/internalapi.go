@@ -89,14 +89,12 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	search := r.URL.Query().Get("query")
 	year := r.URL.Query().Get("year")
 
-	params := database.ListUsersParams{
+	dbUsers, err := s.DB.ListUsers(r.Context(), database.ListUsersParams{
 		Limit:  limit,
 		Offset: offset,
 		Search: search,
 		Year:   year,
-	}
-
-	dbUsers, err := s.DB.ListUsers(r.Context(), params)
+	})
 
 	if err != nil {
 		return err

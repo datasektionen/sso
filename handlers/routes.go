@@ -75,5 +75,6 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 	// internalapi.go
 	if includeInternal {
 		mux.Handle("GET /api/users", httputil.Route(s, apiListUsers))
+		mux.Handle("GET /api/search", httputil.Route(s, apiSearchUsers))
 	}
 }

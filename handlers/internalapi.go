@@ -76,7 +76,7 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	}
 	limit := int32(i)
 
-	offsetStr := r.URL.Query().Get("offset")
+	offsetStr := r.FormValue("offset")
 	if offsetStr == "" {
 		offsetStr = "5"
 	}

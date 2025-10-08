@@ -111,11 +111,11 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	users := make([]User, len(dbUsers))
 	for i, user := range dbUsers {
 		users[i] = User{
-			KTHID: user.Kthid,
-			Email: user.Email,
-			FirstName: user.FirstName,
+			KTHID:      user.Kthid,
+			Email:      user.Email,
+			FirstName:  user.FirstName,
 			FamilyName: user.FamilyName,
-			YearTag: user.YearTag,
+			YearTag:    user.YearTag,
 		}
 	}
 	return httputil.JSON(users)

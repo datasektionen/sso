@@ -1,9 +1,0 @@
-- [x] hitta på namn
-- [x] ladda upp på github
-- [x] Dockerfile
-- [x] migrations
-- [x] sqlc?
-- [x] gör en riktig frontend
-- [x] riktig användardata
-- [x] rigtigare frontend med typ interactive islands
-- [~] oidc provider

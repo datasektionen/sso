@@ -130,7 +130,7 @@ func finishLoginPasskey(s *service.Service, w http.ResponseWriter, r *http.Reque
 		kthid = waUser.WebAuthnName()
 	}
 
-	return s.LoginUser(r.Context(), kthid)
+	return s.LoginUser(r.Context(), kthid, false)
 }
 
 func addPasskeyForm(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

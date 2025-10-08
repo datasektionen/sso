@@ -17,7 +17,7 @@ func devLogin(s *service.Service, w http.ResponseWriter, r *http.Request) httput
 	if user == nil {
 		return httputil.BadRequest("No such user")
 	}
-	return s.LoginUser(r.Context(), user.KTHID)
+	return s.LoginUser(r.Context(), user.KTHID, true)
 }
 
 func autoReload(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

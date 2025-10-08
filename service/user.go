@@ -90,7 +90,7 @@ The user `+user.FirstName+` `+user.FamilyName+` (`+user.KTHID+`) has requested t
 	return dbUserToModel(newUser), nil
 }
 
-func (s *Service) LoginUser(ctx context.Context, kthid string) httputil.ToResponse {
+func (s *Service) LoginUser(ctx context.Context, kthid string, redirect bool) httputil.ToResponse {
 	perms, err := hive.GetSSOPermissions(ctx, kthid)
 	if err != nil {
 		return err
@@ -109,7 +109,11 @@ func (s *Service) LoginUser(ctx context.Context, kthid string) httputil.ToRespon
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, auth.SessionCookie(sessionID.String()))
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		if redirect {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
 	})
 }
 
@@ -265,5 +269,5 @@ func (s *Service) FinishInvite(w http.ResponseWriter, r *http.Request, kthid str
 	}
 	http.SetCookie(w, &http.Cookie{Name: "invite", MaxAge: -1})
 	slog.Info("User invite link used", "kthid", kthid, "invite-id", inv.ID)
-	return s.LoginUser(r.Context(), kthid)
+	return s.LoginUser(r.Context(), kthid, true)
 }

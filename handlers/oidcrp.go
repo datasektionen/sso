@@ -73,6 +73,6 @@ func kthCallback(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 			httputil.Respond(templates.MissingAccount(), w, r)
 			return
 		}
-		httputil.Respond(s.LoginUser(r.Context(), user.KTHID), w, r)
+		httputil.Respond(s.LoginUser(r.Context(), user.KTHID, true), w, r)
 	}, s.RelyingParty)
 }

@@ -176,8 +176,7 @@ func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.R
 	req.kthid = user.KTHID
 	p.dotabase.reqByID[id] = req
 
-	http.Redirect(w, r, "/op"+op.AuthCallbackURL(p.provider)(r.Context(), authRequestID), http.StatusSeeOther)
-	return nil
+	return httputil.Redirect("/op" + op.AuthCallbackURL(p.provider)(r.Context(), authRequestID))
 }
 
 // AuthRequestByCode implements op.Storage.

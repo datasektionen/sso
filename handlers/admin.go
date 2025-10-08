@@ -379,7 +379,7 @@ func processSheet(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 	memberSheet.mu.Lock()
 	reader := memberSheet.reader
 	memberSheet.mu.Unlock()
-	if r == nil {
+	if reader == nil {
 		return httputil.BadRequest("No membership sheet upload waiting to get started")
 	}
 

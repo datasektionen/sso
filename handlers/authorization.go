@@ -9,10 +9,14 @@ import (
 	"github.com/datasektionen/sso/pkg/hive"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
+	"github.com/datasektionen/sso/templates"
 )
 
 func authorize(s *service.Service, h http.Handler, permID string, scopeGetter func(*http.Request) string) http.Handler {
 	return httputil.Route(s, func(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+		if s.GetLoggedInGuestUser(r) != nil {
+			return templates.MissingAccount()
+		}
 		user := s.GetLoggedInUser(r)
 		if user == nil {
 			s.RedirectToLogin(w, r, r.URL.Path)

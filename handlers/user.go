@@ -47,8 +47,7 @@ func index(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.
 	if nextURL == "" {
 		nextURL = "/account"
 	}
-	user := s.GetLoggedInUser(r)
-	if user != nil {
+	if s.GetLoggedInUser(r) != nil || s.GetLoggedInGuestUser(r) != nil {
 		if hasCookie {
 			http.SetCookie(w, &http.Cookie{Name: nextUrlCookie, MaxAge: -1})
 		}
@@ -73,6 +72,10 @@ func logout(s *service.Service, w http.ResponseWriter, r *http.Request) httputil
 }
 
 func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	if s.GetLoggedInGuestUser(r) != nil {
+		return templates.MissingAccount()
+	}
+
 	user := s.GetLoggedInUser(r)
 	if user == nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -82,11 +85,6 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	if err != nil {
 		return err
 	}
-	// TODO:
-	// perms, err := hive.GetSSOPermissions(r.Context(), user.KTHID)
-	// if err != nil {
-	// 	return err
-	// }
 	return templates.Account(*user, passkeys)
 }
 

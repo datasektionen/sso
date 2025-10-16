@@ -11,6 +11,7 @@ import (
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
+	"github.com/datasektionen/sso/templates"
 	"github.com/google/uuid"
 )
 
@@ -60,6 +61,9 @@ func legacyAPICallback(s *service.Service, w http.ResponseWriter, r *http.Reques
 	callback, _ := r.Cookie("legacyapi-callback")
 	if callback == nil {
 		return httputil.BadRequest("Idk where you came from. Maybe you took longer than 10 minutes?")
+	}
+	if s.GetLoggedInGuestUser(r) != nil {
+		return templates.MissingAccount()
 	}
 	user := s.GetLoggedInUser(r)
 	if user == nil {

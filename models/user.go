@@ -15,4 +15,12 @@ type User struct {
 	FamilyNameChangeRequest string
 }
 
+type GuestUser struct {
+	KTHID      string
+	FirstName  string
+	FamilyName string
+}
+
 type UserCtxKey struct{}
+
+type GuestUserCtxKey struct{}

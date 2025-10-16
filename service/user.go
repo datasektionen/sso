@@ -101,8 +101,30 @@ func (s *Service) LoginUser(ctx context.Context, kthid string, redirect bool) ht
 		jsonPerms = []byte(`{}`)
 	}
 	sessionID, err := s.DB.CreateSession(ctx, database.CreateSessionParams{
-		Kthid:       kthid,
+		Kthid:       pgtype.Text{String: kthid, Valid: true},
 		Permissions: jsonPerms,
+	})
+	if err != nil {
+		return err
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, auth.SessionCookie(sessionID.String()))
+		if redirect {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
+	})
+}
+
+func (s *Service) LoginGuestUser(ctx context.Context, guestUser models.GuestUser, redirect bool) httputil.ToResponse {
+	guestData, err := json.Marshal(guestUser)
+	if err != nil {
+		return err
+	}
+	sessionID, err := s.DB.CreateGuestSession(ctx, database.CreateGuestSessionParams{
+		GuestData:   guestData,
+		Permissions: []byte(`{}`),
 	})
 	if err != nil {
 		return err
@@ -133,25 +155,31 @@ func (s *Service) WithSession(r *http.Request) (*http.Request, error) {
 	if err != nil {
 		return r, err
 	}
-	user, err := s.GetUser(r.Context(), session.Kthid)
-	if err != nil {
-		return r, err
-	}
 	var permissions hive.Permissions
 	err = json.Unmarshal(session.Permissions, &permissions)
 	if err != nil {
 		slog.Error("Got invalid json in permissions in database. Defaulting to empty permission set.", "permissions", session.Permissions, "error", err)
 	}
 
-	return r.WithContext(context.WithValue(
-		context.WithValue(
-			r.Context(),
-			hive.PermissionsCtxKey{},
-			permissions,
-		),
-		models.UserCtxKey{},
-		user,
-	)), nil
+	ctx := context.WithValue(r.Context(), hive.PermissionsCtxKey{}, permissions)
+
+	if session.Kthid.Valid {
+		user, err := s.GetUser(r.Context(), session.Kthid.String)
+		if err != nil {
+			return r, err
+		}
+		ctx = context.WithValue(ctx, models.UserCtxKey{}, user)
+	} else if len(session.GuestData) > 0 {
+		var guestUser models.GuestUser
+		err = json.Unmarshal(session.GuestData, &guestUser)
+		if err != nil {
+			slog.Error("Got invalid json in guest_data in database.", "guest_data", session.GuestData, "error", err)
+			return r, nil
+		}
+		ctx = context.WithValue(ctx, models.GuestUserCtxKey{}, &guestUser)
+	}
+
+	return r.WithContext(ctx), nil
 }
 
 func (s *Service) GetLoggedInUser(r *http.Request) *models.User {
@@ -160,6 +188,14 @@ func (s *Service) GetLoggedInUser(r *http.Request) *models.User {
 		return nil
 	}
 	return user.(*models.User)
+}
+
+func (s *Service) GetLoggedInGuestUser(r *http.Request) *models.GuestUser {
+	guestUser := r.Context().Value(models.GuestUserCtxKey{})
+	if guestUser == nil {
+		return nil
+	}
+	return guestUser.(*models.GuestUser)
 }
 
 func (s *Service) Logout(w http.ResponseWriter, r *http.Request) httputil.ToResponse {

@@ -4,10 +4,11 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
+	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
-	"github.com/datasektionen/sso/templates"
 	"github.com/google/uuid"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
@@ -70,7 +71,29 @@ func kthCallback(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 				return
 			}
 
-			httputil.Respond(templates.MissingAccount(), w, r)
+			uniqueNameAny := tokens.IDTokenClaims.Claims["unique_name"]
+			uniqueNameArray, _ := uniqueNameAny.([]string)
+			var name string
+			if len(uniqueNameArray) >= 1 {
+				name = uniqueNameArray[0]
+			}
+			givenName, familyName, found := strings.Cut(name, " ")
+			if !found {
+				slog.Warn(
+					"Did not manage to find a reasonable name from kth user to create guest session. Proceeding as ${kthid} ${kthid}sson",
+					"given name", givenName,
+					"family name", familyName,
+					"tokens", tokens,
+				)
+				givenName = kthid
+				familyName = kthid + "sson"
+			}
+
+			httputil.Respond(s.LoginGuestUser(r.Context(), models.GuestUser{
+				KTHID:      kthid,
+				FirstName:  givenName,
+				FamilyName: familyName,
+			}, true), w, r)
 			return
 		}
 		httputil.Respond(s.LoginUser(r.Context(), user.KTHID, true), w, r)

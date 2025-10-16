@@ -178,7 +178,7 @@ func (s *Service) Logout(w http.ResponseWriter, r *http.Request) httputil.ToResp
 }
 
 func (s *Service) RedirectToLogin(w http.ResponseWriter, r *http.Request, nextURL string) {
-	http.Redirect(w, r, "/?"+url.Values{"next-url": []string{nextURL}}.Encode(), http.StatusSeeOther)
+	http.Redirect(w, r, "/?"+url.Values{"next-url": {nextURL}}.Encode(), http.StatusSeeOther)
 }
 
 func (s *Service) FinishAccountRequestKTH(w http.ResponseWriter, r *http.Request, kthid string) httputil.ToResponse {

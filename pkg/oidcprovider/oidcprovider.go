@@ -30,8 +30,6 @@ import (
 	"golang.org/x/text/language"
 )
 
-// http://localhost:7000/op/authorize?client_id=bing&response_type=token&scope=openid&redirect_uri=http://localhost:8080/callback
-
 type provider struct {
 	provider *op.Provider
 	dotabase dotabase

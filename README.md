@@ -124,7 +124,7 @@ This also updates generated files and they're tracked by the git repository so y
 
 Only needed if you want to test the "Login with KTH" button.
 
-Start a vault dev server (tested with version v1.16.2):
+Start a vault dev server (tested with version v1.20.2):
 
 ```sh
 vault server -dev
@@ -138,13 +138,13 @@ export VAULT_ADDR=http://127.0.0.1:8200
 vault auth enable userpass
 vault auth tune -listing-visibility=unauth userpass
 vault write auth/userpass/users/turetek password=turetek
-vault write identity/entity name=turetek
+vault write identity/entity name=turetek metadata="displayName=Ture Teknokrat"
 vault write identity/entity-alias \
     name=turetek \
     canonical_id=$(vault read -field=id identity/entity/name/turetek) \
     mount_accessor=$(vault auth list -detailed -format json | jq -r '.["userpass/"].accessor')
 
-vault write identity/oidc/scope/profile template=$(echo '{"username":{{identity.entity.name}}}' | base64 -)
+vault write identity/oidc/scope/profile template=$(echo '{"username":{{identity.entity.name}},"unique_name":[{{identity.entity.metadata.displayName}}]}' | base64 -w0 -)
 vault write identity/oidc/provider/default scopes_supported="profile"
 vault write identity/oidc/client/sso redirect_uris="http://localhost:7000/oidc/kth/callback" assignments=allow_all
 

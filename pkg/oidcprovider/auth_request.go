@@ -1,7 +1,6 @@
 package oidcprovider
 
 import (
-	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,15 +12,14 @@ type authRequest struct {
 	id       uuid.UUID
 	authCode string
 	inner    *oidc.AuthRequest
-	kthid    string
+	subject  string
 }
 
 var _ op.AuthRequest = authRequest{}
 
 // Done implements op.AuthRequest.
 func (a authRequest) Done() bool {
-	slog.Warn("oidcprovider.authRequest.Done")
-	return a.kthid != ""
+	return a.subject != ""
 }
 
 // GetACR implements op.AuthRequest.
@@ -95,6 +93,5 @@ func (a authRequest) GetState() string {
 
 // GetSubject implements op.AuthRequest.
 func (a authRequest) GetSubject() string {
-	slog.Warn("oidcprovider.authRequest.GetSubject")
-	return a.kthid
+	return a.subject
 }

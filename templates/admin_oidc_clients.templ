@@ -45,6 +45,7 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 				<input
 					type="checkbox"
 					id={ "allow-guests-" + client.ID }
+					class={ checkboxStyle }
 					if client.AllowGuests {
 						checked
 					}

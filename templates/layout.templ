@@ -106,6 +106,13 @@ var roundButton = `
 	[&>p]:text-center [&>p]:leading-none
 `
 
+var checkboxStyle = `
+	appearance-none bg-[#3f4c66] shrink-0 h-5 w-5 rounded
+	grid place-items-center cursor-pointer
+	border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight
+	checked:after:content-['✓'] checked:after:text-white checked:after:leading-none checked:after:text-lg
+`
+
 var selectStyle = `
 	border border-neutral-500
 	outline-none focus:border-cerisestrong hover:border-ceriselight

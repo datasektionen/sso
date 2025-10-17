@@ -41,6 +41,22 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 		</p>
 		if perms.WriteOIDCClients.Matches(client.ID) {
 			<div class="flex gap-2 items-center">
+				<label for={ "allow-guests-" + client.ID }>Allow guests:</label>
+				<input
+					type="checkbox"
+					id={ "allow-guests-" + client.ID }
+					if client.AllowGuests {
+						checked
+					}
+					hx-patch={ "/admin/oidc-clients/" + client.ID }
+					hx-trigger="change"
+					hx-include="this"
+					hx-target="closest li"
+					hx-swap="outerHTML"
+					hx-vals={ `{"allow-guests": ` + bigIfTrue(client.AllowGuests, "false", "true") + `}` }
+				/>
+			</div>
+			<div class="flex gap-2 items-center">
 				<label for={ "hive-system-id-" + client.ID }>Hive System ID:</label>
 				if client.HiveSystemID != "" {
 					<div class="flex gap-2 items-center hive-system-id">
@@ -66,6 +82,10 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 				}
 			</div>
 		} else {
+			<div class="flex gap-2 items-center">
+				<label for={ "allow-guests-" + client.ID }>Allow guests:</label>
+				<p>{ bigIfTrue(client.AllowGuests, "Yes", "No") }</p>
+			</div>
 			<div class="flex gap-2 items-center">
 				<label for={ "hive-system-id-" + client.ID }>Hive System ID:</label>
 				if client.HiveSystemID != "" {

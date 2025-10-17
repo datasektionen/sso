@@ -12,7 +12,7 @@ import (
 const createClient = `-- name: CreateClient :one
 insert into oidc_clients (id, secret_hash, redirect_uris, hive_system_id)
 values ($1, $2, '{}', $1)
-returning secret_hash, redirect_uris, id, hive_system_id, last_used_at
+returning secret_hash, redirect_uris, id, hive_system_id, last_used_at, allow_guests
 `
 
 type CreateClientParams struct {
@@ -29,6 +29,7 @@ func (q *Queries) CreateClient(ctx context.Context, arg CreateClientParams) (Oid
 		&i.ID,
 		&i.HiveSystemID,
 		&i.LastUsedAt,
+		&i.AllowGuests,
 	)
 	return i, err
 }
@@ -44,7 +45,7 @@ func (q *Queries) DeleteClient(ctx context.Context, id string) error {
 }
 
 const getClient = `-- name: GetClient :one
-select secret_hash, redirect_uris, id, hive_system_id, last_used_at
+select secret_hash, redirect_uris, id, hive_system_id, last_used_at, allow_guests
 from oidc_clients
 where id = $1
 `
@@ -58,6 +59,7 @@ func (q *Queries) GetClient(ctx context.Context, id string) (OidcClient, error) 
 		&i.ID,
 		&i.HiveSystemID,
 		&i.LastUsedAt,
+		&i.AllowGuests,
 	)
 	return i, err
 }
@@ -66,7 +68,7 @@ const getClientUpdateLastUse = `-- name: GetClientUpdateLastUse :one
 update oidc_clients
 set last_used_at = now()
 where id = $1
-returning secret_hash, redirect_uris, id, hive_system_id, last_used_at
+returning secret_hash, redirect_uris, id, hive_system_id, last_used_at, allow_guests
 `
 
 func (q *Queries) GetClientUpdateLastUse(ctx context.Context, id string) (OidcClient, error) {
@@ -78,12 +80,13 @@ func (q *Queries) GetClientUpdateLastUse(ctx context.Context, id string) (OidcCl
 		&i.ID,
 		&i.HiveSystemID,
 		&i.LastUsedAt,
+		&i.AllowGuests,
 	)
 	return i, err
 }
 
 const listClients = `-- name: ListClients :many
-select secret_hash, redirect_uris, id, hive_system_id, last_used_at
+select secret_hash, redirect_uris, id, hive_system_id, last_used_at, allow_guests
 from oidc_clients
 `
 
@@ -102,6 +105,7 @@ func (q *Queries) ListClients(ctx context.Context) ([]OidcClient, error) {
 			&i.ID,
 			&i.HiveSystemID,
 			&i.LastUsedAt,
+			&i.AllowGuests,
 		); err != nil {
 			return nil, err
 		}
@@ -113,11 +117,37 @@ func (q *Queries) ListClients(ctx context.Context) ([]OidcClient, error) {
 	return items, nil
 }
 
+const updateClientAllowGuests = `-- name: UpdateClientAllowGuests :one
+update oidc_clients
+set allow_guests = $2
+where id = $1
+returning secret_hash, redirect_uris, id, hive_system_id, last_used_at, allow_guests
+`
+
+type UpdateClientAllowGuestsParams struct {
+	ID          string
+	AllowGuests bool
+}
+
+func (q *Queries) UpdateClientAllowGuests(ctx context.Context, arg UpdateClientAllowGuestsParams) (OidcClient, error) {
+	row := q.db.QueryRow(ctx, updateClientAllowGuests, arg.ID, arg.AllowGuests)
+	var i OidcClient
+	err := row.Scan(
+		&i.SecretHash,
+		&i.RedirectUris,
+		&i.ID,
+		&i.HiveSystemID,
+		&i.LastUsedAt,
+		&i.AllowGuests,
+	)
+	return i, err
+}
+
 const updateClientHiveSystemID = `-- name: UpdateClientHiveSystemID :one
 update oidc_clients
 set hive_system_id = $2
 where id = $1
-returning secret_hash, redirect_uris, id, hive_system_id, last_used_at
+returning secret_hash, redirect_uris, id, hive_system_id, last_used_at, allow_guests
 `
 
 type UpdateClientHiveSystemIDParams struct {
@@ -134,6 +164,7 @@ func (q *Queries) UpdateClientHiveSystemID(ctx context.Context, arg UpdateClient
 		&i.ID,
 		&i.HiveSystemID,
 		&i.LastUsedAt,
+		&i.AllowGuests,
 	)
 	return i, err
 }
@@ -142,7 +173,7 @@ const updateClientRedirectURIs = `-- name: UpdateClientRedirectURIs :one
 update oidc_clients
 set redirect_uris = $2
 where id = $1
-returning secret_hash, redirect_uris, id, hive_system_id, last_used_at
+returning secret_hash, redirect_uris, id, hive_system_id, last_used_at, allow_guests
 `
 
 type UpdateClientRedirectURIsParams struct {
@@ -159,6 +190,7 @@ func (q *Queries) UpdateClientRedirectURIs(ctx context.Context, arg UpdateClient
 		&i.ID,
 		&i.HiveSystemID,
 		&i.LastUsedAt,
+		&i.AllowGuests,
 	)
 	return i, err
 }

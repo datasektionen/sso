@@ -448,18 +448,35 @@ func createOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request
 
 func updateOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	id := r.PathValue("id")
-	hiveSystemID := r.FormValue("hive-system-id")
 
-	client, err := s.DB.UpdateClientHiveSystemID(r.Context(), database.UpdateClientHiveSystemIDParams{
-		ID:           id,
-		HiveSystemID: hiveSystemID,
-	})
-	if err != nil {
+	client, err := s.DB.GetClient(r.Context(), id)
+	if err == pgx.ErrNoRows {
+		return httputil.NotFound()
+	} else if err != nil {
 		return err
 	}
-	if client.ID == "" {
-		return httputil.NotFound()
+
+	if hiveSystemID := r.FormValue("hive-system-id"); hiveSystemID != "" {
+		client, err = s.DB.UpdateClientHiveSystemID(r.Context(), database.UpdateClientHiveSystemIDParams{
+			ID:           id,
+			HiveSystemID: hiveSystemID,
+		})
+		if err != nil {
+			return err
+		}
 	}
+
+	if allowGuestsVal := r.FormValue("allow-guests"); allowGuestsVal != "" {
+		allowGuests := allowGuestsVal == "true"
+		client, err = s.DB.UpdateClientAllowGuests(r.Context(), database.UpdateClientAllowGuestsParams{
+			ID:          id,
+			AllowGuests: allowGuests,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return templates.OidcClient(client, nil)
 }
 

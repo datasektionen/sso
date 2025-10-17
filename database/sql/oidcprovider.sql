@@ -30,6 +30,12 @@ set hive_system_id = $2
 where id = $1
 returning *;
 
+-- name: UpdateClientAllowGuests :one
+update oidc_clients
+set allow_guests = $2
+where id = $1
+returning *;
+
 -- name: DeleteClient :exec
 delete from oidc_clients
 where id = $1;

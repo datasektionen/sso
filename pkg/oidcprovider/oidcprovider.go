@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"math/big"
@@ -21,6 +22,7 @@ import (
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/pls"
 	"github.com/datasektionen/sso/service"
+	"github.com/datasektionen/sso/templates"
 
 	"github.com/go-jose/go-jose/v4"
 	"github.com/google/uuid"
@@ -46,7 +48,7 @@ type dotabase struct {
 }
 
 type accessToken struct {
-	kthid    string
+	subject  string
 	scopes   []string
 	clientID string
 }
@@ -168,10 +170,25 @@ func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.R
 	}
 
 	user := p.s.GetLoggedInUser(r)
-	if user == nil {
+	guest := p.s.GetLoggedInGuestUser(r)
+	if user != nil {
+		// one could assert that user.KTHID[0] != '{'
+		req.subject = user.KTHID
+	} else if guest != nil {
+		if client, err := p.s.DB.GetClient(r.Context(), req.GetClientID()); err != nil {
+			return err
+		} else if !client.AllowGuests {
+			return templates.MissingAccount()
+		}
+
+		guestJSON, err := json.Marshal(*guest)
+		if err != nil {
+			return err
+		}
+		req.subject = "{" + base64.StdEncoding.EncodeToString(guestJSON)
+	} else {
 		return httputil.BadRequest("User did not seem to get logged in")
 	}
-	req.kthid = user.KTHID
 	p.dotabase.reqByID[id] = req
 
 	return httputil.Redirect("/op" + op.AuthCallbackURL(p.provider)(r.Context(), authRequestID))
@@ -215,16 +232,16 @@ func (p *provider) CreateAccessAndRefreshTokens(ctx context.Context, request op.
 
 // CreateAccessToken implements op.Storage.
 func (p *provider) CreateAccessToken(ctx context.Context, request op.TokenRequest) (accessTokenID string, expiration time.Time, err error) {
-	slog.Warn("oidcprovider.*service.CreateAccessToken", "request", request)
 	tokenID := uuid.New()
 	p.dotabase.mu.Lock()
 	defer p.dotabase.mu.Unlock()
 	p.dotabase.tokenByID[tokenID] = accessToken{
-		kthid:  request.GetSubject(),
-		scopes: request.GetScopes(),
+		subject: request.GetSubject(),
+		scopes:  request.GetScopes(),
 		// NOTE: our implementation of GetAudience simply returns `[]string{a.GetClientID()}`, but there are other implementations in the library, so I don't know if this is safe or can arbitrarily overwritten by a client. Conclusion: I picked a shitty library
 		clientID: request.GetAudience()[0],
 	}
+	slog.Info("CreateAccessToken", "accessTokenID", tokenID, "request", request)
 	return tokenID.String(), time.Now().Add(time.Minute), nil
 }
 
@@ -244,8 +261,6 @@ func (p *provider) CreateAuthRequest(ctx context.Context, r *oidc.AuthRequest, u
 
 // DeleteAuthRequest implements op.Storage.
 func (p *provider) DeleteAuthRequest(ctx context.Context, authRequestID string) error {
-	slog.Warn("oidcprovider.*service.DeleteAuthRequest", "authRequestID", authRequestID)
-
 	id, err := uuid.Parse(authRequestID)
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
@@ -330,7 +345,6 @@ func (p *provider) RevokeToken(ctx context.Context, tokenOrTokenID string, userI
 
 // SaveAuthCode implements op.Storage.
 func (p *provider) SaveAuthCode(ctx context.Context, authRequestID string, code string) error {
-	slog.Warn("oidcprovider.*service.SaveAuthCode", "authRequestID", authRequestID, "code", code)
 	id, err := uuid.Parse(authRequestID)
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
@@ -354,21 +368,21 @@ func (p *provider) SetIntrospectionFromToken(ctx context.Context, userinfo *oidc
 }
 
 // SetUserinfoFromScopes implements op.Storage.
-func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.UserInfo, kthid string, clientID string, scopes []string) error {
-	user, err := p.s.GetUser(ctx, kthid)
+func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.UserInfo, subject string, clientID string, scopes []string) error {
+	user, guest, err := getUserOrGuestFromSubject(ctx, p.s, subject)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		slog.Error("SetUserinfoFromScopes: user not found", "kthid", kthid, "clientID", clientID, "scopes", scopes)
-		return errors.New("SetUserinfoFromScopes, no user but pretty sure that should have been handled in this request???")
+	if user == nil && guest == nil {
+		slog.Error("SetUserinfoFromScopes: user not found", "subject", subject, "clientID", clientID, "scopes", scopes)
+		return errors.New("SetUserinfoFromScopes, no user found but pretty sure that should have been handled in this request???")
 	}
 
 	client, err := p.s.DB.GetClientUpdateLastUse(ctx, clientID)
 	if err != nil {
 		return err
 	}
-	if err := setUserinfo(ctx, userinfo, *user, scopes, client.HiveSystemID); err != nil {
+	if err := setUserinfo(ctx, userinfo, user, guest, scopes, client.HiveSystemID); err != nil {
 		return err
 	}
 	slog.Info("oidcprovider.*service.SetUserinfoFromScopes", "userinfo", userinfo)
@@ -376,8 +390,8 @@ func (p *provider) SetUserinfoFromScopes(ctx context.Context, userinfo *oidc.Use
 }
 
 // SetUserinfoFromToken implements op.Storage.
-func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID, kthid, origin string) error {
-	slog.Warn("oidcprovider.*service.SetUserinfoFromToken", "tokenID", tokenID, "subject", kthid, "origin", origin)
+func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.UserInfo, tokenID, subject, origin string) error {
+	slog.Warn("oidcprovider.*service.SetUserinfoFromToken", "tokenID", tokenID, "subject", subject, "origin", origin)
 	accessTokenID, err := uuid.Parse(tokenID)
 	if err != nil {
 		return httputil.BadRequest("SetUserinfoFromToken: invalid uuid syntax in token id")
@@ -386,16 +400,16 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 	token := p.dotabase.tokenByID[accessTokenID]
 	p.dotabase.mu.Unlock()
 
-	if token.kthid != kthid {
+	if token.subject != subject {
 		return httputil.BadRequest("You're asking to get info about a different user than who the token is for")
 	}
 
-	user, err := p.s.GetUser(ctx, kthid)
+	user, guest, err := getUserOrGuestFromSubject(ctx, p.s, subject)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		slog.Error("SetUserinfoFromToken: user not found", "kthid", kthid)
+	if user == nil && guest == nil {
+		slog.Error("SetUserinfoFromToken: user not found", "subject", subject)
 		return errors.New("SetUserinfoFromToken, no user but pretty sure that should have been handled in this request???")
 	}
 
@@ -403,7 +417,7 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 	if err != nil {
 		return err
 	}
-	if err := setUserinfo(ctx, userinfo, *user, token.scopes, client.HiveSystemID); err != nil {
+	if err := setUserinfo(ctx, userinfo, user, guest, token.scopes, client.HiveSystemID); err != nil {
 		return err
 	}
 
@@ -411,7 +425,15 @@ func (p *provider) SetUserinfoFromToken(ctx context.Context, userinfo *oidc.User
 	return nil
 }
 
-func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User, scopes []string, system string) error {
+func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user *models.User, guest *models.GuestUser, scopes []string, system string) error {
+	if user == nil {
+		user = &models.User{
+			KTHID:      guest.KTHID,
+			Email:      guest.KTHID + "@kth.se",
+			FirstName:  guest.FirstName,
+			FamilyName: guest.FamilyName,
+		}
+	}
 	if userinfo.Claims == nil {
 		userinfo.Claims = make(map[string]any)
 	}
@@ -436,26 +458,27 @@ func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user models.User,
 			if system == "" {
 				return httputil.BadRequest("Hive System ID must be set in the admin console when requesting permissions through OIDC")
 			}
-			perms, err := hive.GetRawPermissionsInSystemForUser(ctx, user.KTHID, system)
-			if err != nil {
-				slog.Error("setUserinfo: error getting permissions", "err", err)
-				return err
-			}
-			userinfo.Claims[scope] = perms
-
-		case "year_tag":
-			userinfo.Claims[scope] = user.YearTag
-
-		default:
-			if group, ok := strings.CutPrefix(scope, "pls_"); ok {
-				perms, err := pls.GetUserPermissionsForGroup(ctx, user.KTHID, group)
+			if guest == nil {
+				perms, err := hive.GetRawPermissionsInSystemForUser(ctx, user.KTHID, system)
 				if err != nil {
 					slog.Error("setUserinfo: error getting permissions", "err", err)
 					return err
 				}
 				userinfo.Claims[scope] = perms
 			}
-
+		case "year_tag":
+			userinfo.Claims[scope] = user.YearTag
+		default:
+			if group, ok := strings.CutPrefix(scope, "pls_"); ok {
+				if guest == nil {
+					perms, err := pls.GetUserPermissionsForGroup(ctx, user.KTHID, group)
+					if err != nil {
+						slog.Error("setUserinfo: error getting permissions", "err", err)
+						return err
+					}
+					userinfo.Claims[scope] = perms
+				}
+			}
 		}
 	}
 
@@ -510,4 +533,19 @@ func (p *provider) TokenRequestByRefreshToken(ctx context.Context, refreshTokenI
 func (p *provider) ValidateJWTProfileScopes(ctx context.Context, userID string, scopes []string) ([]string, error) {
 	slog.Warn("oidcprovider.*service.ValidateJWTProfileScopes", "userID", userID, "scopes", scopes)
 	panic("unimplemented")
+}
+
+func getUserOrGuestFromSubject(ctx context.Context, s *service.Service, subject string) (*models.User, *models.GuestUser, error) {
+	if guestJSONBase64, ok := strings.CutPrefix(subject, "{"); ok {
+		guestJSON, err := base64.StdEncoding.DecodeString(guestJSONBase64)
+		if err != nil {
+			return nil, nil, err
+		}
+		guest := &models.GuestUser{}
+		err = json.Unmarshal(guestJSON, guest)
+		return nil, guest, err
+	} else {
+		user, err := s.GetUser(ctx, subject)
+		return user, nil, err
+	}
 }

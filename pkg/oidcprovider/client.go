@@ -25,7 +25,6 @@ func (c client) AccessTokenType() op.AccessTokenType {
 
 // ApplicationType implements op.Client.
 func (c client) ApplicationType() op.ApplicationType {
-	slog.Warn("oidcprovider.client.ApplicationType")
 	return op.ApplicationTypeWeb
 }
 
@@ -51,13 +50,11 @@ func (c client) GetID() string {
 
 // GrantTypes implements op.Client.
 func (c client) GrantTypes() []oidc.GrantType {
-	slog.Warn("oidcprovider.client.GrantTypes")
 	return []oidc.GrantType{oidc.GrantTypeCode}
 }
 
 // IDTokenLifetime implements op.Client.
 func (c client) IDTokenLifetime() time.Duration {
-	slog.Warn("oidcprovider.client.IDTokenLifetime")
 	return time.Hour * 24
 }
 
@@ -68,7 +65,6 @@ func (c client) IDTokenUserinfoClaimsAssertion() bool {
 
 // IsScopeAllowed implements op.Client.
 func (c client) IsScopeAllowed(scope string) bool {
-	slog.Warn("oidcprovider.client.IsScopeAllowed", "scope", scope)
 	for _, supported := range supportedScopes {
 		if prefix, ok := strings.CutSuffix(supported, "*"); ok {
 			if strings.HasPrefix(scope, prefix) {
@@ -105,12 +101,11 @@ func (c client) ResponseTypes() []oidc.ResponseType {
 
 // RestrictAdditionalAccessTokenScopes implements op.Client.
 func (c client) RestrictAdditionalAccessTokenScopes() func(scopes []string) []string {
-	slog.Warn("oidcprovider.client.RestrictAdditionalAccessTokenScopes")
+	slog.Error("oidcprovider.client.RestrictAdditionalAccessTokenScopes")
 	panic("unimplemented")
 }
 
 // RestrictAdditionalIdTokenScopes implements op.Client.
 func (c client) RestrictAdditionalIdTokenScopes() func(scopes []string) []string {
-	slog.Warn("oidcprovider.client.RestrictAdditionalIdTokenScopes")
 	return func(scopes []string) []string { return scopes }
 }

@@ -9,9 +9,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math/big"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -173,7 +175,8 @@ func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.R
 	guest := p.s.GetLoggedInGuestUser(r)
 	if user != nil {
 		// one could assert that user.KTHID[0] != '{'
-		req.subject = user.KTHID
+
+		req.subject = url.Values{"kthid": []string{user.KTHID}}.Encode()
 	} else if guest != nil {
 		if client, err := p.s.DB.GetClient(r.Context(), req.GetClientID()); err != nil {
 			return err
@@ -185,7 +188,7 @@ func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.R
 		if err != nil {
 			return err
 		}
-		req.subject = "{" + base64.StdEncoding.EncodeToString(guestJSON)
+		req.subject = url.Values{"guest": {string(guestJSON)}}.Encode()
 	} else {
 		return httputil.BadRequest("User did not seem to get logged in")
 	}
@@ -536,16 +539,18 @@ func (p *provider) ValidateJWTProfileScopes(ctx context.Context, userID string, 
 }
 
 func getUserOrGuestFromSubject(ctx context.Context, s *service.Service, subject string) (*models.User, *models.GuestUser, error) {
-	if guestJSONBase64, ok := strings.CutPrefix(subject, "{"); ok {
-		guestJSON, err := base64.StdEncoding.DecodeString(guestJSONBase64)
-		if err != nil {
-			return nil, nil, err
-		}
+	v, err := url.ParseQuery(subject)
+	if err != nil {
+		return nil, nil, err
+	}
+	if kthid := v.Get("kthid"); kthid != "" {
+		user, err := s.GetUser(ctx, kthid)
+		return user, nil, err
+	} else if guestJSON := v.Get("guest"); guestJSON != "" {
 		guest := &models.GuestUser{}
-		err = json.Unmarshal(guestJSON, guest)
+		err = json.Unmarshal([]byte(guestJSON), guest)
 		return nil, guest, err
 	} else {
-		user, err := s.GetUser(ctx, subject)
-		return user, nil, err
+		return nil, nil, fmt.Errorf("Huh, no kthid or guest in subject?: subject=%s", subject)
 	}
 }

@@ -174,9 +174,7 @@ func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.R
 	user := p.s.GetLoggedInUser(r)
 	guest := p.s.GetLoggedInGuestUser(r)
 	if user != nil {
-		// one could assert that user.KTHID[0] != '{'
-
-		req.subject = url.Values{"kthid": []string{user.KTHID}}.Encode()
+		req.subject = url.Values{"kthid": {user.KTHID}}.Encode()
 	} else if guest != nil {
 		if client, err := p.s.DB.GetClient(r.Context(), req.GetClientID()); err != nil {
 			return err

@@ -34,7 +34,7 @@ func Send(ctx context.Context, recipient, subject, contents string) error {
 	}); err != nil {
 		return err
 	}
-	resp, err := http.Post(config.Config.SpamURL.String()+"/api/sendmail", "application/json", &body)
+	resp, err := http.Post(config.Config.SpamURL.String()+"/api/legacy/sendmail", "application/json", &body)
 	if err != nil {
 		return err
 	}

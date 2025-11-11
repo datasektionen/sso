@@ -19,6 +19,8 @@ user info stuff, SSO supports some custom scopes:
   for each OIDC client in SSO's admin panel. The value follows the same format as the body in the
   [`/user/{username}/permissions`](https://hive.datasektionen.se/api/v1/docs#get-/user/-username-/permissions)
   endpoint in Hive's API.
+- `picture`: will make the returned profile claim contain a link to the users profile picture. Note,
+  the link should not be stored because it cannot be garanteed to be valid for more than 24 hours.
 
 ---
 
@@ -41,14 +43,23 @@ The url query parameter `format` determines how the users are returned:
   Requested non-existing users are represented by empty json objects.
 - `map`: The response body will contain a json object with keys being usernames and values being
   objects as explained in `single`. Requested non-existing users will not be present in the response.
+The url query parameter `picture` determines the type of image that is returened per user:
+- `none`: No link is returned (the field is ommited). This is the default option.
+- `thumbnail`: Link to a smaller lower quality picture coresponding to [rfinger](https://rfinger.datasektionen.se/docs/api) `quality=false`
+- `full`: Link to a picture with its original quality coresponding to [rfinger](https://rfinger.datasektionen.se/docs/api) `quality=true`
 
 `GET /api/search`: Retrives user information (kthid, email, first name, family name, year tag) by searching
 their kthid, first name and family name.
-The url paramaters:
+The following url paramaters are used to limit the search:
 - `query` is used for the search term (if omited return all members)
 - `limit` for the number of entries returned (defaults to 5)
 - `offset` for the number of entries to skip (defaults to 0)
 - `year` to limit the search to a specific year, formated as a year tag (if omited search all years)
+
+The url query parameter `picture` optionaly adds an addition field to the response:
+- `none`: No link is returned (the field is ommited). This is the default option.
+- `thumbnail`: Link to a smaller lower quality picture coresponding to [rfinger](https://rfinger.datasektionen.se/docs/api) `quality=false`
+- `full`: Link to a picture with its original quality coresponding to [rfinger](https://rfinger.datasektionen.se/docs/api) `quality=true`
 
 ## Development
 

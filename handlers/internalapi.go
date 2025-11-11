@@ -6,6 +6,7 @@ import (
 
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/pkg/httputil"
+	"github.com/datasektionen/sso/pkg/rfinger"
 	"github.com/datasektionen/sso/service"
 )
 
@@ -20,18 +21,35 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		Email      string `json:"email,omitempty"`
 		FirstName  string `json:"firstName,omitempty"`
 		FamilyName string `json:"familyName,omitempty"`
+		Picture    string `json:"picture,omitempty"`
 		YearTag    string `json:"yearTag,omitempty"`
 	}
-	convert := func(user database.User) User {
+	convert := func(user database.User, picture string) User {
 		return User{
 			Email:      user.Email,
 			FirstName:  user.FirstName,
 			FamilyName: user.FamilyName,
+			Picture:    picture,
 			YearTag:    user.YearTag,
 		}
 	}
 
-	switch r.URL.Query().Get("format") {
+	pictures := make(map[string]string)
+
+	if r.FormValue("picture") != "none" {
+		var err error
+		if r.FormValue("format") == "single" {
+			pictures[q[0]], err = rfinger.GetPicture(r.Context(), q[0], r.FormValue("picture") == "full")
+		} else {
+			pictures, err = rfinger.GetPictures(r.Context(), q, r.FormValue("picture") == "full")
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	switch r.FormValue("format") {
 	case "single":
 		if len(q) != 1 {
 			return httputil.BadRequest("Single user requested but not exactly one username provided")
@@ -39,7 +57,8 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		if len(dbUsers) != 1 {
 			return httputil.NotFound()
 		}
-		return httputil.JSON(convert(dbUsers[0]))
+
+		return httputil.JSON(convert(dbUsers[0], pictures[dbUsers[0].Kthid]))
 	case "array":
 		indices := map[string]int{}
 		for i, username := range q {
@@ -50,13 +69,13 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		}
 		users := make([]User, len(q))
 		for _, user := range dbUsers {
-			users[indices[user.Kthid]] = convert(user)
+			users[indices[user.Kthid]] = convert(user, pictures[user.Kthid])
 		}
 		return httputil.JSON(users)
 	case "map":
 		users := map[string]User{}
 		for _, user := range dbUsers {
-			users[user.Kthid] = convert(user)
+			users[user.Kthid] = convert(user, pictures[user.Kthid])
 		}
 
 		return httputil.JSON(users)
@@ -100,11 +119,27 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		return err
 	}
 
+	pictureUsers := make([]string, len(dbUsers))
+	pictures := make(map[string]string, len(dbUsers))
+
+	if r.FormValue("picture") != "none" {
+		for i, users := range dbUsers {
+			pictureUsers[i] = users.Kthid
+		}
+
+		pictures, err = rfinger.GetPictures(r.Context(), pictureUsers, r.FormValue("picture") == "full")
+
+		if err != nil {
+			return err
+		}
+	}
+
 	type User struct {
 		KTHID      string `json:"kthid"`
 		Email      string `json:"email,omitempty"`
 		FirstName  string `json:"firstName,omitempty"`
 		FamilyName string `json:"familyName,omitempty"`
+		Picture    string `json:"picture,omitempty"`
 		YearTag    string `json:"yearTag,omitempty"`
 	}
 
@@ -115,6 +150,7 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 			Email:      user.Email,
 			FirstName:  user.FirstName,
 			FamilyName: user.FamilyName,
+			Picture:    pictures[user.Kthid],
 			YearTag:    user.YearTag,
 		}
 	}

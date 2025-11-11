@@ -23,6 +23,7 @@ import (
 	"github.com/datasektionen/sso/pkg/hive"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/pls"
+	"github.com/datasektionen/sso/pkg/rfinger"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
 
@@ -57,7 +58,7 @@ type accessToken struct {
 
 var _ op.Storage = &provider{}
 
-var supportedScopes = []string{"openid", "profile", "email", "offline_access", "pls_*", "permissions", "year_tag"}
+var supportedScopes = []string{"openid", "profile", "email", "offline_access", "pls_*", "permissions", "picture", "year_tag"}
 
 func Init(s *service.Service) (http.Handler, error) {
 	// Yes, the initialization of this key does indeed seem very shady. I do
@@ -127,6 +128,7 @@ func Init(s *service.Service) (http.Handler, error) {
 			"sub",
 			"name", "family_name", "given_name",
 			"email", "email_verified",
+			"picture",
 			"pls_*",
 			"permissions",
 			"year_tag",
@@ -469,6 +471,13 @@ func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user *models.User
 			}
 		case "year_tag":
 			userinfo.Claims[scope] = user.YearTag
+		case "picture":
+			picture, err := rfinger.GetPicture(ctx, user.KTHID, false)
+			if err != nil {
+				slog.Error("setUserinfo: error getting picture", "err", err)
+				return err
+			}
+			userinfo.Picture = picture
 		default:
 			if group, ok := strings.CutPrefix(scope, "pls_"); ok {
 				if guest == nil {

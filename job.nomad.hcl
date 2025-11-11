@@ -55,6 +55,7 @@ OIDC_PROVIDER_KEY={{ .oidc_provider_key }}
 DATABASE_URL=postgresql://sso:{{ .database_password }}@postgres.dsekt.internal:5432/sso
 SPAM_API_KEY={{ .spam_api_key }}
 HIVE_API_KEY={{ .hive_api_key }}
+RFINGER_API_KEY={{ .rfinger_api_key }}
 {{ end }}
 
 KTH_ISSUER_URL=https://login.ug.kth.se/adfs
@@ -69,6 +70,7 @@ LDAP_PROXY_URL=http://ldap-proxy.dsekt.internal:38980
 PLS_URL=https://pls.datasektionen.se
 HIVE_URL=http://hive.nomad.dsekt.internal
 SPAM_URL=https://spam.datasektionen.se
+RFINGER_URL=https://rfinger.datasektionen.se
 ENV
         destination = "local/.env"
         env         = true

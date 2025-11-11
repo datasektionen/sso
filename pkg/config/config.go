@@ -24,6 +24,8 @@ type Cfg struct {
 	HiveAPIKey            string
 	SpamURL               *url.URL
 	SpamAPIKey            string
+	RfingerURL            *url.URL
+	RfingerAPIKey         string
 }
 
 var Config Cfg
@@ -47,6 +49,8 @@ func init() {
 		HiveAPIKey:            os.Getenv("HIVE_API_KEY"),
 		SpamURL:               getURL("SPAM_URL", true),
 		SpamAPIKey:            os.Getenv("SPAM_API_KEY"),
+		RfingerURL:            getURL("RFINGER_URL", true),
+		RfingerAPIKey:         os.Getenv("RFINGER_API_KEY"),
 	}
 }
 

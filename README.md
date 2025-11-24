@@ -31,6 +31,8 @@ means that you cannot call these from code that runs in the browser.
 
 `GET /api/users`: Retrieves user information (email, first name, family name, year tag) by their
 usernames. The url query parameter `u`, which can be repeated, determines which users to retrieve.
+The url query parameter `guest` which can be either true or false (defaults to false if not present)
+changes the search from sso membership list to all users at kth.
 The url query parameter `format` determines how the users are returned:
 - `single`: exactly one must be requested. If it is not found, the status code will be 404,
   otherwise the response body will contain a json object with the keys `email`, `firstName`,

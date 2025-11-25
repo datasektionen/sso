@@ -36,7 +36,7 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 
 	pictures := make(map[string]string)
 
-	if r.FormValue("picture") != "none" {
+	if r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail" {
 		var err error
 		if r.FormValue("format") == "single" {
 			pictures[q[0]], err = rfinger.GetPicture(r.Context(), q[0], r.FormValue("picture") == "full")
@@ -122,7 +122,7 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	pictureUsers := make([]string, len(dbUsers))
 	pictures := make(map[string]string, len(dbUsers))
 
-	if r.FormValue("picture") != "none" {
+	if r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail" {
 		for i, users := range dbUsers {
 			pictureUsers[i] = users.Kthid
 		}

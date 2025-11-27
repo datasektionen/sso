@@ -134,7 +134,6 @@ func Init(s *service.Service) (http.Handler, error) {
 			"year_tag",
 		},
 		SupportedScopes: supportedScopes,
-		CodeMethodS256: true,
 	},
 		p,
 		op.StaticIssuer(config.Config.OIDCProviderIssuerURL.String()),

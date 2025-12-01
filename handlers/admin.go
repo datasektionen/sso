@@ -32,11 +32,11 @@ import (
 )
 
 func membersPage(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	uploadTime, err := s.DB.GetLastSheetUploadTime(r.Context())
+	upload, err := s.DB.GetLastSheetUpload(r.Context())
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
 	}
-	return templates.Members(uploadTime.Time)
+	return templates.Members(upload.UploadedAt.Time, upload.UploadedBy)
 }
 
 func adminUsersForm(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -366,8 +366,8 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 			}
 			events <- sheetEvent{"progress", templates.UploadProgress(float64(i) / float64(len(rows)-1))}
 		}
-		if err := s.DB.MarkSheetUploadedNow(ctx); err != nil {
-
+		user := s.GetLoggedInUser(r)
+		if err := s.DB.MarkSheetUploadedNow(ctx, user.KTHID); err != nil {
 			events <- sheetEvent{"message", templates.UploadMessage("Could not mark last uploaded date so you will forever think the fresh data is old 😈", false)}
 		}
 		events <- sheetEvent{"progress", templates.UploadProgress(1)}

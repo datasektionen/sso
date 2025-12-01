@@ -179,16 +179,21 @@ func (q *Queries) GetKTHIDByWebauthnID(ctx context.Context, webauthnID []byte) (
 	return kthid, err
 }
 
-const getLastSheetUploadTime = `-- name: GetLastSheetUploadTime :one
-select uploaded_at
+const getLastSheetUpload = `-- name: GetLastSheetUpload :one
+select uploaded_at, uploaded_by
 from last_membership_sheet
 `
 
-func (q *Queries) GetLastSheetUploadTime(ctx context.Context) (pgtype.Timestamp, error) {
-	row := q.db.QueryRow(ctx, getLastSheetUploadTime)
-	var uploaded_at pgtype.Timestamp
-	err := row.Scan(&uploaded_at)
-	return uploaded_at, err
+type GetLastSheetUploadRow struct {
+	UploadedAt pgtype.Timestamp
+	UploadedBy string
+}
+
+func (q *Queries) GetLastSheetUpload(ctx context.Context) (GetLastSheetUploadRow, error) {
+	row := q.db.QueryRow(ctx, getLastSheetUpload)
+	var i GetLastSheetUploadRow
+	err := row.Scan(&i.UploadedAt, &i.UploadedBy)
+	return i, err
 }
 
 const getSession = `-- name: GetSession :one
@@ -369,15 +374,16 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const markSheetUploadedNow = `-- name: MarkSheetUploadedNow :exec
-insert into last_membership_sheet (uploaded_at)
-values (now())
+insert into last_membership_sheet (uploaded_at, uploaded_by)
+values (now(), $1)
 on conflict (unique_marker)
 do update
-set uploaded_at = now()
+set uploaded_at = now(),
+    uploaded_by = $1
 `
 
-func (q *Queries) MarkSheetUploadedNow(ctx context.Context) error {
-	_, err := q.db.Exec(ctx, markSheetUploadedNow)
+func (q *Queries) MarkSheetUploadedNow(ctx context.Context, uploadedBy string) error {
+	_, err := q.db.Exec(ctx, markSheetUploadedNow, uploadedBy)
 	return err
 }
 

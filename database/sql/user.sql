@@ -88,16 +88,17 @@ set first_name_change_request = $2,
 where kthid = $1
 returning *;
 
--- name: GetLastSheetUploadTime :one
-select uploaded_at
+-- name: GetLastSheetUpload :one
+select uploaded_at, uploaded_by
 from last_membership_sheet;
 
 -- name: MarkSheetUploadedNow :exec
-insert into last_membership_sheet (uploaded_at)
-values (now())
+insert into last_membership_sheet (uploaded_at, uploaded_by)
+values (now(), $1)
 on conflict (unique_marker)
 do update
-set uploaded_at = now();
+set uploaded_at = now(),
+    uploaded_by = $1;
 
 -- name: CreateAccountRequest :one
 insert into account_requests (reference, reason, year_tag)

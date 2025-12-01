@@ -29,7 +29,7 @@ templ AdminPage() {
 	}
 }
 
-templ Members(lastUpdatedAt time.Time) {
+templ Members(lastUploadedAt time.Time, lastUploadedBy string) {
 	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	@AdminPage() {
 		<div class="p-8">
@@ -37,7 +37,7 @@ templ Members(lastUpdatedAt time.Time) {
 				@MemberList([]models.User{}, "", 0, false, []string{}, "")
 			</section>
 			if perms.WriteMembers {
-				@uploadForm(lastUpdatedAt)
+				@uploadForm(lastUploadedAt, lastUploadedBy)
 				@UploadStatus(false)
 			}
 		</div>
@@ -116,7 +116,7 @@ templ MemberList(users []models.User, search string, offset int, more bool, year
 	</div>
 }
 
-templ uploadForm(lastUpdatedAt time.Time) {
+templ uploadForm(lastUploadedAt time.Time, lastUploadedBy string) {
 	<form
 		class="py-2 flex gap-2 items-center"
 		hx-post="/admin/members/upload-sheet"
@@ -124,7 +124,7 @@ templ uploadForm(lastUpdatedAt time.Time) {
 		hx-swap="outerHTML"
 		hx-target="#upload-status"
 	>
-		<p class="shrink-0">Upload THS membership sheet. Last upload at { lastUpdatedAt.Format(time.DateOnly) }</p>
+		<p class="shrink-0">Upload THS membership sheet. Last upload at { lastUploadedAt.Format(time.DateOnly) } by { lastUploadedBy }</p>
 		<input
 			name="sheet"
 			type="file"

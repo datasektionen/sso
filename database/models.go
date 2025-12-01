@@ -30,6 +30,7 @@ type Invite struct {
 type LastMembershipSheet struct {
 	UniqueMarker string
 	UploadedAt   pgtype.Timestamp
+	UploadedBy   string
 }
 
 type LegacyapiToken struct {

@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -473,4 +474,60 @@ func (q *Queries) UserSetYear(ctx context.Context, arg UserSetYearParams) (User,
 		&i.FamilyNameChangeRequest,
 	)
 	return i, err
+}
+
+const beginEmailLogin = `-- name: BeginEmailLogin :one
+insert into email_login (kthid, code)
+values ($1, $2)
+`
+
+type BeginEmailLoginParams struct {
+	Kthid string
+	Code  string
+}
+
+func (q *Queries) BeginEmailLogin(ctx context.Context, arg BeginEmailLoginParams) error {
+	_, err := q.db.Exec(ctx, beginEmailLogin, arg.Kthid, arg.Code)
+	return err
+}
+
+const getEmailLogin = `-- name: GetEmailLogin :one
+select creation_time, attempts
+from email_login
+where kthid = $1 and code = $2
+`
+
+type GetEmailLoginParams struct {
+	Kthid string
+	Code  string
+}
+
+type EmailLoginResponse struct {
+	CreationTime time.Time
+	Attempts      int
+}
+
+func (q *Queries) GetEmailLogin(ctx context.Context, arg GetEmailLoginParams) (EmailLoginResponse, error) {
+	row := q.db.QueryRow(ctx, getEmailLogin, arg.Kthid, arg.Code)
+	var i EmailLoginResponse
+	err := row.Scan(&i.CreationTime, &i.Attempts)
+	return i, err
+}
+
+const clearEmailCodes = `-- name: ClearEmailCodes :one
+delete from email_login where kthid = $1
+`
+
+func (q *Queries) ClearEmailCodes(ctx context.Context, kthid string) error {
+	_, err := q.db.Exec(ctx, clearEmailCodes, kthid)
+	return err
+}
+
+const increaseAttempts = `-- name: IncreaseAttempts :one
+update email_login set attempts = attempts + 1 where kthid = $1
+`
+
+func (q *Queries) IncreaseAttempts(ctx context.Context, kthid string) error {
+	_, err := q.db.Exec(ctx, increaseAttempts, kthid)
+	return err
 }

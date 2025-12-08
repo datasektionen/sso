@@ -20,6 +20,7 @@ templ Index(devLogin func() templ.Component) {
 				"
 			>Log in with KTH</a>
 			@PasskeyLoginForm("", nil, uuid.Nil)
+			@MailLoginForm()
 			@devLogin()
 			<a
 				class="text-right italic cursor-pointer hover:underline text-sm w-max ml-auto"
@@ -27,6 +28,77 @@ templ Index(devLogin func() templ.Component) {
 			>Request account</a>
 		</div>
 	}
+}
+
+templ MailLoginForm() {
+	<form
+		id="email-login-form"
+		hx-post="/login/email/begin"
+		hx-swap="endElement"
+		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"
+	>
+		<label class="text-sm" for="email-kthid">
+			Log in using a email
+		</label>
+		<div class="flex gap-2">
+			<input
+				id="email-kthid"
+				name="kthid"
+				type="text"
+				placeholder="KTH ID"
+				class="
+					border border-neutral-500 grow
+					outline-none focus:border-cerisestrong hover:border-ceriselight
+					bg-slate-800 p-1.5 rounded h-8
+				"
+			/>
+			<button
+				id="email-send"
+				class={ `
+					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+					grid place-items-center pointer
+					border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
+					nf nf-cod-key -scale-x-100
+				`}
+			></button>
+		</div>
+	</form>
+}
+
+templ CodeForm(kthid string) {
+	<form
+		id="code-form"
+		method="post"
+		action="/login/email/finish"
+		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"
+	>
+		<label class="text-sm" for="email-code">
+			Signin code (max 3 attempts)
+		</label>
+		<input type="hidden" name="kthid" value={kthid}>
+		<div class="flex gap-2">
+			<input
+				id="email-code"
+				name="code"
+				type="text"
+				placeholder="AAA000"
+				class="
+					border border-neutral-500 grow
+					outline-none focus:border-cerisestrong hover:border-ceriselight
+					bg-slate-800 p-1.5 rounded h-8
+				"
+			/>
+			<button
+				id="code-send"
+				class={ `
+					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+					grid place-items-center pointer
+					border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
+					nf nf-cod-key -scale-x-100
+				`}
+			></button>
+		</div>
+	</form>
 }
 
 templ Account(user models.User, passkeys []models.Passkey) {

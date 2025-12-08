@@ -61,6 +61,10 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 	mux.Handle("POST /passkey", httputil.Route(s, addPasskey))
 	mux.Handle("DELETE /passkey/{id}", httputil.Route(s, removePasskey))
 
+	// emaillogin.go
+	mux.Handle("POST /login/email/begin", httputil.Route(s, beginLoginEmail))
+	mux.Handle("POST /login/email/finish", httputil.Route(s, finishLoginEmail))
+
 	// oidcrp.go
 	mux.Handle("GET /oidc/kth/login", httputil.Route(s, kthLogin))
 	mux.Handle("GET /oidc/kth/callback", httputil.Route(s, kthCallback))

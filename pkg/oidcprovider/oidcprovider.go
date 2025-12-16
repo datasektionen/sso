@@ -58,7 +58,7 @@ type accessToken struct {
 
 var _ op.Storage = &provider{}
 
-var supportedScopes = []string{"openid", "profile", "email", "offline_access", "pls_*", "permissions", "picture", "year_tag"}
+var supportedScopes = []string{"openid", "profile", "email", "offline_access", "pls_*", "permissions", "permissions_flat", "picture", "year_tag"}
 
 func Init(s *service.Service) (http.Handler, error) {
 	// Yes, the initialization of this key does indeed seem very shady. I do
@@ -468,6 +468,26 @@ func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user *models.User
 					return err
 				}
 				userinfo.Claims[scope] = perms
+			}
+		case "permissions_flat":
+			if system == "" {
+				return httputil.BadRequest("Hive System ID must be set in the admin console when requesting permissions through OIDC")
+			}
+			if guest == nil {
+				perms, err := hive.GetRawPermissionsInSystemForUser(ctx, user.KTHID, system)
+				if err != nil {
+					slog.Error("setUserinfo: error getting permissions", "err", err)
+					return err
+				}
+				var flatPerms []string
+				for _, perm := range perms {
+					p := perm.ID
+					if len(perm.Scope) > 0 {
+						p += ":" + perm.Scope
+					}
+					flatPerms = append(flatPerms, p)
+				}
+				userinfo.Claims[scope] = flatPerms
 			}
 		case "year_tag":
 			userinfo.Claims[scope] = user.YearTag

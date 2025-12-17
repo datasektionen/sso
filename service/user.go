@@ -226,17 +226,23 @@ func (s *Service) FinishAccountRequestKTH(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	if err := s.DB.FinishAccountRequestKTH(r.Context(), database.FinishAccountRequestKTHParams{
-		ID:    requestID,
-		Kthid: pgtype.Text{String: kthid, Valid: true},
-	}); err != nil {
-		return err
-	}
 
 	person, err := kthldap.Lookup(r.Context(), kthid)
 	if err != nil {
 		return err
 	}
+
+	if err := s.DB.FinishAccountRequestKTH(r.Context(), database.FinishAccountRequestKTHParams{
+		ID:         requestID,
+		Kthid:      pgtype.Text{String: kthid, Valid: true},
+		UgKthid:    person.UGKTHID,
+		FirstName:  person.FirstName,
+		FamilyName: person.FamilyName,
+		Email:      person.FirstName + "@kth.se",
+	}); err != nil {
+		return err
+	}
+
 	if err := email.Send(
 		r.Context(),
 		"d-sys@datasektionen.se",

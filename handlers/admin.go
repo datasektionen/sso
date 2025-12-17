@@ -595,25 +595,13 @@ func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	kthid := accountRequest.Kthid.String
-	if kthid == "" {
-		return httputil.BadRequest("No KTH ID - approval not implemented for that")
-	}
-
-	person, err := kthldap.Lookup(r.Context(), accountRequest.Kthid.String)
-	if err != nil {
-		return err
-	}
-	if person == nil {
-		return fmt.Errorf("Could not find user with kthid '%s' in KTH's ldap", kthid)
-	}
-	emailAddress := person.KTHID + "@kth.se"
 	if err := tx.CreateUser(r.Context(), database.CreateUserParams{
-		Kthid:      kthid,
-		UgKthid:    person.UGKTHID,
-		Email:      emailAddress,
-		FirstName:  person.FirstName,
-		FamilyName: person.FamilyName,
+		Kthid:      accountRequest.Kthid.String,
+		UgKthid:    accountRequest.UgKthid,
+		Email:      accountRequest.Email,
+		FirstName:  accountRequest.FirstName,
+		FamilyName: accountRequest.FamilyName,
+		YearTag:    accountRequest.YearTag,
 	}); err != nil {
 		var pgerr *pgconn.PgError
 		if errors.As(err, &pgerr) && pgerr.Code == "23505" /* unique_violation */ {
@@ -626,11 +614,11 @@ func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	if err := email.Send(r.Context(), emailAddress, "Datasektionen account request approved", strings.TrimSpace(fmt.Sprintf(`
+	if err := email.Send(r.Context(), accountRequest.Email, "Datasektionen account request approved", strings.TrimSpace(fmt.Sprintf(`
 Hello %s, your Datasektionen account request has been approved!
 
 You can go to [sso.datasektionen.se](https://sso.datasektionen.se/) to log in and see your account, or simply go directly to a system you want to log in to.
-	`, person.FirstName))); err != nil {
+	`, accountRequest.FirstName))); err != nil {
 		slog.Error("Could not send email", "error", err)
 		return "Approved, but could not send email!"
 	}

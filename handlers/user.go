@@ -181,7 +181,7 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 
 		_, err := s.DB.CreateAccountRequestManual(r.Context(), database.CreateAccountRequestManualParams{
 			Kthid:      kthid,
-			UgKthid:    "ug" + kthid,
+			UgKthid:    "d-ug" + kthid,
 			Reference:  reference,
 			Reason:     reason,
 			YearTag:    yearTag,

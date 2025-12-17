@@ -16,14 +16,14 @@ add column email text;
 -- +goose Down
 -- +goose StatementBegin
 alter table account_requests
-drop column ug_kthid text;
+drop column ug_kthid;
 
 alter table account_requests
-drop column first_name text;
+drop column first_name;
 
 alter table account_requests
-drop column family_name text;
+drop column family_name;
 
 alter table account_requests
-drop column email text;
+drop column email;
 -- +goose StatementEnd

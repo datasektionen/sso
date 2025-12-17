@@ -601,7 +601,7 @@ func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Re
 		Email:      accountRequest.Email,
 		FirstName:  accountRequest.FirstName,
 		FamilyName: accountRequest.FamilyName,
-		YearTag:    accountRequest.Email,
+		YearTag:    accountRequest.YearTag,
 	}); err != nil {
 		var pgerr *pgconn.PgError
 		if errors.As(err, &pgerr) && pgerr.Code == "23505" /* unique_violation */ {

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	_ "embed"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -36,35 +37,22 @@ func init() {
 	}
 }
 
-func BytesTo11BitInts(bytes []byte) func(func(uint16) bool) {
-	return func(yield func(uint16) bool) {
-		buf, bits := uint32(0), 0
-		for _, b := range bytes {
-			buf = buf | (uint32(b) << bits)
-			bits += 8
-			for bits >= 11 {
-				bits -= 11
-				idx := buf & 0b11111111111
-				buf = buf >> 11
-				if !yield(uint16(idx)) {
-					return
-				}
-			}
-		}
-	}
-}
-
-// randomCode generates a code of 11 english words from a wordlist of 2048 words, thus it has 121 bits of entropy
+// randomCode generates a code of 5 english words from a wordlist of 2048 words, thus it has 55 bits
+// of entropy. given that someone takes three seconds to generate a code and guess three times and
+// does that for 75 years, the chance that they succeed is `1 - (1 - 3 / 2**55) ** (2366820000 / 3)`
+// which imo is small enough.
 func randomCode() string {
-	var randBytes [16]byte
-	rand.Read(randBytes[:])
-
 	var code string
-	for idx := range BytesTo11BitInts(randBytes[:]) {
-		if code != "" {
+	max := big.NewInt(int64(len(idxToWord)))
+	for i := range 5 {
+		idx, err := rand.Int(rand.Reader, max)
+		if err != nil {
+			panic("could not read random, altough that would panic, not return an error, so i guess bitflip?")
+		}
+		if i > 0 {
 			code += " "
 		}
-		code += idxToWord[idx]
+		code += idxToWord[idx.Int64()]
 	}
 
 	return code
@@ -88,8 +76,8 @@ func parseCode(text string) (string, error) {
 		res += word
 		count += 1
 	}
-	if count != 11 {
-		return "", httputil.BadRequest("The code always consists of 11 words. You provided " + strconv.Itoa(count))
+	if count != 5 {
+		return "", httputil.BadRequest("The code always consists of 5 words. You provided " + strconv.Itoa(count))
 	}
 	return res, nil
 }

@@ -110,7 +110,7 @@ func (s *Service) LoginUser(ctx context.Context, kthid string, redirect bool) ht
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, auth.SessionCookie(sessionID.String()))
 		if redirect {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			httputil.Respond(httputil.Redirect("/"), w, r)
 		} else {
 			w.WriteHeader(http.StatusOK)
 		}

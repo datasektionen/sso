@@ -26,11 +26,17 @@ func autoReload(s *service.Service, w http.ResponseWriter, r *http.Request) http
 		return errors.New("Cannot flush body")
 	}
 	w.Header().Set("Content-Type", "text/event-stream")
+
+	tick := time.NewTicker(time.Minute)
 	for {
-		_, _ = w.Write([]byte("data: schmunguss\n\n"))
-		if canFlush {
-			flusher.Flush()
+		select {
+		case <-tick.C:
+			_, _ = w.Write([]byte("data: schmunguss\n\n"))
+			if canFlush {
+				flusher.Flush()
+			}
+		case <-r.Context().Done():
+			return nil
 		}
-		time.Sleep(time.Minute)
 	}
 }

@@ -2,8 +2,8 @@ package templates
 
 import (
 	"github.com/datasektionen/sso/models"
-	"time"
 	"github.com/google/uuid"
+	"time"
 )
 
 templ Index(devLogin func() templ.Component) {
@@ -20,7 +20,7 @@ templ Index(devLogin func() templ.Component) {
 				"
 			>Log in with KTH</a>
 			@PasskeyLoginForm("", nil, uuid.Nil)
-			@MailLoginForm()
+			@EmailLoginForm()
 			@devLogin()
 			<a
 				class="text-right italic cursor-pointer hover:underline text-sm w-max ml-auto"
@@ -30,12 +30,10 @@ templ Index(devLogin func() templ.Component) {
 	}
 }
 
-templ MailLoginForm() {
+templ EmailLoginForm() {
 	<form
-		id="email-login-form"
 		hx-post="/login/email/begin"
 		hx-swap="endElement"
-		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"
 	>
 		<label class="text-sm" for="email-kthid">
 			Log in using a email
@@ -59,7 +57,7 @@ templ MailLoginForm() {
 					grid place-items-center pointer
 					border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
 					nf nf-cod-key -scale-x-100
-				`}
+				` }
 			></button>
 		</div>
 	</form>
@@ -67,21 +65,17 @@ templ MailLoginForm() {
 
 templ CodeForm(kthid string) {
 	<form
-		id="code-form"
-		method="post"
-		action="/login/email/finish"
-		class="[&>.error]:bg-red-600/50 [&>.error]:p-2 [&>.error]:mt-2 [&>.error]:rounded"
+		hx-post="/login/email/finish"
 	>
 		<label class="text-sm" for="email-code">
-			Signin code (max 3 attempts)
+			Signin code
 		</label>
-		<input type="hidden" name="kthid" value={kthid}>
+		<input type="hidden" name="kthid" value={ kthid }/>
 		<div class="flex gap-2">
 			<input
 				id="email-code"
 				name="code"
 				type="text"
-				placeholder="AAA000"
 				class="
 					border border-neutral-500 grow
 					outline-none focus:border-cerisestrong hover:border-ceriselight
@@ -90,12 +84,12 @@ templ CodeForm(kthid string) {
 			/>
 			<button
 				id="code-send"
-				class={ `
+				class="
 					bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
 					grid place-items-center pointer
 					border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
 					nf nf-cod-key -scale-x-100
-				`}
+				"
 			></button>
 		</div>
 	</form>

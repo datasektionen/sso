@@ -58,7 +58,7 @@ func devAutoReload() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script type=\"module\">\n\t\tlet data = undefined;\n\t\tlet es = new EventSource(\"/dev/auto-reload\");\n\t\tasync function f() {\n\t\t\ttry {\n\t\t\t\tconst res = await fetch(\"/ping\");\n\t\t\t\tawait res.text();\n\t\t\t\tlocation.reload();\n\t\t\t} catch (_) {\n\t\t\t\tsetTimeout(f, 200);\n\t\t\t}\n\t\t};\n\t\tes.onerror = f;\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script>\n\t\tlet data = undefined;\n\t\tlet es = new EventSource(\"/dev/auto-reload\");\n\t\tasync function f() {\n\t\t\ttry {\n\t\t\t\tconst res = await fetch(\"/ping\");\n\t\t\t\tawait res.text();\n\t\t\t\tlocation.reload();\n\t\t\t} catch (_) {\n\t\t\t\tsetTimeout(f, 200);\n\t\t\t}\n\t\t};\n\t\tes.onerror = f;\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

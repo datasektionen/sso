@@ -7,11 +7,28 @@ package database
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const beginEmailLogin = `-- name: BeginEmailLogin :exec
+insert into email_logins (kthid, code)
+values ($1, $2)
+on conflict (kthid)
+do update
+set code = $2
+`
+
+type BeginEmailLoginParams struct {
+	Kthid string
+	Code  string
+}
+
+func (q *Queries) BeginEmailLogin(ctx context.Context, arg BeginEmailLoginParams) error {
+	_, err := q.db.Exec(ctx, beginEmailLogin, arg.Kthid, arg.Code)
+	return err
+}
 
 const createAccountRequest = `-- name: CreateAccountRequest :one
 insert into account_requests (reference, reason, year_tag)
@@ -138,6 +155,71 @@ type FinishAccountRequestKTHParams struct {
 func (q *Queries) FinishAccountRequestKTH(ctx context.Context, arg FinishAccountRequestKTHParams) error {
 	_, err := q.db.Exec(ctx, finishAccountRequestKTH, arg.ID, arg.Kthid)
 	return err
+}
+
+const finishEmailLogin = `-- name: FinishEmailLogin :one
+with deleted_expired as (
+    delete from email_logins
+    where email_logins.kthid = $1
+    and created_at < now() - interval '10 minutes'
+    returning false as ok
+),
+deleted_exhausted as (
+    delete from email_logins
+    where kthid = $1
+    and attempts >= 3
+    and not exists (select 1 from deleted_expired)
+    returning false as ok
+),
+deleted_correct as (
+    delete from email_logins
+    where kthid = $1
+    and email_logins.code = $2
+    and not exists (select 1 from deleted_expired)
+    and not exists (select 1 from deleted_exhausted)
+    returning true as ok
+),
+updated_attempts as (
+    update email_logins
+    set attempts = attempts + 1
+    where kthid = $1
+    and code != $2
+    and attempts < 3
+    and not exists (select 1 from deleted_expired)
+    and not exists (select 1 from deleted_exhausted)
+    returning false as ok
+),
+not_existing as (
+    select false as ok
+    from (select 1)
+    where not exists (select 1 from email_logins)
+)
+select ok, 'expired' as reason from deleted_expired
+union
+select ok, 'exhausted' from deleted_exhausted
+union
+select ok, 'wrong' from updated_attempts
+union
+select ok, 'correct' from deleted_correct
+union
+select ok, 'no code' from not_existing
+`
+
+type FinishEmailLoginParams struct {
+	Kthid string
+	Code  string
+}
+
+type FinishEmailLoginRow struct {
+	Ok     bool
+	Reason string
+}
+
+func (q *Queries) FinishEmailLogin(ctx context.Context, arg FinishEmailLoginParams) (FinishEmailLoginRow, error) {
+	row := q.db.QueryRow(ctx, finishEmailLogin, arg.Kthid, arg.Code)
+	var i FinishEmailLoginRow
+	err := row.Scan(&i.Ok, &i.Reason)
+	return i, err
 }
 
 const getAllYears = `-- name: GetAllYears :many
@@ -474,60 +556,4 @@ func (q *Queries) UserSetYear(ctx context.Context, arg UserSetYearParams) (User,
 		&i.FamilyNameChangeRequest,
 	)
 	return i, err
-}
-
-const beginEmailLogin = `-- name: BeginEmailLogin :one
-insert into email_login (kthid, code)
-values ($1, $2)
-`
-
-type BeginEmailLoginParams struct {
-	Kthid string
-	Code  string
-}
-
-func (q *Queries) BeginEmailLogin(ctx context.Context, arg BeginEmailLoginParams) error {
-	_, err := q.db.Exec(ctx, beginEmailLogin, arg.Kthid, arg.Code)
-	return err
-}
-
-const getEmailLogin = `-- name: GetEmailLogin :one
-select creation_time, attempts
-from email_login
-where kthid = $1 and code = $2
-`
-
-type GetEmailLoginParams struct {
-	Kthid string
-	Code  string
-}
-
-type EmailLoginResponse struct {
-	CreationTime time.Time
-	Attempts      int
-}
-
-func (q *Queries) GetEmailLogin(ctx context.Context, arg GetEmailLoginParams) (EmailLoginResponse, error) {
-	row := q.db.QueryRow(ctx, getEmailLogin, arg.Kthid, arg.Code)
-	var i EmailLoginResponse
-	err := row.Scan(&i.CreationTime, &i.Attempts)
-	return i, err
-}
-
-const clearEmailCodes = `-- name: ClearEmailCodes :one
-delete from email_login where kthid = $1
-`
-
-func (q *Queries) ClearEmailCodes(ctx context.Context, kthid string) error {
-	_, err := q.db.Exec(ctx, clearEmailCodes, kthid)
-	return err
-}
-
-const increaseAttempts = `-- name: IncreaseAttempts :one
-update email_login set attempts = attempts + 1 where kthid = $1
-`
-
-func (q *Queries) IncreaseAttempts(ctx context.Context, kthid string) error {
-	_, err := q.db.Exec(ctx, increaseAttempts, kthid)
-	return err
 }

@@ -58,6 +58,9 @@ func serve(s *service.Service, op http.Handler, internal bool, p int) {
 		started = "Internal server started"
 	}
 	slog.Info(started, "address", "http://localhost:"+port)
+	if config.Config.Dev {
+		slog.Info("Using configuration", "config", config.Config)
+	}
 	slog.Error("Failed serving http server", "error", http.Serve(l, mux))
 	os.Exit(1)
 }

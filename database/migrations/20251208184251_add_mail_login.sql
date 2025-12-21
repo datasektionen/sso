@@ -1,15 +1,14 @@
 -- +goose Up
 -- +goose StatementBegin
-create table email_login (
-    kthid text not null,
+create table email_logins (
+    kthid text primary key, -- each user may only have one code "active" at a time
     code text not null,
-    creation_time timestamp with time zone not null default now(),
-    attempts int not null default 0,
-    primary key (kthid, creation_time)
+    created_at timestamp not null default now(),
+    attempts int not null default 0
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-drop table email_login;
+drop table email_logins;
 -- +goose StatementEnd

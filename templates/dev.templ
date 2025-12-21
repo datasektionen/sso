@@ -29,7 +29,7 @@ templ DevLoginForm() {
 }
 
 templ devAutoReload() {
-	<script type="module">
+	<script>
 		let data = undefined;
 		let es = new EventSource("/dev/auto-reload");
 		async function f() {

@@ -119,3 +119,57 @@ order by created_at;
 delete from account_requests
 where id = $1
 returning *;
+
+-- name: BeginEmailLogin :exec
+insert into email_logins (kthid, code)
+values ($1, $2)
+on conflict (kthid)
+do update
+set code = $2;
+
+-- name: FinishEmailLogin :one
+with deleted_expired as (
+    delete from email_logins
+    where email_logins.kthid = $1
+    and created_at < now() - interval '10 minutes'
+    returning false as ok
+),
+deleted_exhausted as (
+    delete from email_logins
+    where kthid = $1
+    and attempts >= 3
+    and not exists (select 1 from deleted_expired)
+    returning false as ok
+),
+deleted_correct as (
+    delete from email_logins
+    where kthid = $1
+    and email_logins.code = $2
+    and not exists (select 1 from deleted_expired)
+    and not exists (select 1 from deleted_exhausted)
+    returning true as ok
+),
+updated_attempts as (
+    update email_logins
+    set attempts = attempts + 1
+    where kthid = $1
+    and code != $2
+    and attempts < 3
+    and not exists (select 1 from deleted_expired)
+    and not exists (select 1 from deleted_exhausted)
+    returning false as ok
+),
+not_existing as (
+    select false as ok
+    from (select 1)
+    where not exists (select 1 from email_logins)
+)
+select ok, 'expired' as reason from deleted_expired
+union
+select ok, 'exhausted' from deleted_exhausted
+union
+select ok, 'wrong' from updated_attempts
+union
+select ok, 'correct' from deleted_correct
+union
+select ok, 'no code' from not_existing;

@@ -18,6 +18,13 @@ type AccountRequest struct {
 	Kthid     pgtype.Text
 }
 
+type EmailLogin struct {
+	Kthid     string
+	Code      string
+	CreatedAt pgtype.Timestamp
+	Attempts  int32
+}
+
 type Invite struct {
 	ID          uuid.UUID
 	Name        string

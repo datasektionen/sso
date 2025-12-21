@@ -78,8 +78,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 
 	user := s.GetLoggedInUser(r)
 	if user == nil {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return nil
+		return httputil.Redirect("/")
 	}
 	passkeys, err := s.ListPasskeysForUser(r.Context(), user.KTHID)
 	if err != nil {

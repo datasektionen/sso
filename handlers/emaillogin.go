@@ -3,6 +3,7 @@ package handlers
 import (
 	"crypto/rand"
 	_ "embed"
+	"fmt"
 	"log/slog"
 	"math/big"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/pkg/config"
 	"github.com/datasektionen/sso/pkg/email"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
@@ -105,7 +107,7 @@ func beginLoginEmail(s *service.Service, w http.ResponseWriter, r *http.Request)
 		r.Context(),
 		user.Email,
 		"SSO - Login Code",
-		`Your temporary login code is `+code,
+		fmt.Sprintf("Your login code to [Datasektionen SSO](%s) is `%s`", config.Config.Origin, code),
 	); err != nil {
 		return err
 	}

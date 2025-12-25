@@ -161,7 +161,7 @@ updated_attempts as (
 ),
 not_existing as (
     select false as ok
-    from (select 1)
+    from (select 1) temp
     where not exists (select 1 from email_logins)
 )
 select ok, 'expired' as reason from deleted_expired

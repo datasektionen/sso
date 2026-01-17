@@ -245,7 +245,7 @@ func (p *provider) CreateAccessToken(ctx context.Context, request op.TokenReques
 		clientID: request.GetAudience()[0],
 	}
 	slog.Info("CreateAccessToken", "accessTokenID", tokenID, "request", request)
-	return tokenID.String(), time.Now().Add(time.Minute), nil
+	return tokenID.String(), time.Now().Add(10 * time.Minute), nil
 }
 
 // CreateAuthRequest implements op.Storage.

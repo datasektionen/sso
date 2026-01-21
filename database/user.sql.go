@@ -49,6 +49,30 @@ func (q *Queries) CreateAccountRequest(ctx context.Context, arg CreateAccountReq
 	return id, err
 }
 
+const createAccountRequestManual = `-- name: CreateAccountRequestManual :one
+insert into account_requests (kthid, ug_kthid, reference, reason, year_tag, first_name, family_name, email)
+values ($1, $2, $3, $4, $5, $6, $7, $8)
+returning id
+`
+
+type CreateAccountRequestManualParams struct {
+	Kthid      string
+	UgKthid    string
+	Reference  string
+	Reason     string
+	YearTag    string
+	FirstName  string
+	FamilyName string
+	Email      string
+}
+
+func (q *Queries) CreateAccountRequestManual(ctx context.Context, arg CreateAccountRequestManualParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createAccountRequestManual, arg.Kthid, arg.UgKthid, arg.Reference, arg.Reason, arg.YearTag, arg.FirstName, arg.FamilyName, arg.Email)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createGuestSession = `-- name: CreateGuestSession :one
 insert into sessions (guest_data, permissions)
 values ($1, $2)
@@ -124,7 +148,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 const deleteAccountRequest = `-- name: DeleteAccountRequest :one
 delete from account_requests
 where id = $1
-returning id, created_at, reference, reason, year_tag, kthid
+returning id, created_at, reference, reason, year_tag, kthid, ug_kthid, first_name, family_name, email
 `
 
 func (q *Queries) DeleteAccountRequest(ctx context.Context, id uuid.UUID) (AccountRequest, error) {
@@ -137,23 +161,36 @@ func (q *Queries) DeleteAccountRequest(ctx context.Context, id uuid.UUID) (Accou
 		&i.Reason,
 		&i.YearTag,
 		&i.Kthid,
+		&i.UgKthid,
+		&i.FirstName,
+		&i.FamilyName,
+		&i.Email,
 	)
 	return i, err
 }
 
 const finishAccountRequestKTH = `-- name: FinishAccountRequestKTH :exec
 update account_requests
-set kthid = $2
+set
+	kthid = $2,
+	ug_kthid = $3,
+	first_name = $4,
+	family_name = $5,
+	email = $6
 where id = $1
 `
 
 type FinishAccountRequestKTHParams struct {
-	ID    uuid.UUID
-	Kthid pgtype.Text
+	ID         uuid.UUID
+	Kthid      pgtype.Text
+	UgKthid    string
+	FirstName  string
+	FamilyName string
+	Email      string
 }
 
 func (q *Queries) FinishAccountRequestKTH(ctx context.Context, arg FinishAccountRequestKTHParams) error {
-	_, err := q.db.Exec(ctx, finishAccountRequestKTH, arg.ID, arg.Kthid)
+	_, err := q.db.Exec(ctx, finishAccountRequestKTH, arg.ID, arg.Kthid, arg.UgKthid, arg.FirstName, arg.FamilyName, arg.Email)
 	return err
 }
 

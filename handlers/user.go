@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/pkg/email"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
@@ -166,8 +169,42 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		})
 		return httputil.Redirect("/oidc/kth/login")
 	} else {
-		panic("todo")
+		firstName := r.FormValue("first-name")
+		familyName := r.FormValue("family-name")
+		emailAddress := r.FormValue("email")
+		kthid := r.FormValue("kthid")
+
+		if kthid == "" {
+			kthid = "d-" + strings.ToLower(firstName) + "." + strings.ToLower(familyName)
+		}
+
+		_, err := s.DB.CreateAccountRequestManual(r.Context(), database.CreateAccountRequestManualParams{
+			Kthid:      kthid,
+			UgKthid:    "d-ug" + kthid,
+			Reference:  reference,
+			Reason:     reason,
+			YearTag:    yearTag,
+			FirstName:  firstName,
+			FamilyName: familyName,
+			Email:      emailAddress,
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := email.Send(
+			r.Context(),
+			"d-sys@datasektionen.se",
+			"Datasektionen Account Requested by "+kthid,
+			strings.TrimSpace(fmt.Sprintf(`
+				<p>A new account request has been made by %s %s (%s).</p><a href="https://sso.datasektionen.se/admin/account-requests">sso.datasektionen.se/admin/account-requests</a>
+			`, firstName, familyName, kthid)),
+		); err != nil {
+
+			return httputil.Redirect("/request-account/done")
+		}
 	}
+	return httputil.BadRequest("Failed! Conntact server administrator")
 }
 
 func requestAccountDone(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

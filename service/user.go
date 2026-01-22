@@ -226,17 +226,27 @@ func (s *Service) FinishAccountRequestKTH(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		return httputil.BadRequest("Invalid uuid")
 	}
-	if err := s.DB.FinishAccountRequestKTH(r.Context(), database.FinishAccountRequestKTHParams{
-		ID:    requestID,
-		Kthid: pgtype.Text{String: kthid, Valid: true},
-	}); err != nil {
-		return err
-	}
 
 	person, err := kthldap.Lookup(r.Context(), kthid)
 	if err != nil {
 		return err
 	}
+	if person == nil {
+		slog.Error("Could not find user in ldap", "kthid", kthid)
+		return errors.New("Could not find user in ldap")
+	}
+
+	if err := s.DB.FinishAccountRequestKTH(r.Context(), database.FinishAccountRequestKTHParams{
+		ID:         requestID,
+		Kthid:      kthid,
+		UgKthid:    person.UGKTHID,
+		FirstName:  person.FirstName,
+		FamilyName: person.FamilyName,
+		Email:      person.KTHID + "@kth.se",
+	}); err != nil {
+		return err
+	}
+
 	if err := email.Send(
 		r.Context(),
 		"d-sys@datasektionen.se",
@@ -245,9 +255,10 @@ func (s *Service) FinishAccountRequestKTH(w http.ResponseWriter, r *http.Request
 			<p>A new account request has been made by %s %s (%s).</p><a href="https://sso.datasektionen.se/admin/account-requests">sso.datasektionen.se/admin/account-requests</a>
 		`, person.FirstName, person.FamilyName, person.KTHID)),
 	); err != nil {
-		return err
+		slog.Error("Could not send account request email", "kthid", kthid, "error", err)
 	}
 
+	http.SetCookie(w, &http.Cookie{Name: "account-request-id", MaxAge: -1, Path: "/"})
 	return http.RedirectHandler("/request-account/done", http.StatusSeeOther)
 }
 

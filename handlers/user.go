@@ -1,17 +1,22 @@
 package handlers
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/pkg/config"
+	"github.com/datasektionen/sso/pkg/email"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 const nextUrlCookie string = "_sso_next-url"
@@ -166,7 +171,40 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		})
 		return httputil.Redirect("/oidc/kth/login")
 	} else {
-		panic("todo")
+		firstName := strings.TrimSpace(r.FormValue("first-name"))
+		familyName := strings.TrimSpace(r.FormValue("family-name"))
+		emailAddress := strings.TrimSpace(r.FormValue("email"))
+		kthid := strings.TrimSpace(r.FormValue("kthid"))
+
+		if kthid == "" {
+			kthid = "d-" + strings.ToLower(firstName) + "." + strings.ToLower(familyName)
+		}
+
+		if _, err := s.DB.CreateAccountRequestManual(r.Context(), database.CreateAccountRequestManualParams{
+			Kthid:      kthid,
+			UgKthid:    "d-ug" + kthid,
+			Reference:  reference,
+			Reason:     reason,
+			YearTag:    yearTag,
+			FirstName:  firstName,
+			FamilyName: familyName,
+			Email:      emailAddress,
+		}); err != nil {
+			return err
+		}
+
+		if err := email.Send(
+			r.Context(),
+			"d-sys@datasektionen.se",
+			"Datasektionen Account Requested by "+kthid,
+			strings.TrimSpace(fmt.Sprintf(`
+				<p>A new account request has been made by %s %s (%s).</p><a href="https://sso.datasektionen.se/admin/account-requests">sso.datasektionen.se/admin/account-requests</a>
+			`, firstName, familyName, kthid)),
+		); err != nil {
+			slog.Error("Could not send account request email", "kthid", kthid, "error", err)
+		}
+
+		return httputil.Redirect("/request-account/done")
 	}
 }
 

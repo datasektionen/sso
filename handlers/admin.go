@@ -552,7 +552,10 @@ func accountRequests(s *service.Service, w http.ResponseWriter, r *http.Request)
 		return err
 	}
 
-	requests = slices.DeleteFunc(append([]database.AccountRequest{}, requests...), func(req database.AccountRequest) bool { return !req.Kthid.Valid })
+	requests = slices.DeleteFunc(
+		append([]database.AccountRequest{}, requests...),
+		func(req database.AccountRequest) bool { return !req.Done },
+	)
 
 	return templates.AccountRequests(requests)
 }
@@ -567,15 +570,26 @@ func denyAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	if kthid := req.Kthid.String; r.URL.Query().Has("email") && req.Kthid.Valid && kthid != "" {
-		if err := email.Send(r.Context(), kthid+"@kth.se", "Datasektionen account request denied", "<p>Your Datasektionen account request has been denied.</p>"); err != nil {
-			slog.Error("Could not send email", "error", err)
-			return "Denied, but could not send email!"
-		}
-		return "Denied ❌ and sent email!"
+	var recipient string
+	if req.Email != "" {
+		recipient = req.Email
+	} else if req.Kthid != "" {
+		recipient = req.Kthid + "@kth.se"
 	}
 
-	return "Denied ❌"
+	if recipient == "" {
+		return "Denied ❌ (no email address)"
+	}
+
+	if err := email.Send(
+		r.Context(),
+		recipient,
+		"Datasektionen account request denied", "<p>Your Datasektionen account request has been denied.</p>",
+	); err != nil {
+		slog.Error("Could not send email", "recipient", recipient, "error", err)
+		return "Denied, but could not send email!"
+	}
+	return "Denied ❌ and sent email!"
 }
 
 func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -595,25 +609,20 @@ func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	kthid := accountRequest.Kthid.String
-	if kthid == "" {
-		return httputil.BadRequest("No KTH ID - approval not implemented for that")
+	if accountRequest.Kthid == "" {
+		return httputil.BadRequest("Account request is missing kthid")
+	}
+	if accountRequest.UgKthid == "" || accountRequest.Email == "" || accountRequest.FirstName == "" || accountRequest.FamilyName == "" {
+		return httputil.BadRequest("Account request is missing user data; ask the requester to complete login")
 	}
 
-	person, err := kthldap.Lookup(r.Context(), accountRequest.Kthid.String)
-	if err != nil {
-		return err
-	}
-	if person == nil {
-		return fmt.Errorf("Could not find user with kthid '%s' in KTH's ldap", kthid)
-	}
-	emailAddress := person.KTHID + "@kth.se"
 	if err := tx.CreateUser(r.Context(), database.CreateUserParams{
-		Kthid:      kthid,
-		UgKthid:    person.UGKTHID,
-		Email:      emailAddress,
-		FirstName:  person.FirstName,
-		FamilyName: person.FamilyName,
+		Kthid:      accountRequest.Kthid,
+		UgKthid:    accountRequest.UgKthid,
+		Email:      accountRequest.Email,
+		FirstName:  accountRequest.FirstName,
+		FamilyName: accountRequest.FamilyName,
+		YearTag:    accountRequest.YearTag,
 	}); err != nil {
 		var pgerr *pgconn.PgError
 		if errors.As(err, &pgerr) && pgerr.Code == "23505" /* unique_violation */ {
@@ -626,11 +635,11 @@ func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	if err := email.Send(r.Context(), emailAddress, "Datasektionen account request approved", strings.TrimSpace(fmt.Sprintf(`
+	if err := email.Send(r.Context(), accountRequest.Email, "Datasektionen account request approved", strings.TrimSpace(fmt.Sprintf(`
 Hello %s, your Datasektionen account request has been approved!
 
 You can go to [sso.datasektionen.se](https://sso.datasektionen.se/) to log in and see your account, or simply go directly to a system you want to log in to.
-	`, person.FirstName))); err != nil {
+	`, accountRequest.FirstName))); err != nil {
 		slog.Error("Could not send email", "error", err)
 		return "Approved, but could not send email!"
 	}

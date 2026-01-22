@@ -10,12 +10,17 @@ import (
 )
 
 type AccountRequest struct {
-	ID        uuid.UUID
-	CreatedAt pgtype.Timestamp
-	Reference string
-	Reason    string
-	YearTag   string
-	Kthid     pgtype.Text
+	ID         uuid.UUID
+	CreatedAt  pgtype.Timestamp
+	Reference  string
+	Reason     string
+	YearTag    string
+	Kthid      string
+	Done       bool
+	UgKthid    string
+	FirstName  string
+	FamilyName string
+	Email      string
 }
 
 type EmailLogin struct {

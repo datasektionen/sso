@@ -31,8 +31,8 @@ func (q *Queries) BeginEmailLogin(ctx context.Context, arg BeginEmailLoginParams
 }
 
 const createAccountRequest = `-- name: CreateAccountRequest :one
-insert into account_requests (reference, reason, year_tag)
-values ($1, $2, $3)
+insert into account_requests (done, reference, reason, year_tag)
+values (false, $1, $2, $3)
 returning id
 `
 
@@ -44,6 +44,39 @@ type CreateAccountRequestParams struct {
 
 func (q *Queries) CreateAccountRequest(ctx context.Context, arg CreateAccountRequestParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, createAccountRequest, arg.Reference, arg.Reason, arg.YearTag)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createAccountRequestManual = `-- name: CreateAccountRequestManual :one
+insert into account_requests (done, kthid, ug_kthid, reference, reason, year_tag, first_name, family_name, email)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8)
+returning id
+`
+
+type CreateAccountRequestManualParams struct {
+	Kthid      string
+	UgKthid    string
+	Reference  string
+	Reason     string
+	YearTag    string
+	FirstName  string
+	FamilyName string
+	Email      string
+}
+
+func (q *Queries) CreateAccountRequestManual(ctx context.Context, arg CreateAccountRequestManualParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createAccountRequestManual,
+		arg.Kthid,
+		arg.UgKthid,
+		arg.Reference,
+		arg.Reason,
+		arg.YearTag,
+		arg.FirstName,
+		arg.FamilyName,
+		arg.Email,
+	)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
@@ -124,7 +157,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 const deleteAccountRequest = `-- name: DeleteAccountRequest :one
 delete from account_requests
 where id = $1
-returning id, created_at, reference, reason, year_tag, kthid
+returning id, created_at, reference, reason, year_tag, kthid, done, ug_kthid, first_name, family_name, email
 `
 
 func (q *Queries) DeleteAccountRequest(ctx context.Context, id uuid.UUID) (AccountRequest, error) {
@@ -137,23 +170,45 @@ func (q *Queries) DeleteAccountRequest(ctx context.Context, id uuid.UUID) (Accou
 		&i.Reason,
 		&i.YearTag,
 		&i.Kthid,
+		&i.Done,
+		&i.UgKthid,
+		&i.FirstName,
+		&i.FamilyName,
+		&i.Email,
 	)
 	return i, err
 }
 
 const finishAccountRequestKTH = `-- name: FinishAccountRequestKTH :exec
 update account_requests
-set kthid = $2
+set
+    done = true,
+    kthid = $2,
+    ug_kthid = $3,
+    first_name = $4,
+    family_name = $5,
+    email = $6
 where id = $1
 `
 
 type FinishAccountRequestKTHParams struct {
-	ID    uuid.UUID
-	Kthid pgtype.Text
+	ID         uuid.UUID
+	Kthid      string
+	UgKthid    string
+	FirstName  string
+	FamilyName string
+	Email      string
 }
 
 func (q *Queries) FinishAccountRequestKTH(ctx context.Context, arg FinishAccountRequestKTHParams) error {
-	_, err := q.db.Exec(ctx, finishAccountRequestKTH, arg.ID, arg.Kthid)
+	_, err := q.db.Exec(ctx, finishAccountRequestKTH,
+		arg.ID,
+		arg.Kthid,
+		arg.UgKthid,
+		arg.FirstName,
+		arg.FamilyName,
+		arg.Email,
+	)
 	return err
 }
 
@@ -362,7 +417,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, ids []string) ([]User, erro
 }
 
 const listAccountRequests = `-- name: ListAccountRequests :many
-select id, created_at, reference, reason, year_tag, kthid
+select id, created_at, reference, reason, year_tag, kthid, done, ug_kthid, first_name, family_name, email
 from account_requests
 order by created_at
 `
@@ -383,6 +438,11 @@ func (q *Queries) ListAccountRequests(ctx context.Context) ([]AccountRequest, er
 			&i.Reason,
 			&i.YearTag,
 			&i.Kthid,
+			&i.Done,
+			&i.UgKthid,
+			&i.FirstName,
+			&i.FamilyName,
+			&i.Email,
 		); err != nil {
 			return nil, err
 		}

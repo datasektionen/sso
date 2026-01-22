@@ -570,26 +570,30 @@ func denyAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	var recipient string
-	if req.Email != "" {
-		recipient = req.Email
-	} else if req.Kthid != "" {
-		recipient = req.Kthid + "@kth.se"
-	}
+	if r.URL.Query().Has("send-email") {
+		var recipient string
+		if req.Email != "" {
+			recipient = req.Email
+		} else if req.Kthid != "" {
+			recipient = req.Kthid + "@kth.se"
+		}
 
-	if recipient == "" {
-		return "Denied ❌ (no email address)"
-	}
+		if recipient == "" {
+			return "Denied ❌ (no email address)"
+		}
 
-	if err := email.Send(
-		r.Context(),
-		recipient,
-		"Datasektionen account request denied", "<p>Your Datasektionen account request has been denied.</p>",
-	); err != nil {
-		slog.Error("Could not send email", "recipient", recipient, "error", err)
-		return "Denied, but could not send email!"
+		if err := email.Send(
+			r.Context(),
+			recipient,
+			"Datasektionen account request denied", "<p>Your Datasektionen account request has been denied.</p>",
+		); err != nil {
+			slog.Error("Could not send email", "recipient", recipient, "error", err)
+			return "Denied, but could not send email!"
+		}
+		return "Denied ❌ and sent email!"
+	} else {
+		return "Denied ❌ (no email send)"
 	}
-	return "Denied ❌ and sent email!"
 }
 
 func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

@@ -88,6 +88,25 @@ set first_name_change_request = $2,
 where kthid = $1
 returning *;
 
+-- name: ListUsersWithNameChangeRequests :many
+select *
+from users
+where first_name_change_request != '' or family_name_change_request != '';
+
+-- name: ApproveNameChangeRequest :exec
+update users
+set first_name = case when first_name_change_request != '' then first_name_change_request else first_name end,
+    family_name = case when family_name_change_request != '' then family_name_change_request else family_name end,
+    first_name_change_request = '',
+    family_name_change_request = ''
+where kthid = $1;
+
+-- name: DenyNameChangeRequest :exec
+update users
+set first_name_change_request = '',
+    family_name_change_request = ''
+where kthid = $1;
+
 -- name: GetLastSheetUpload :one
 select uploaded_at, uploaded_by
 from last_membership_sheet;

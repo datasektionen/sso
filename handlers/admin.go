@@ -646,3 +646,27 @@ You can go to [sso.datasektionen.se](https://sso.datasektionen.se/) to log in an
 
 	return "Approved ✅"
 }
+
+func nameChangeRequests(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	users, err := s.DB.ListUsersWithNameChangeRequests(r.Context())
+	if err != nil {
+		return err
+	}
+	return templates.NameChangeRequests(users)
+}
+
+func approveNameChangeRequest(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	kthid := r.PathValue("kthid")
+	if err := s.DB.ApproveNameChangeRequest(r.Context(), kthid); err != nil {
+		return err
+	}
+	return "Approved ✅"
+}
+
+func denyNameChangeRequest(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	kthid := r.PathValue("kthid")
+	if err := s.DB.DenyNameChangeRequest(r.Context(), kthid); err != nil {
+		return err
+	}
+	return "Denied ❌"
+}

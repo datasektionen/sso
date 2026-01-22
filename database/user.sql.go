@@ -12,6 +12,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const approveNameChangeRequest = `-- name: ApproveNameChangeRequest :exec
+update users
+set first_name = case when first_name_change_request != '' then first_name_change_request else first_name end,
+    family_name = case when family_name_change_request != '' then family_name_change_request else family_name end,
+    first_name_change_request = '',
+    family_name_change_request = ''
+where kthid = $1
+`
+
+func (q *Queries) ApproveNameChangeRequest(ctx context.Context, kthid string) error {
+	_, err := q.db.Exec(ctx, approveNameChangeRequest, kthid)
+	return err
+}
+
 const beginEmailLogin = `-- name: BeginEmailLogin :exec
 insert into email_logins (kthid, code)
 values ($1, $2)
@@ -177,6 +191,18 @@ func (q *Queries) DeleteAccountRequest(ctx context.Context, id uuid.UUID) (Accou
 		&i.Email,
 	)
 	return i, err
+}
+
+const denyNameChangeRequest = `-- name: DenyNameChangeRequest :exec
+update users
+set first_name_change_request = '',
+    family_name_change_request = ''
+where kthid = $1
+`
+
+func (q *Queries) DenyNameChangeRequest(ctx context.Context, kthid string) error {
+	_, err := q.db.Exec(ctx, denyNameChangeRequest, kthid)
+	return err
 }
 
 const finishAccountRequestKTH = `-- name: FinishAccountRequestKTH :exec
@@ -487,6 +513,43 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		arg.Search,
 		arg.Year,
 	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.Kthid,
+			&i.UgKthid,
+			&i.Email,
+			&i.FirstName,
+			&i.FamilyName,
+			&i.YearTag,
+			&i.MemberTo,
+			&i.WebauthnID,
+			&i.FirstNameChangeRequest,
+			&i.FamilyNameChangeRequest,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersWithNameChangeRequests = `-- name: ListUsersWithNameChangeRequests :many
+select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+from users
+where first_name_change_request != '' or family_name_change_request != ''
+`
+
+func (q *Queries) ListUsersWithNameChangeRequests(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsersWithNameChangeRequests)
 	if err != nil {
 		return nil, err
 	}

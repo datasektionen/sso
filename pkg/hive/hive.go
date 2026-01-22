@@ -36,21 +36,23 @@ func (sp PermissionScopes) Exists() bool {
 }
 
 type Permissions struct {
-	ReadMembers           bool             `hive:"read-members"`
-	WriteMembers          bool             `hive:"write-members"`
-	ReadOIDCClients       bool             `hive:"read-oidc-clients"`
-	WriteOIDCClients      PermissionScopes `hive:"write-oidc-clients"`
-	ReadInvites           bool             `hive:"read-invites"`
-	WriteInvites          bool             `hive:"write-invites"`
-	ReadAccountRequests   bool             `hive:"read-account-requests"`
-	ManageAccountRequests bool             `hive:"manage-account-requests"`
+	ReadMembers              bool             `hive:"read-members"`
+	WriteMembers             bool             `hive:"write-members"`
+	ReadOIDCClients          bool             `hive:"read-oidc-clients"`
+	WriteOIDCClients         PermissionScopes `hive:"write-oidc-clients"`
+	ReadInvites              bool             `hive:"read-invites"`
+	WriteInvites             bool             `hive:"write-invites"`
+	ReadAccountRequests      bool             `hive:"read-account-requests"`
+	ManageAccountRequests    bool             `hive:"manage-account-requests"`
+	ReadNameChangeRequests   bool             `hive:"read-name-change-requests"`
+	ManageNameChangeRequests bool             `hive:"manage-name-change-requests"`
 }
 
 type PermissionsCtxKey struct{}
 
 func GetSSOPermissions(ctx context.Context, kthid string) (Permissions, error) {
 	if config.Config.Dev && config.Config.HiveURL == nil {
-		return Permissions{true, true, true, PermissionScopes{[]string{"*"}}, true, true, true, true}, nil
+		return Permissions{true, true, true, PermissionScopes{[]string{"*"}}, true, true, true, true, true, true}, nil
 	}
 
 	rawPerms, err := GetRawPermissionsInSystemForUser(ctx, kthid, "sso")

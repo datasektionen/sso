@@ -169,10 +169,10 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		})
 		return httputil.Redirect("/oidc/kth/login")
 	} else {
-		firstName := r.FormValue("first-name")
-		familyName := r.FormValue("family-name")
-		emailAddress := r.FormValue("email")
-		kthid := r.FormValue("kthid")
+		firstName := strings.TrimSpace(r.FormValue("first-name"))
+		familyName := strings.TrimSpace(r.FormValue("family-name"))
+		emailAddress := strings.TrimSpace(r.FormValue("email"))
+		kthid := strings.TrimSpace(r.FormValue("kthid"))
 
 		if kthid == "" {
 			kthid = "d-" + strings.ToLower(firstName) + "." + strings.ToLower(familyName)

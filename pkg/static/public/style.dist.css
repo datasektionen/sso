@@ -1,4 +1,4 @@
-/*! tailwindcss v4.1.17 | MIT License | https://tailwindcss.com */
+/*! tailwindcss v4.1.18 | MIT License | https://tailwindcss.com */
 @import "https://www.nerdfonts.com/assets/css/webfont.css";
 @layer properties;
 @layer theme, base, components, utilities;
@@ -21,7 +21,6 @@
     --color-gray-900: oklch(21% 0.034 264.665);
     --color-neutral-100: oklch(97% 0 0);
     --color-neutral-500: oklch(55.6% 0 0);
-    --color-neutral-800: oklch(26.9% 0 0);
     --color-white: #fff;
     --spacing: 0.25rem;
     --container-lg: 32rem;
@@ -362,11 +361,14 @@
   .grid-cols-6 {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
+  .grid-cols-\[1fr_1fr_max-content\] {
+    grid-template-columns: 1fr 1fr max-content;
+  }
+  .grid-cols-\[auto_auto_auto_1fr\] {
+    grid-template-columns: auto auto auto 1fr;
+  }
   .grid-cols-\[repeat\(4\,auto\)\] {
     grid-template-columns: repeat(4,auto);
-  }
-  .grid-cols-\[repeat\(6\,auto\)_max-content\] {
-    grid-template-columns: repeat(6,auto) max-content;
   }
   .grid-cols-subgrid {
     grid-template-columns: subgrid;
@@ -432,6 +434,10 @@
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
+  .border-t {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+  }
   .border-b {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
@@ -441,6 +447,18 @@
   }
   .border-transparent {
     border-color: transparent;
+  }
+  .border-white\/10 {
+    border-color: color-mix(in srgb, #fff 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+    }
+  }
+  .border-white\/20 {
+    border-color: color-mix(in srgb, #fff 20%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-white) 20%, transparent);
+    }
   }
   .bg-\[\#3f4c66\] {
     background-color: #3f4c66;
@@ -465,9 +483,6 @@
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-green-600) 50%, transparent);
     }
-  }
-  .bg-neutral-800 {
-    background-color: var(--color-neutral-800);
   }
   .bg-red-600\/50 {
     background-color: color-mix(in srgb, oklch(57.7% 0.245 27.325) 50%, transparent);
@@ -584,6 +599,18 @@
   .text-red-500 {
     color: var(--color-red-500);
   }
+  .text-white\/50 {
+    color: color-mix(in srgb, #fff 50%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-white) 50%, transparent);
+    }
+  }
+  .text-white\/70 {
+    color: color-mix(in srgb, #fff 70%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-white) 70%, transparent);
+    }
+  }
   .capitalize {
     text-transform: capitalize;
   }
@@ -592,6 +619,9 @@
   }
   .italic {
     font-style: italic;
+  }
+  .underline {
+    text-decoration-line: underline;
   }
   .opacity-0 {
     opacity: 0%;
@@ -606,14 +636,6 @@
   }
   .blur {
     --tw-blur: blur(8px);
-    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
-  }
-  .brightness-75 {
-    --tw-brightness: brightness(75%);
-    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
-  }
-  .grayscale {
-    --tw-grayscale: grayscale(100%);
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
   .filter {

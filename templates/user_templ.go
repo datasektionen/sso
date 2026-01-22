@@ -885,7 +885,7 @@ func AccountRequestDone() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"p-8 flex flex-col gap-4\"><h1 class=\"text-2xl font-bold text-center capitalize pb-4\">Account request complete</h1><p>Thank you for requesting an account. You will receive an E-mail when your request has been accepted or denied.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"p-8 flex flex-col gap-4\"><h1 class=\"text-2xl font-bold text-center capitalize pb-4\">Account request complete</h1><p>Thank you for requesting an account. You will receive an E-mail when your request has been accepted or denied.</p><p>If you want to know the status of or expedite your account request your should primarily contact the person you provided as reference.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

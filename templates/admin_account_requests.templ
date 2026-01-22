@@ -9,45 +9,52 @@ import (
 templ AccountRequests(requests []database.AccountRequest) {
 	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	@AdminPage() {
-		<ul class="grid grid-cols-[repeat(6,auto)_max-content] p-2 gap-2">
-			<li class="grid grid-cols-subgrid col-span-full border-b">
-				<p>KTH ID</p>
-				<p>Reference</p>
-				<p>Reason</p>
-				<p>Request Date</p>
-				<p>Year</p>
-			</li>
+		<ul class="flex flex-col p-2 gap-2">
 			for _, request := range requests {
-				<li class="grid grid-cols-subgrid col-span-full odd:bg-white/5 p-1">
-					<p>{ request.Kthid }</p>
-					<p>{ request.Reference }</p>
-					<p class="whitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-pre-line">{ request.Reason }</p>
-					<p>{ request.CreatedAt.Time.Format(time.DateOnly) }</p>
-					<p>{ request.YearTag }</p>
-					<div class="flex gap-2 justify-stretch">
-						if perms.ManageAccountRequests {
-							<button
-								class={ button }
-								hx-post={ "/admin/account-requests/" + request.ID.String() }
-								hx-target="closest div"
-							>
-								Approve
-							</button>
-							<button
-								class={ button }
-								hx-delete={ "/admin/account-requests/" + request.ID.String() }
-								hx-target="closest div"
-							>
-								Deny
-							</button>
-							<button
-								class={ button }
-								hx-delete={ "/admin/account-requests/" + request.ID.String() + "?email" }
-								hx-target="closest div"
-							>
-								Deny & Email
-							</button>
-						}
+				<li class="border border-white/20 rounded">
+					<div class="grid grid-cols-[1fr_1fr_max-content] gap-2 p-2">
+						<p>
+							{ request.FirstName }
+							{ request.FamilyName }
+							if request.Kthid != "" {
+								({ request.Kthid })
+							}
+						</p>
+						<p>{ request.Email }</p>
+						<div class="flex gap-2 justify-stretch">
+							if perms.ManageAccountRequests {
+								<button
+									class={ button }
+									hx-post={ "/admin/account-requests/" + request.ID.String() }
+									hx-target="closest li"
+									hx-swap="outerHTML"
+								>
+									Approve
+								</button>
+								<button
+									class={ button }
+									hx-delete={ "/admin/account-requests/" + request.ID.String() }
+									hx-target="closest li"
+									hx-swap="outerHTML"
+								>
+									Deny silently
+								</button>
+								<button
+									class={ button }
+									hx-delete={ "/admin/account-requests/" + request.ID.String() + "?email" }
+									hx-target="closest li"
+									hx-swap="outerHTML"
+								>
+									Deny & Email
+								</button>
+							}
+						</div>
+					</div>
+					<div class="grid grid-cols-[auto_auto_auto_1fr] gap-2 p-2 border-t border-white/10 text-sm text-white/70">
+						<p><span class="text-white/50">Reference:</span> { request.Reference }</p>
+						<p><span class="text-white/50">Requested at:</span> { request.CreatedAt.Time.Format(time.DateOnly) }</p>
+						<p><span class="text-white/50">Year:</span> { request.YearTag }</p>
+						<p class="whitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-pre-line"><span class="text-white/50">Reason:</span> { request.Reason }</p>
 					</div>
 				</li>
 			}

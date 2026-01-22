@@ -1,0 +1,66 @@
+package templates
+
+import (
+	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/pkg/hive"
+)
+
+templ NameChangeRequests(users []database.User) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
+	@AdminPage() {
+		<ul class="flex flex-col p-2 gap-2">
+			for _, user := range users {
+				<li class="border border-white/20 rounded p-2">
+					<div class="grid grid-cols-[repeat(5,1fr)_max-content] gap-2 items-center">
+						<div>
+							<p class="text-white/50 text-sm">First name</p>
+							<p>{ user.FirstName }</p>
+						</div>
+						<div>
+							<p class="text-white/50 text-sm">Family name</p>
+							<p>{ user.FamilyName }</p>
+						</div>
+						<div class="h-full">
+							<p class="text-sm">Requested name:</p>
+						</div>
+						<div>
+							<p class="text-white/50 text-sm">First name</p>
+							<p>
+								{ user.FirstNameChangeRequest }
+							</p>
+						</div>
+						<div>
+							<p class="text-white/50 text-sm">Family name</p>
+							<p>
+								{ user.FamilyNameChangeRequest }
+							</p>
+						</div>
+						<div class="flex gap-2">
+							if perms.ManageNameChangeRequests {
+								<button
+									class={ button }
+									hx-post={ "/admin/name-change-requests/" + user.Kthid }
+									hx-target="closest li"
+									hx-swap="outerHTML"
+								>
+									Approve
+								</button>
+								<button
+									class={ button }
+									hx-delete={ "/admin/name-change-requests/" + user.Kthid }
+									hx-target="closest li"
+									hx-swap="outerHTML"
+								>
+									Deny
+								</button>
+							}
+						</div>
+					</div>
+				</li>
+			}
+			if len(users) == 0 {
+				<p class="text-white/50 p-2">No pending name change requests</p>
+			}
+		</ul>
+	}
+}

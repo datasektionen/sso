@@ -47,6 +47,10 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 	mux.Handle("DELETE /admin/account-requests/{id}", authorize(s, httputil.Route(s, denyAccountRequest), "manage-account-requests", nil))
 	mux.Handle("POST /admin/account-requests/{id}", authorize(s, httputil.Route(s, approveAccountRequest), "manage-account-requests", nil))
 
+	mux.Handle("GET /admin/name-change-requests", authorize(s, httputil.Route(s, nameChangeRequests), "read-name-change-requests", nil))
+	mux.Handle("POST /admin/name-change-requests/{kthid}", authorize(s, httputil.Route(s, approveNameChangeRequest), "manage-name-change-requests", nil))
+	mux.Handle("DELETE /admin/name-change-requests/{kthid}", authorize(s, httputil.Route(s, denyNameChangeRequest), "manage-name-change-requests", nil))
+
 	// dev.go
 	if config.Config.Dev {
 		mux.Handle("POST /login/dev", httputil.Route(s, devLogin))

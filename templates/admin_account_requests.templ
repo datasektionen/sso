@@ -60,6 +60,9 @@ templ AccountRequests(requests []database.AccountRequest) {
 					</div>
 				</li>
 			}
+			if len(requests) == 0 {
+				<p class="text-white/50 p-2">No pending account requests</p>
+			}
 		</ul>
 	}
 }

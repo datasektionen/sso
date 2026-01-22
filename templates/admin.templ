@@ -21,6 +21,9 @@ templ adminNav() {
 	if perms.ReadAccountRequests {
 		<a href="/admin/account-requests">Account Requests</a>
 	}
+	if perms.ReadNameChangeRequests {
+		<a href="/admin/name-change-requests">Name Change Requests</a>
+	}
 }
 
 templ AdminPage() {

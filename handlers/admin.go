@@ -552,7 +552,10 @@ func accountRequests(s *service.Service, w http.ResponseWriter, r *http.Request)
 		return err
 	}
 
-	requests = slices.DeleteFunc(append([]database.AccountRequest{}, requests...), func(req database.AccountRequest) bool { return !req.Kthid.Valid })
+	requests = slices.DeleteFunc(
+		append([]database.AccountRequest{}, requests...),
+		func(req database.AccountRequest) bool { return !req.Done },
+	)
 
 	return templates.AccountRequests(requests)
 }
@@ -567,15 +570,26 @@ func denyAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	if kthid := req.Kthid.String; r.URL.Query().Has("email") && req.Kthid.Valid && kthid != "" {
-		if err := email.Send(r.Context(), kthid+"@kth.se", "Datasektionen account request denied", "<p>Your Datasektionen account request has been denied.</p>"); err != nil {
-			slog.Error("Could not send email", "error", err)
-			return "Denied, but could not send email!"
-		}
-		return "Denied ❌ and sent email!"
+	var recipient string
+	if req.Email != "" {
+		recipient = req.Email
+	} else if req.Kthid != "" {
+		recipient = req.Kthid + "@kth.se"
 	}
 
-	return "Denied ❌"
+	if recipient == "" {
+		return "Denied ❌ (no email address)"
+	}
+
+	if err := email.Send(
+		r.Context(),
+		recipient,
+		"Datasektionen account request denied", "<p>Your Datasektionen account request has been denied.</p>",
+	); err != nil {
+		slog.Error("Could not send email", "recipient", recipient, "error", err)
+		return "Denied, but could not send email!"
+	}
+	return "Denied ❌ and sent email!"
 }
 
 func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -595,8 +609,15 @@ func approveAccountRequest(s *service.Service, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
+	if accountRequest.Kthid == "" {
+		return httputil.BadRequest("Account request is missing kthid")
+	}
+	if accountRequest.UgKthid == "" || accountRequest.Email == "" || accountRequest.FirstName == "" || accountRequest.FamilyName == "" {
+		return httputil.BadRequest("Account request is missing user data; ask the requester to complete login")
+	}
+
 	if err := tx.CreateUser(r.Context(), database.CreateUserParams{
-		Kthid:      accountRequest.Kthid.String,
+		Kthid:      accountRequest.Kthid,
 		UgKthid:    accountRequest.UgKthid,
 		Email:      accountRequest.Email,
 		FirstName:  accountRequest.FirstName,

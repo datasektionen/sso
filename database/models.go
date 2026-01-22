@@ -15,7 +15,8 @@ type AccountRequest struct {
 	Reference  string
 	Reason     string
 	YearTag    string
-	Kthid      pgtype.Text
+	Kthid      string
+	Done       bool
 	UgKthid    string
 	FirstName  string
 	FamilyName string

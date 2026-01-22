@@ -19,7 +19,7 @@ templ AccountRequests(requests []database.AccountRequest) {
 			</li>
 			for _, request := range requests {
 				<li class="grid grid-cols-subgrid col-span-full odd:bg-white/5 p-1">
-					<p>{ request.Kthid.String }</p>
+					<p>{ request.Kthid }</p>
 					<p>{ request.Reference }</p>
 					<p class="whitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-pre-line">{ request.Reason }</p>
 					<p>{ request.CreatedAt.Time.Format(time.DateOnly) }</p>

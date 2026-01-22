@@ -101,13 +101,24 @@ set uploaded_at = now(),
     uploaded_by = $1;
 
 -- name: CreateAccountRequest :one
-insert into account_requests (reference, reason, year_tag)
-values ($1, $2, $3)
+insert into account_requests (done, reference, reason, year_tag)
+values (false, $1, $2, $3)
+returning id;
+
+-- name: CreateAccountRequestManual :one
+insert into account_requests (done, kthid, ug_kthid, reference, reason, year_tag, first_name, family_name, email)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8)
 returning id;
 
 -- name: FinishAccountRequestKTH :exec
 update account_requests
-set kthid = $2
+set
+    done = true,
+    kthid = $2,
+    ug_kthid = $3,
+    first_name = $4,
+    family_name = $5,
+    email = $6
 where id = $1;
 
 -- name: ListAccountRequests :many

@@ -2,10 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/datasektionen/sso/database"
 	"github.com/datasektionen/sso/pkg/config"
@@ -13,8 +17,6 @@ import (
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/service"
 	"github.com/datasektionen/sso/templates"
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 const nextUrlCookie string = "_sso_next-url"
@@ -178,7 +180,7 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 			kthid = "d-" + strings.ToLower(firstName) + "." + strings.ToLower(familyName)
 		}
 
-		_, err := s.DB.CreateAccountRequestManual(r.Context(), database.CreateAccountRequestManualParams{
+		if _, err := s.DB.CreateAccountRequestManual(r.Context(), database.CreateAccountRequestManualParams{
 			Kthid:      kthid,
 			UgKthid:    "d-ug" + kthid,
 			Reference:  reference,
@@ -187,8 +189,7 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 			FirstName:  firstName,
 			FamilyName: familyName,
 			Email:      emailAddress,
-		})
-		if err != nil {
+		}); err != nil {
 			return err
 		}
 
@@ -200,11 +201,11 @@ func requestAccount(s *service.Service, w http.ResponseWriter, r *http.Request) 
 				<p>A new account request has been made by %s %s (%s).</p><a href="https://sso.datasektionen.se/admin/account-requests">sso.datasektionen.se/admin/account-requests</a>
 			`, firstName, familyName, kthid)),
 		); err != nil {
-
-			return httputil.Redirect("/request-account/done")
+			slog.Error("Could not send account request email", "kthid", kthid, "error", err)
 		}
+
+		return httputil.Redirect("/request-account/done")
 	}
-	return httputil.BadRequest("Failed! Conntact server administrator")
 }
 
 func requestAccountDone(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

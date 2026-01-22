@@ -26,6 +26,25 @@ func (q *Queries) ApproveNameChangeRequest(ctx context.Context, kthid string) er
 	return err
 }
 
+const beginEmailChange = `-- name: BeginEmailChange :exec
+insert into email_change_requests (kthid, new_email, code)
+values ($1, $2, $3)
+on conflict (kthid)
+do update
+set new_email = $2, code = $3, created_at = now(), attempts = 0
+`
+
+type BeginEmailChangeParams struct {
+	Kthid    string
+	NewEmail string
+	Code     string
+}
+
+func (q *Queries) BeginEmailChange(ctx context.Context, arg BeginEmailChangeParams) error {
+	_, err := q.db.Exec(ctx, beginEmailChange, arg.Kthid, arg.NewEmail, arg.Code)
+	return err
+}
+
 const beginEmailLogin = `-- name: BeginEmailLogin :exec
 insert into email_logins (kthid, code)
 values ($1, $2)
@@ -41,6 +60,16 @@ type BeginEmailLoginParams struct {
 
 func (q *Queries) BeginEmailLogin(ctx context.Context, arg BeginEmailLoginParams) error {
 	_, err := q.db.Exec(ctx, beginEmailLogin, arg.Kthid, arg.Code)
+	return err
+}
+
+const cancelEmailChange = `-- name: CancelEmailChange :exec
+delete from email_change_requests
+where kthid = $1
+`
+
+func (q *Queries) CancelEmailChange(ctx context.Context, kthid string) error {
+	_, err := q.db.Exec(ctx, cancelEmailChange, kthid)
 	return err
 }
 
@@ -238,6 +267,72 @@ func (q *Queries) FinishAccountRequestKTH(ctx context.Context, arg FinishAccount
 	return err
 }
 
+const finishEmailChange = `-- name: FinishEmailChange :one
+with deleted_expired as (
+    delete from email_change_requests
+    where email_change_requests.kthid = $1
+    and created_at < now() - interval '1 hour'
+    returning false as ok, '' as new_email
+),
+deleted_exhausted as (
+    delete from email_change_requests
+    where kthid = $1
+    and attempts >= 3
+    and not exists (select 1 from deleted_expired)
+    returning false as ok, '' as new_email
+),
+deleted_correct as (
+    delete from email_change_requests
+    where kthid = $1
+    and email_change_requests.code = $2
+    and not exists (select 1 from deleted_expired)
+    and not exists (select 1 from deleted_exhausted)
+    returning true as ok, email_change_requests.new_email
+),
+updated_attempts as (
+    update email_change_requests
+    set attempts = attempts + 1
+    where kthid = $1
+    and code != $2
+    and attempts < 3
+    and not exists (select 1 from deleted_expired)
+    and not exists (select 1 from deleted_exhausted)
+    returning false as ok, '' as new_email
+),
+not_existing as (
+    select false as ok, '' as new_email
+    from (select 1) temp
+    where not exists (select 1 from email_change_requests where kthid = $1)
+)
+select ok, 'expired' as reason, new_email from deleted_expired
+union
+select ok, 'exhausted', new_email from deleted_exhausted
+union
+select ok, 'wrong', new_email from updated_attempts
+union
+select ok, 'correct', new_email from deleted_correct
+union
+select ok, 'no code', new_email from not_existing
+`
+
+type FinishEmailChangeParams struct {
+	Kthid string
+	Code  string
+}
+
+type FinishEmailChangeRow struct {
+	Ok       bool
+	Reason   string
+	NewEmail string
+}
+
+func (q *Queries) FinishEmailChange(ctx context.Context, arg FinishEmailChangeParams) (FinishEmailChangeRow, error) {
+	row := q.db.QueryRow(ctx, finishEmailChange, arg.Kthid, arg.Code)
+	var i FinishEmailChangeRow
+	err := row.Scan(&i.Ok, &i.Reason, &i.NewEmail)
+	return i, err
+}
+
 const finishEmailLogin = `-- name: FinishEmailLogin :one
 with deleted_expired as (
     delete from email_logins
@@ -358,6 +453,20 @@ func (q *Queries) GetLastSheetUpload(ctx context.Context) (GetLastSheetUploadRow
 	var i GetLastSheetUploadRow
 	err := row.Scan(&i.UploadedAt, &i.UploadedBy)
 	return i, err
+}
+
+const getPendingEmailChange = `-- name: GetPendingEmailChange :one
+select new_email
+from email_change_requests
+where kthid = $1
+and created_at >= now() - interval '1 hour'
+`
+
+func (q *Queries) GetPendingEmailChange(ctx context.Context, kthid string) (string, error) {
+	row := q.db.QueryRow(ctx, getPendingEmailChange, kthid)
+	var new_email string
+	err := row.Scan(&new_email)
+	return new_email, err
 }
 
 const getSession = `-- name: GetSession :one
@@ -601,6 +710,36 @@ where id = $1
 func (q *Queries) RemoveSession(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, removeSession, id)
 	return err
+}
+
+const userSetEmail = `-- name: UserSetEmail :one
+update users
+set email = $2
+where kthid = $1
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+`
+
+type UserSetEmailParams struct {
+	Kthid string
+	Email string
+}
+
+func (q *Queries) UserSetEmail(ctx context.Context, arg UserSetEmailParams) (User, error) {
+	row := q.db.QueryRow(ctx, userSetEmail, arg.Kthid, arg.Email)
+	var i User
+	err := row.Scan(
+		&i.Kthid,
+		&i.UgKthid,
+		&i.Email,
+		&i.FirstName,
+		&i.FamilyName,
+		&i.YearTag,
+		&i.MemberTo,
+		&i.WebauthnID,
+		&i.FirstNameChangeRequest,
+		&i.FamilyNameChangeRequest,
+	)
+	return i, err
 }
 
 const userSetMemberTo = `-- name: UserSetMemberTo :exec

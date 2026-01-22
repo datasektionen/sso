@@ -23,6 +23,14 @@ type AccountRequest struct {
 	Email      string
 }
 
+type EmailChangeRequest struct {
+	Kthid     string
+	NewEmail  string
+	Code      string
+	CreatedAt pgtype.Timestamp
+	Attempts  int32
+}
+
 type EmailLogin struct {
 	Kthid     string
 	Code      string

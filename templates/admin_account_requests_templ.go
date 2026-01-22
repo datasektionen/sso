@@ -265,14 +265,14 @@ func AccountRequests(requests []database.AccountRequest) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</p><p class=\"whitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-pre-line\"><span class=\"text-white/50\">Reason:</span> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</p><p tabindex=\"0\" class=\"\n\t\t\t\t\t\t\twhitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-pre-line focus:whitespace-pre-line\n\t\t\t\t\t\t\"><span class=\"text-white/50\">Reason:</span> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var19 string
 				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(request.Reason)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin_account_requests.templ`, Line: 57, Col: 152}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin_account_requests.templ`, Line: 59, Col: 67}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 				if templ_7745c5c3_Err != nil {

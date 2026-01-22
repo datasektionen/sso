@@ -54,7 +54,9 @@ templ AccountRequests(requests []database.AccountRequest) {
 						<p><span class="text-white/50">Reference:</span> { request.Reference }</p>
 						<p><span class="text-white/50">Requested at:</span> { request.CreatedAt.Time.Format(time.DateOnly) }</p>
 						<p><span class="text-white/50">Year:</span> { request.YearTag }</p>
-						<p class="whitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-pre-line"><span class="text-white/50">Reason:</span> { request.Reason }</p>
+						<p tabindex="0" class="
+							whitespace-nowrap text-ellipsis overflow-x-hidden hover:whitespace-pre-line focus:whitespace-pre-line
+						"><span class="text-white/50">Reason:</span> { request.Reason }</p>
 					</div>
 				</li>
 			}

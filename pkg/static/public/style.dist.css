@@ -214,11 +214,17 @@
   .static {
     position: static;
   }
+  .inset-0 {
+    inset: calc(var(--spacing) * 0);
+  }
   .inset-0\.5 {
     inset: calc(var(--spacing) * 0.5);
   }
   .bottom-3 {
     bottom: calc(var(--spacing) * 3);
+  }
+  .left-1 {
+    left: calc(var(--spacing) * 1);
   }
   .left-1\/2 {
     left: calc(1/2 * 100%);
@@ -328,14 +334,27 @@
   .max-w-lg {
     max-width: var(--container-lg);
   }
+  .flex-shrink {
+    flex-shrink: 1;
+  }
   .shrink-0 {
     flex-shrink: 0;
+  }
+  .flex-grow {
+    flex-grow: 1;
   }
   .grow {
     flex-grow: 1;
   }
   .grow-0 {
     flex-grow: 0;
+  }
+  .border-collapse {
+    border-collapse: collapse;
+  }
+  .-translate-x-1 {
+    --tw-translate-x: calc(var(--spacing) * -1);
+    translate: var(--tw-translate-x) var(--tw-translate-y);
   }
   .-translate-x-1\/2 {
     --tw-translate-x: calc(calc(1/2 * 100%) * -1);
@@ -354,6 +373,9 @@
   }
   .cursor-pointer {
     cursor: pointer;
+  }
+  .resize {
+    resize: both;
   }
   .appearance-none {
     appearance: none;
@@ -448,6 +470,9 @@
   .border-transparent {
     border-color: transparent;
   }
+  .border-white {
+    border-color: var(--color-white);
+  }
   .border-white\/10 {
     border-color: color-mix(in srgb, #fff 10%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -478,11 +503,17 @@
   .bg-gray-900 {
     background-color: var(--color-gray-900);
   }
+  .bg-green-600 {
+    background-color: var(--color-green-600);
+  }
   .bg-green-600\/50 {
     background-color: color-mix(in srgb, oklch(62.7% 0.194 149.214) 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-green-600) 50%, transparent);
     }
+  }
+  .bg-red-600 {
+    background-color: var(--color-red-600);
   }
   .bg-red-600\/50 {
     background-color: color-mix(in srgb, oklch(57.7% 0.245 27.325) 50%, transparent);
@@ -528,6 +559,9 @@
   }
   .p-12 {
     padding: calc(var(--spacing) * 12);
+  }
+  .px-1 {
+    padding-inline: calc(var(--spacing) * 1);
   }
   .px-1\.5 {
     padding-inline: calc(var(--spacing) * 1.5);
@@ -599,6 +633,9 @@
   .text-red-500 {
     color: var(--color-red-500);
   }
+  .text-white {
+    color: var(--color-white);
+  }
   .text-white\/50 {
     color: color-mix(in srgb, #fff 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -633,6 +670,10 @@
   .ring {
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .outline {
+    outline-style: var(--tw-outline-style);
+    outline-width: 1px;
   }
   .blur {
     --tw-blur: blur(8px);
@@ -734,6 +775,16 @@
   .focus\:border-cerisestrong {
     &:focus {
       border-color: var(--color-cerisestrong);
+    }
+  }
+  .focus\:whitespace-pre-line {
+    &:focus {
+      white-space: pre-line;
+    }
+  }
+  .active\:whitespace-pre-line {
+    &:active {
+      white-space: pre-line;
     }
   }
   .enabled\:hover\:border-ceriselight {
@@ -1069,6 +1120,11 @@
   inherits: false;
   initial-value: 0 0 #0000;
 }
+@property --tw-outline-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
 @property --tw-blur {
   syntax: "*";
   inherits: false;
@@ -1162,6 +1218,7 @@
       --tw-ring-offset-width: 0px;
       --tw-ring-offset-color: #fff;
       --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-outline-style: solid;
       --tw-blur: initial;
       --tw-brightness: initial;
       --tw-contrast: initial;

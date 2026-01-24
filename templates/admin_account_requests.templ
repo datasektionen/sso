@@ -41,7 +41,7 @@ templ AccountRequests(requests []database.AccountRequest) {
 								</button>
 								<button
 									class={ button }
-									hx-delete={ "/admin/account-requests/" + request.ID.String() + "?email" }
+									hx-delete={ "/admin/account-requests/" + request.ID.String() + "?send-email" }
 									hx-target="closest li"
 									hx-swap="outerHTML"
 								>

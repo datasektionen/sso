@@ -89,7 +89,11 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	if err != nil {
 		return err
 	}
-	return templates.Account(*user, passkeys)
+	pendingEmail, err := s.DB.GetPendingEmailChange(r.Context(), user.KTHID)
+	if err != nil && err != pgx.ErrNoRows {
+		return nil
+	}
+	return templates.Account(*user, passkeys, pendingEmail)
 }
 
 var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z][A-Za-z]{0,3}-\d{2}$`)
@@ -102,11 +106,15 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 	if err := r.ParseForm(); err != nil {
 		return httputil.BadRequest("Invalid form body")
 	}
+	pendingEmail, err := s.DB.GetPendingEmailChange(r.Context(), user.KTHID)
+	if err != nil && err != pgx.ErrNoRows {
+		return nil
+	}
 	yearTagList := r.Form["year-tag"]
 	if len(yearTagList) > 0 {
 		yearTag := yearTagList[0]
 		if !yearTagRegex.Match([]byte(yearTag)) {
-			return templates.AccountSettingsForm(*user, map[string]string{"year-tag": `Invalid format. Must match ` + yearTagRegex.String()})
+			return templates.AccountSettingsForm(*user, pendingEmail, map[string]string{"year-tag": `Invalid format. Must match ` + yearTagRegex.String()})
 		}
 		var err error
 		*user, err = s.UserSetYear(r.Context(), user.KTHID, yearTag)
@@ -131,7 +139,106 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 			return err
 		}
 	}
-	return templates.AccountSettingsForm(*user, nil)
+	return templates.AccountSettingsForm(*user, pendingEmail, nil)
+}
+
+var emailRegex = regexp.MustCompile(`.+@.+\..+`)
+
+func beginEmailChange(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user := s.GetLoggedInUser(r)
+	if user == nil {
+		return httputil.Unauthorized()
+	}
+
+	newEmail := strings.TrimSpace(r.FormValue("new-email"))
+	if !emailRegex.MatchString(newEmail) {
+		return templates.AccountSettingsForm(*user, "", map[string]string{"email": "Invalid email format"})
+	}
+
+	code := randomCode()
+
+	if err := s.DB.BeginEmailChange(r.Context(), database.BeginEmailChangeParams{
+		Kthid:    user.KTHID,
+		NewEmail: newEmail,
+		Code:     code,
+	}); err != nil {
+		return err
+	}
+
+	if err := email.Send(
+		r.Context(),
+		newEmail,
+		"SSO - Email Change Verification",
+		fmt.Sprintf("Your verification code to change your email address on [Datasektionen SSO](%s) is `%s`", config.Config.Origin, code),
+	); err != nil {
+		return err
+	}
+
+	return templates.AccountSettingsForm(*user, newEmail, nil)
+}
+
+func finishEmailChange(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user := s.GetLoggedInUser(r)
+	if user == nil {
+		return httputil.Unauthorized()
+	}
+
+	code := r.FormValue("code")
+	code, err := parseCode(code)
+	if err != nil {
+		return err
+	}
+
+	res, err := s.DB.FinishEmailChange(r.Context(), database.FinishEmailChangeParams{
+		Kthid: user.KTHID,
+		Code:  code,
+	})
+	if err != nil {
+		return err
+	}
+
+	if res.Ok {
+		newUser, err := s.DB.UserSetEmail(r.Context(), database.UserSetEmailParams{
+			Kthid: user.KTHID,
+			Email: res.NewEmail,
+		})
+		if err != nil {
+			return err
+		}
+		updatedUser := service.DBUserToModel(newUser)
+		return templates.AccountSettingsForm(updatedUser, "", nil)
+	}
+
+	pendingEmail, err := s.DB.GetPendingEmailChange(r.Context(), user.KTHID)
+	if err != nil && err != pgx.ErrNoRows {
+		return nil
+	}
+
+	msg := "Code is invalid for an unknown reason. (please tell d-sys)"
+	switch res.Reason {
+	case "expired":
+		msg = "Verification code has expired. Please request a new one."
+	case "exhausted":
+		msg = "Too many invalid attempts. Please request a new code."
+	case "wrong":
+		msg = "Invalid code. Please copy-paste or spell better."
+	case "no code":
+		msg = "No pending email change. Please request one first."
+	}
+	return templates.AccountSettingsForm(*user, pendingEmail, map[string]string{"email": msg})
+}
+
+func cancelEmailChange(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user := s.GetLoggedInUser(r)
+	if user == nil {
+		return httputil.Unauthorized()
+	}
+
+	if err := s.DB.CancelEmailChange(r.Context(), user.KTHID); err != nil {
+		return err
+	}
+
+	return templates.AccountSettingsForm(*user, "", nil)
 }
 
 func requestAccountPage(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

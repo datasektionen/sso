@@ -23,7 +23,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func dbUserToModel(user database.User) models.User {
+func DBUserToModel(user database.User) models.User {
 	var memberTo time.Time
 	if user.MemberTo.Valid {
 		memberTo = user.MemberTo.Time
@@ -45,7 +45,7 @@ func dbUserToModel(user database.User) models.User {
 func DBUsersToModel(users []database.User) []models.User {
 	us := make([]models.User, len(users))
 	for i, u := range users {
-		us[i] = dbUserToModel(u)
+		us[i] = DBUserToModel(u)
 	}
 	return us
 }
@@ -58,7 +58,7 @@ func (s *Service) GetUser(ctx context.Context, kthid string) (*models.User, erro
 	if err != nil {
 		return nil, err
 	}
-	u := dbUserToModel(user)
+	u := DBUserToModel(user)
 	return &u, nil
 }
 
@@ -70,7 +70,7 @@ func (s *Service) UserSetYear(ctx context.Context, kthid string, yearTag string)
 	if err != nil {
 		return models.User{}, err
 	}
-	return dbUserToModel(user), nil
+	return DBUserToModel(user), nil
 }
 
 func (s *Service) UserSetNameChangeRequest(ctx context.Context, user models.User, firstName string, familyName string) (models.User, error) {
@@ -87,7 +87,7 @@ The user `+user.FirstName+` `+user.FamilyName+` (`+user.KTHID+`) has requested t
 	`)); err != nil {
 		return models.User{}, err
 	}
-	return dbUserToModel(newUser), nil
+	return DBUserToModel(newUser), nil
 }
 
 func (s *Service) LoginUser(ctx context.Context, kthid string, redirect bool) httputil.ToResponse {

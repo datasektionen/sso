@@ -95,16 +95,16 @@ templ CodeForm(kthid string) {
 	</form>
 }
 
-templ Account(user models.User, passkeys []models.Passkey) {
+templ Account(user models.User, passkeys []models.Passkey, pendingEmail string) {
 	@page(nav()) {
 		<div class="p-8 flex flex-col gap-8">
-			@AccountSettingsForm(user, nil)
+			@AccountSettingsForm(user, pendingEmail, nil)
 			@PasskeySettings(passkeys)
 		</div>
 	}
 }
 
-templ AccountSettingsForm(user models.User, errors map[string]string) {
+templ AccountSettingsForm(user models.User, pendingEmail string, errors map[string]string) {
 	<section class="grid gap-4 text-lg">
 		<div>
 			<p class="text-xl text-ceriselight">Name</p>
@@ -175,7 +175,77 @@ templ AccountSettingsForm(user models.User, errors map[string]string) {
 		</div>
 		<div>
 			<p class="text-xl text-ceriselight">Email address</p>
-			<p>{ user.Email }</p>
+			<div class="flex gap-2 items-center">
+				<p>{ user.Email }</p>
+				<button
+					class={ roundButton }
+					title="Change email address"
+					_="on click show next <form/>"
+				><i class="text-sm nf nf-fa-edit"></i></button>
+			</div>
+			if pendingEmail != "" {
+				<div class="flex flex-col gap-2">
+					<p>Pending email change to: { pendingEmail }</p>
+					<form
+						class="flex gap-2 items-center"
+						hx-post="/account/email/verify"
+						hx-swap="outerHTML"
+						hx-target="closest section"
+					>
+						<input
+							class={ input }
+							type="text"
+							name="code"
+							placeholder="Verification code"
+							autocomplete="off"
+						/>
+						<button class={ button }>Verify</button>
+					</form>
+					if e, ok := errors["email"]; ok {
+						<p class="text-red-500">{ e }</p>
+					}
+					<form hx-post="/account/email/cancel" hx-swap="outerHTML" hx-target="closest section">
+						<button
+							class="
+								bg-[#3f4c66] px-1.5 block rounded border text-center
+								select-none border-transparent outline-none
+								focus:border-cerisestrong hover:border-ceriselight
+							"
+						>Cancel</button>
+					</form>
+				</div>
+			}
+			<form
+				style="display: none"
+				class="flex flex-col gap-2 p-2 items-start"
+				hx-post="/account/email/change"
+				hx-swap="outerHTML"
+				hx-target="closest section"
+			>
+				<p>A verification code will be sent to the new email address.</p>
+				<div>
+					<label for="new-email">New email address:</label>
+					<input class={ input } type="email" id="new-email" name="new-email" autocomplete="off"/>
+				</div>
+				if e, ok := errors["email"]; ok {
+					<p class="text-red-500">{ e }</p>
+				}
+				<button
+					class="
+						bg-[#3f4c66] px-1.5 block rounded border text-center
+						select-none border-transparent outline-none
+						focus:border-cerisestrong hover:border-ceriselight
+					"
+				>Request change</button>
+				<button
+					class="
+						bg-[#3f4c66] px-1.5 block rounded border text-center
+						select-none border-transparent outline-none
+						focus:border-cerisestrong hover:border-ceriselight
+					"
+					_="on click hide closest <form/> then halt"
+				>Cancel</button>
+			</form>
 		</div>
 		<form hx-patch="/account" hx-swap="outerHTML" hx-target="closest section" class="flex flex-col items-start">
 			<label for="year-tag" class="text-xl text-ceriselight">Year</label>

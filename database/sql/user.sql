@@ -203,3 +203,73 @@ union
 select ok, 'correct' from deleted_correct
 union
 select ok, 'no code' from not_existing;
+
+-- name: BeginEmailChange :exec
+insert into email_change_requests (kthid, new_email, code)
+values ($1, $2, $3)
+on conflict (kthid)
+do update
+set new_email = $2, code = $3, created_at = now(), attempts = 0;
+
+-- name: GetPendingEmailChange :one
+select new_email
+from email_change_requests
+where kthid = $1
+and created_at >= now() - interval '1 hour';
+
+-- name: CancelEmailChange :exec
+delete from email_change_requests
+where kthid = $1;
+
+-- name: FinishEmailChange :one
+with deleted_expired as (
+    delete from email_change_requests
+    where email_change_requests.kthid = $1
+    and created_at < now() - interval '1 hour'
+    returning false as ok, '' as new_email
+),
+deleted_exhausted as (
+    delete from email_change_requests
+    where kthid = $1
+    and attempts >= 3
+    and not exists (select 1 from deleted_expired)
+    returning false as ok, '' as new_email
+),
+deleted_correct as (
+    delete from email_change_requests
+    where kthid = $1
+    and email_change_requests.code = $2
+    and not exists (select 1 from deleted_expired)
+    and not exists (select 1 from deleted_exhausted)
+    returning true as ok, email_change_requests.new_email
+),
+updated_attempts as (
+    update email_change_requests
+    set attempts = attempts + 1
+    where kthid = $1
+    and code != $2
+    and attempts < 3
+    and not exists (select 1 from deleted_expired)
+    and not exists (select 1 from deleted_exhausted)
+    returning false as ok, '' as new_email
+),
+not_existing as (
+    select false as ok, '' as new_email
+    from (select 1) temp
+    where not exists (select 1 from email_change_requests where kthid = $1)
+)
+select ok, 'expired' as reason, new_email from deleted_expired
+union
+select ok, 'exhausted', new_email from deleted_exhausted
+union
+select ok, 'wrong', new_email from updated_attempts
+union
+select ok, 'correct', new_email from deleted_correct
+union
+select ok, 'no code', new_email from not_existing;
+
+-- name: UserSetEmail :one
+update users
+set email = $2
+where kthid = $1
+returning *;

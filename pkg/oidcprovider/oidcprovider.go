@@ -452,6 +452,7 @@ func setUserinfo(ctx context.Context, userinfo *oidc.UserInfo, user *models.User
 			userinfo.Name = user.FirstName + " " + user.FamilyName
 			userinfo.GivenName = user.FirstName
 			userinfo.FamilyName = user.FamilyName
+			userinfo.PreferredUsername = userinfo.Name
 
 		case oidc.ScopeEmail:
 			userinfo.Email = user.Email

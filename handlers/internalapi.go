@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/pkg/config"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/rfinger"
 	"github.com/datasektionen/sso/service"
@@ -84,6 +86,39 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 	}
 }
 
+type userSearchResult struct {
+	Users    []database.User
+	Pictures map[string]string
+}
+
+func searchUsers(s *service.Service, r *http.Request, searchParam string, limit int32, offset int32, membersOnly bool, includePictures bool, fullQualityPictures bool) (userSearchResult, error) {
+	dbUsers, err := s.DB.ListUsers(r.Context(), database.ListUsersParams{
+		Limit:       limit,
+		Offset:      offset,
+		Search:      r.FormValue(searchParam),
+		Year:        r.FormValue("year"),
+		MembersOnly: membersOnly,
+	})
+	if err != nil {
+		return userSearchResult{}, err
+	}
+
+	pictures := make(map[string]string, len(dbUsers))
+	if includePictures && len(dbUsers) > 0 && config.Config.RfingerURL != nil {
+		pictureUsers := make([]string, len(dbUsers))
+		for i, user := range dbUsers {
+			pictureUsers[i] = user.Kthid
+		}
+		pictures, err = rfinger.GetPictures(r.Context(), pictureUsers, fullQualityPictures)
+		if err != nil {
+			slog.WarnContext(r.Context(), "Could not fetch member pictures from rfinger", "error", err)
+			pictures = map[string]string{}
+		}
+	}
+
+	return userSearchResult{Users: dbUsers, Pictures: pictures}, nil
+}
+
 func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	limitStr := r.FormValue("limit")
 	if limitStr == "" {
@@ -105,33 +140,9 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 	}
 	offset := int32(i)
 
-	search := r.FormValue("query")
-	year := r.FormValue("year")
-
-	dbUsers, err := s.DB.ListUsers(r.Context(), database.ListUsersParams{
-		Limit:  limit,
-		Offset: offset,
-		Search: search,
-		Year:   year,
-	})
-
+	res, err := searchUsers(s, r, "query", limit, offset, r.FormValue("membersOnly") == "true", r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail", r.FormValue("picture") == "full")
 	if err != nil {
 		return err
-	}
-
-	pictureUsers := make([]string, len(dbUsers))
-	pictures := make(map[string]string, len(dbUsers))
-
-	if r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail" {
-		for i, users := range dbUsers {
-			pictureUsers[i] = users.Kthid
-		}
-
-		pictures, err = rfinger.GetPictures(r.Context(), pictureUsers, r.FormValue("picture") == "full")
-
-		if err != nil {
-			return err
-		}
 	}
 
 	type User struct {
@@ -143,14 +154,14 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		YearTag    string `json:"yearTag,omitempty"`
 	}
 
-	users := make([]User, len(dbUsers))
-	for i, user := range dbUsers {
+	users := make([]User, len(res.Users))
+	for i, user := range res.Users {
 		users[i] = User{
 			KTHID:      user.Kthid,
 			Email:      user.Email,
 			FirstName:  user.FirstName,
 			FamilyName: user.FamilyName,
-			Picture:    pictures[user.Kthid],
+			Picture:    res.Pictures[user.Kthid],
 			YearTag:    user.YearTag,
 		}
 	}

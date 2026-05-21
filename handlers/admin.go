@@ -19,6 +19,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/email"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/kthldap"
@@ -67,6 +68,91 @@ func adminUsersForm(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		return err
 	}
 	return templates.MemberList(users, search, int(offset), more, years, year)
+}
+
+func adminUser(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user, err := s.GetUser(r.Context(), r.PathValue("kthid"))
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return httputil.BadRequest("No such user")
+	}
+	return templates.Member(*user)
+}
+
+func editAdminUserForm(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	user, err := s.GetUser(r.Context(), r.PathValue("kthid"))
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return httputil.BadRequest("No such user")
+	}
+	return templates.EditMember(*user, nil)
+}
+
+func updateAdminUser(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	kthid := r.PathValue("kthid")
+	firstName := strings.TrimSpace(r.FormValue("first-name"))
+	familyName := strings.TrimSpace(r.FormValue("family-name"))
+	email := strings.TrimSpace(r.FormValue("email"))
+	yearTag := strings.TrimSpace(r.FormValue("year-tag"))
+	memberToStr := r.FormValue("member-to")
+
+	user := models.User{
+		KTHID:      kthid,
+		Email:      email,
+		FirstName:  firstName,
+		FamilyName: familyName,
+		YearTag:    yearTag,
+	}
+
+	errors := make(map[string]string)
+	if firstName == "" {
+		errors["first-name"] = "First name is required"
+	}
+	if familyName == "" {
+		errors["family-name"] = "Family name is required"
+	}
+	if !emailRegex.MatchString(email) {
+		errors["email"] = "Invalid email format"
+	}
+	if yearTag != "" && !yearTagRegex.MatchString(yearTag) {
+		errors["year-tag"] = `Invalid format. Must match ` + yearTagRegex.String()
+	}
+
+	memberTo := pgtype.Date{}
+	if memberToStr != "" {
+		parsedMemberTo, err := time.Parse(time.DateOnly, memberToStr)
+		if err != nil {
+			errors["member-to"] = "Invalid date"
+		} else {
+			memberTo = pgtype.Date{Time: parsedMemberTo, Valid: true}
+			user.MemberTo = parsedMemberTo
+		}
+	}
+
+	if len(errors) > 0 {
+		return templates.EditMember(user, errors)
+	}
+
+	updatedUser, err := s.DB.AdminUpdateUser(r.Context(), database.AdminUpdateUserParams{
+		Kthid:      kthid,
+		Email:      email,
+		FirstName:  firstName,
+		FamilyName: familyName,
+		YearTag:    yearTag,
+		MemberTo:   memberTo,
+	})
+	if err == pgx.ErrNoRows {
+		return httputil.BadRequest("No such user")
+	}
+	if err != nil {
+		return err
+	}
+
+	return templates.Member(service.DBUserToModel(updatedUser))
 }
 
 func invites(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

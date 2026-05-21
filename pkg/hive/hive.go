@@ -38,6 +38,7 @@ func (sp PermissionScopes) Exists() bool {
 type Permissions struct {
 	ReadMembers              bool             `hive:"read-members"`
 	WriteMembers             bool             `hive:"write-members"`
+	ManageMembers            bool             `hive:"manage-members"`
 	ReadOIDCClients          bool             `hive:"read-oidc-clients"`
 	WriteOIDCClients         PermissionScopes `hive:"write-oidc-clients"`
 	ReadInvites              bool             `hive:"read-invites"`
@@ -52,7 +53,7 @@ type PermissionsCtxKey struct{}
 
 func GetSSOPermissions(ctx context.Context, kthid string) (Permissions, error) {
 	if config.Config.Dev && config.Config.HiveURL == nil {
-		return Permissions{true, true, true, PermissionScopes{[]string{"*"}}, true, true, true, true, true, true}, nil
+		return Permissions{true, true, true, true, PermissionScopes{Scopes: []string{"*"}}, true, true, true, true, true, true}, nil
 	}
 
 	rawPerms, err := GetRawPermissionsInSystemForUser(ctx, kthid, "sso")

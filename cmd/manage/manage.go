@@ -43,7 +43,7 @@ func main() {
 			Email:      p.KTHID + "@kth.se",
 			FirstName:  p.FirstName,
 			FamilyName: p.FamilyName,
-			YearTag:    "D" + time.Now().Format("06"),
+			YearTag:    "D-" + time.Now().Format("06"),
 			MemberTo:   pgtype.Date{Time: time.Now().AddDate(1, 0, 0), Valid: true},
 		}))
 	case "goose":

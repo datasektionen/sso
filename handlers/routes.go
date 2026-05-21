@@ -29,6 +29,9 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 	// admin.go
 	mux.Handle("GET /admin/members", authorize(s, httputil.Route(s, membersPage), "read-members", nil))
 	mux.Handle("GET /admin/users", authorize(s, httputil.Route(s, adminUsersForm), "read-members", nil))
+	mux.Handle("GET /admin/users/{kthid}", authorize(s, httputil.Route(s, adminUser), "read-members", nil))
+	mux.Handle("GET /admin/users/{kthid}/edit", authorize(s, httputil.Route(s, editAdminUserForm), "manage-members", nil))
+	mux.Handle("PUT /admin/users/{kthid}", authorize(s, httputil.Route(s, updateAdminUser), "manage-members", nil))
 	mux.Handle("POST /admin/members/upload-sheet", authorize(s, httputil.Route(s, uploadSheet), "write-members", nil))
 	mux.Handle("GET /admin/members/upload-sheet", authorize(s, httputil.Route(s, processSheet), "write-members", nil))
 

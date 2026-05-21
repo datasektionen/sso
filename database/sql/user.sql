@@ -75,6 +75,16 @@ update users
 set member_to = $2
 where kthid = $1;
 
+-- name: AdminUpdateUser :one
+update users
+set email = $2,
+    first_name = $3,
+    family_name = $4,
+    year_tag = $5,
+    member_to = $6
+where kthid = $1
+returning *;
+
 -- name: UserSetYear :one
 update users
 set year_tag = coalesce($2, year_tag)

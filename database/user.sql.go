@@ -12,6 +12,51 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const adminUpdateUser = `-- name: AdminUpdateUser :one
+update users
+set email = $2,
+    first_name = $3,
+    family_name = $4,
+    year_tag = $5,
+    member_to = $6
+where kthid = $1
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+`
+
+type AdminUpdateUserParams struct {
+	Kthid      string
+	Email      string
+	FirstName  string
+	FamilyName string
+	YearTag    string
+	MemberTo   pgtype.Date
+}
+
+func (q *Queries) AdminUpdateUser(ctx context.Context, arg AdminUpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, adminUpdateUser,
+		arg.Kthid,
+		arg.Email,
+		arg.FirstName,
+		arg.FamilyName,
+		arg.YearTag,
+		arg.MemberTo,
+	)
+	var i User
+	err := row.Scan(
+		&i.Kthid,
+		&i.UgKthid,
+		&i.Email,
+		&i.FirstName,
+		&i.FamilyName,
+		&i.YearTag,
+		&i.MemberTo,
+		&i.WebauthnID,
+		&i.FirstNameChangeRequest,
+		&i.FamilyNameChangeRequest,
+	)
+	return i, err
+}
+
 const approveNameChangeRequest = `-- name: ApproveNameChangeRequest :exec
 update users
 set first_name = case when first_name_change_request != '' then first_name_change_request else first_name end,

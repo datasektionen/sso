@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+func memberRowID(kthid string) string {
+	return "member-" + kthid
+}
+
 templ adminNav() {
 	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	if perms.ReadMembers {
@@ -36,7 +40,7 @@ templ Members(lastUploadedAt time.Time, lastUploadedBy string) {
 	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	@AdminPage() {
 		<div class="p-8">
-			<section hx-get="/admin/users" hx-trigger="load" hx-swap="morph:innerHTML">
+			<section hx-get="/admin/users" hx-trigger="load" hx-swap="innerHTML">
 				@MemberList([]models.User{}, "", 0, false, []string{}, "")
 			</section>
 			if perms.WriteMembers {
@@ -48,7 +52,7 @@ templ Members(lastUploadedAt time.Time, lastUploadedBy string) {
 }
 
 templ MemberList(users []models.User, search string, offset int, more bool, years []string, selectedYear string) {
-	<div class="grid grid-cols-[repeat(4,auto)] gap-x-2 *:h-7">
+	<div class="grid grid-cols-[repeat(4,auto)] gap-x-2 gap-y-1 *:min-h-7">
 		<div class="grid grid-cols-subgrid col-span-full">
 			<span>Username</span>
 			<span>Name</span>
@@ -56,16 +60,7 @@ templ MemberList(users []models.User, search string, offset int, more bool, year
 			<span>Member until</span>
 		</div>
 		for _, user := range users {
-			<div class="grid grid-cols-subgrid col-span-full">
-				<span>{ user.KTHID }</span>
-				<span>{ user.FirstName } { user.FamilyName }</span>
-				<span>{ user.YearTag }</span>
-				<span>
-					if user.MemberTo != (time.Time{}) {
-						{ user.MemberTo.Format(time.DateOnly) }
-					}
-				</span>
-			</div>
+			@Member(user)
 		}
 		for i := len(users); i < 20; i++ {
 			<div class="grid grid-cols-subgrid col-span-full"></div>
@@ -116,6 +111,121 @@ templ MemberList(users []models.User, search string, offset int, more bool, year
 				disabled
 			}
 		>next</button>
+	</div>
+}
+
+templ Member(user models.User) {
+	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
+	<div id={ memberRowID(user.KTHID) } class="grid grid-cols-subgrid col-span-full odd:bg-white/5 p-1 member-row">
+		<span>{ user.KTHID }</span>
+		<span class="flex items-center gap-2">
+			<span>{ user.FirstName } { user.FamilyName }</span>
+			if perms.ManageMembers {
+				<button
+					class={ roundButton + " nf nf-fa-edit text-sm" }
+					hx-get={ "/admin/users/" + user.KTHID + "/edit" }
+					hx-target="closest .member-row"
+					hx-swap="outerHTML"
+				><p></p></button>
+			}
+		</span>
+		<span>{ user.YearTag }</span>
+		<span>
+			if user.MemberTo != (time.Time{}) {
+				{ user.MemberTo.Format(time.DateOnly) }
+			}
+		</span>
+	</div>
+}
+
+templ EditMember(user models.User, errors map[string]string) {
+	<div id={ memberRowID(user.KTHID) } class="col-span-full bg-white/10 p-2 member-row rounded">
+		<form
+			class="flex flex-wrap items-start gap-3"
+			hx-put={ "/admin/users/" + user.KTHID }
+			hx-target="closest .member-row"
+			hx-swap="outerHTML"
+		>
+			<div class="flex flex-col gap-1">
+				<label for={ "member-first-name-" + user.KTHID }>First name</label>
+				<input
+					id={ "member-first-name-" + user.KTHID }
+					class={ input }
+					type="text"
+					name="first-name"
+					value={ user.FirstName }
+					required
+				/>
+				if e, ok := errors["first-name"]; ok {
+					<p class="text-red-500 text-sm">{ e }</p>
+				}
+			</div>
+			<div class="flex flex-col gap-1">
+				<label for={ "member-family-name-" + user.KTHID }>Family name</label>
+				<input
+					id={ "member-family-name-" + user.KTHID }
+					class={ input }
+					type="text"
+					name="family-name"
+					value={ user.FamilyName }
+					required
+				/>
+				if e, ok := errors["family-name"]; ok {
+					<p class="text-red-500 text-sm">{ e }</p>
+				}
+			</div>
+			<div class="flex flex-col gap-1">
+				<label for={ "member-email-" + user.KTHID }>Email</label>
+				<input
+					id={ "member-email-" + user.KTHID }
+					class={ input }
+					type="email"
+					name="email"
+					value={ user.Email }
+					required
+				/>
+				if e, ok := errors["email"]; ok {
+					<p class="text-red-500 text-sm">{ e }</p>
+				}
+			</div>
+			<div class="flex flex-col gap-1">
+				<label for={ "member-year-tag-" + user.KTHID }>Year</label>
+				<input
+					id={ "member-year-tag-" + user.KTHID }
+					class={ input + " w-24" }
+					type="text"
+					name="year-tag"
+					value={ user.YearTag }
+					autocomplete="off"
+				/>
+				if e, ok := errors["year-tag"]; ok {
+					<p class="text-red-500 text-sm">{ e }</p>
+				}
+			</div>
+			<div class="flex flex-col gap-1">
+				<label for={ "member-member-to-" + user.KTHID }>Member until</label>
+				<input
+					id={ "member-member-to-" + user.KTHID }
+					class={ input }
+					type="date"
+					name="member-to"
+					if user.MemberTo != (time.Time{}) {
+						value={ user.MemberTo.Format(time.DateOnly) }
+					}
+				/>
+				if e, ok := errors["member-to"]; ok {
+					<p class="text-red-500 text-sm">{ e }</p>
+				}
+			</div>
+			<div class="flex items-end gap-2 self-stretch">
+				<button class={ button }>Save</button>
+				<button
+					class={ button }
+					hx-get={ "/admin/users/" + user.KTHID }
+					type="button"
+				>Cancel</button>
+			</div>
+		</form>
 	</div>
 }
 

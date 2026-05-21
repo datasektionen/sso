@@ -51,14 +51,18 @@ select *
 from users
 where case
     when @search::text = '' then true
-    else kthid = @search
-      or first_name ~* @search
-      or family_name ~* @search
-      or first_name || ' ' || family_name ~* @search
+    else kthid = lower(@search)
+      or first_name ilike '%' || replace(replace(replace(@search, '/', '//'), '%', '/%'), '_', '/_') || '%' escape '/'
+      or family_name ilike '%' || replace(replace(replace(@search, '/', '//'), '%', '/%'), '_', '/_') || '%' escape '/'
+      or first_name || ' ' || family_name ilike '%' || replace(replace(replace(@search, '/', '//'), '%', '/%'), '_', '/_') || '%' escape '/'
 end
 and case
     when @year::text = '' then true
     else @year = year_tag
+end
+and case
+    when @members_only::boolean then member_to >= current_date
+    else true
 end
 order by kthid
 limit $1
@@ -68,6 +72,13 @@ offset $2;
 select distinct year_tag
 from users
 where year_tag != ''
+order by year_tag;
+
+-- name: GetAllActiveMemberYears :many
+select distinct year_tag
+from users
+where year_tag != ''
+and member_to >= current_date
 order by year_tag;
 
 -- name: UserSetMemberTo :exec

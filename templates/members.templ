@@ -1,0 +1,101 @@
+package templates
+
+import "github.com/datasektionen/sso/database"
+
+templ MemberSearchPage(years []string) {
+	@page(nav()) {
+		<div class="p-8 flex flex-col gap-6">
+			<header>
+				<h1 class="text-2xl font-bold text-ceriselight">Members</h1>
+				<p class="text-white/70">Search active chapter members.</p>
+			</header>
+			<section>
+				<form class="flex flex-wrap gap-2 pb-4" hx-get="/members/search" hx-target="#member-search-results" hx-swap="outerHTML">
+					<input
+						type="text"
+						name="search"
+						placeholder="Search name or KTHID..."
+						class={ input }
+						hx-get="/members/search"
+						hx-trigger="keyup changed delay:300ms, search"
+						hx-target="#member-search-results"
+						hx-swap="outerHTML"
+						hx-include="closest form"
+					/>
+					<select
+						name="year"
+						class={ selectStyle }
+						hx-get="/members/search"
+						hx-trigger="change"
+						hx-target="#member-search-results"
+						hx-swap="outerHTML"
+						hx-include="closest form"
+					>
+						<option value="">Year</option>
+						for _, year := range years {
+							<option>{ year }</option>
+						}
+					</select>
+					<button class={ button }>Search</button>
+				</form>
+				@MemberSearchResults(nil, map[string]string{}, "", "", 0, false)
+			</section>
+		</div>
+	}
+}
+
+templ MemberSearchResults(users []database.User, pictures map[string]string, search string, year string, offset int, more bool) {
+	<div id="member-search-results" class="flex flex-col gap-4">
+		if len(search) < 2 && year == "" {
+			<p class="text-white/60">Type at least two characters or select a year to search.</p>
+		} else if len(users) == 0 {
+			<p class="text-white/60">No active members found.</p>
+		} else {
+			<div class="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(18rem,1fr))]">
+				for _, user := range users {
+					@MemberSearchCard(user, pictures[user.Kthid])
+				}
+			</div>
+			<div class="flex gap-2">
+				<button
+					class={ button }
+					hx-get="/members/search"
+					hx-target="#member-search-results"
+					hx-swap="outerHTML"
+					hx-vals={ templ.JSONString(map[string]any{"search": search, "year": year, "offset": max(0, offset-12)}) }
+					if offset == 0 {
+						disabled
+					}
+				>Prev</button>
+				<button
+					class={ button }
+					hx-get="/members/search"
+					hx-target="#member-search-results"
+					hx-swap="outerHTML"
+					hx-vals={ templ.JSONString(map[string]any{"search": search, "year": year, "offset": offset + 12}) }
+					if !more {
+						disabled
+					}
+				>Next</button>
+			</div>
+		}
+	</div>
+}
+
+templ MemberSearchCard(user database.User, picture string) {
+	<article class="bg-white/5 rounded p-3 flex gap-3 min-w-0">
+		if picture != "" {
+			<img class="w-16 h-16 rounded-full object-cover object-top shrink-0 bg-slate-700" src={ picture } alt=""/>
+		} else {
+			<div class="w-16 h-16 rounded-full shrink-0 bg-slate-700 grid place-items-center text-2xl text-white/50">?</div>
+		}
+		<div class="min-w-0">
+			<h2 class="font-bold truncate">{ user.FirstName } { user.FamilyName }</h2>
+			<div class="flex gap-1.5 py-0.5">
+				<span class="text-sm">{ user.Kthid }</span>
+				<span class="rounded-full bg-ceriseregular/20 px-2 py-0.5 text-xs text-ceriselight">{ bigIfTrue(user.YearTag != "", user.YearTag, "—") }</span>
+			</div>
+			<p class="text-sm truncate text-white/80">{ bigIfTrue(user.Email != "", user.Email, "—") }</p>
+		</div>
+	</article>
+}

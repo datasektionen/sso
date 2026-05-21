@@ -17,6 +17,8 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 	mux.Handle("GET /{$}", httputil.Route(s, index))
 	mux.Handle("GET /logout", httputil.Route(s, logout))
 	mux.Handle("GET /account", httputil.Route(s, account))
+	mux.Handle("GET /members", httputil.Route(s, members))
+	mux.Handle("GET /members/search", httputil.Route(s, memberSearch))
 	mux.Handle("PATCH /account", httputil.Route(s, updateAccount))
 	mux.Handle("POST /account/email/change", httputil.Route(s, beginEmailChange))
 	mux.Handle("POST /account/email/verify", httputil.Route(s, finishEmailChange))

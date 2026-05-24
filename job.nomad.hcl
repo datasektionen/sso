@@ -69,8 +69,8 @@ DEV=false
 LDAP_PROXY_URL=http://ldap-proxy.dsekt.internal:38980
 PLS_URL=https://pls.datasektionen.se
 HIVE_URL=http://hive.nomad.dsekt.internal
-SPAM_URL=https://spam.datasektionen.se
-RFINGER_URL=https://rfinger.datasektionen.se
+SPAM_URL=http://spam.nomad.dsekt.internal
+RFINGER_URL=http://rfinger.nomad.dsekt.internal
 ENV
         destination = "local/.env"
         env         = true

@@ -5,6 +5,8 @@ import (
 	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/hive"
 	"time"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func memberRowID(kthid string) string {
@@ -57,7 +59,7 @@ templ MemberList(users []models.User, search string, offset int, more bool, year
 			<span>Username</span>
 			<span>Name</span>
 			<span>Year</span>
-			<span>Member until</span>
+			<span>Membership</span>
 		</div>
 		for _, user := range users {
 			@Member(user)
@@ -130,11 +132,7 @@ templ Member(user models.User) {
 			}
 		</span>
 		<span>{ user.YearTag }</span>
-		<span>
-			if user.MemberTo != (time.Time{}) {
-				{ user.MemberTo.Format(time.DateOnly) }
-			}
-		</span>
+		<span>{ cases.Title(language.English).String(user.Membership) }</span>
 	</div>
 }
 
@@ -199,21 +197,6 @@ templ EditMember(user models.User, errors map[string]string) {
 					autocomplete="off"
 				/>
 				if e, ok := errors["year-tag"]; ok {
-					<p class="text-red-500 text-sm">{ e }</p>
-				}
-			</div>
-			<div class="flex flex-col gap-1">
-				<label for={ "member-member-to-" + user.KTHID }>Member until</label>
-				<input
-					id={ "member-member-to-" + user.KTHID }
-					class={ input }
-					type="date"
-					name="member-to"
-					if user.MemberTo != (time.Time{}) {
-						value={ user.MemberTo.Format(time.DateOnly) }
-					}
-				/>
-				if e, ok := errors["member-to"]; ok {
 					<p class="text-red-500 text-sm">{ e }</p>
 				}
 			</div>

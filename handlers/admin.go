@@ -98,7 +98,6 @@ func updateAdminUser(s *service.Service, w http.ResponseWriter, r *http.Request)
 	familyName := strings.TrimSpace(r.FormValue("family-name"))
 	email := strings.TrimSpace(r.FormValue("email"))
 	yearTag := strings.TrimSpace(r.FormValue("year-tag"))
-	memberToStr := r.FormValue("member-to")
 
 	user := models.User{
 		KTHID:      kthid,
@@ -122,17 +121,6 @@ func updateAdminUser(s *service.Service, w http.ResponseWriter, r *http.Request)
 		errors["year-tag"] = `Invalid format. Must match ` + yearTagRegex.String()
 	}
 
-	memberTo := pgtype.Date{}
-	if memberToStr != "" {
-		parsedMemberTo, err := time.Parse(time.DateOnly, memberToStr)
-		if err != nil {
-			errors["member-to"] = "Invalid date"
-		} else {
-			memberTo = pgtype.Date{Time: parsedMemberTo, Valid: true}
-			user.MemberTo = parsedMemberTo
-		}
-	}
-
 	if len(errors) > 0 {
 		return templates.EditMember(user, errors)
 	}
@@ -143,7 +131,6 @@ func updateAdminUser(s *service.Service, w http.ResponseWriter, r *http.Request)
 		FirstName:  firstName,
 		FamilyName: familyName,
 		YearTag:    yearTag,
-		MemberTo:   memberTo,
 	})
 	if err == pgx.ErrNoRows {
 		return httputil.BadRequest("No such user")
@@ -386,9 +373,10 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 			}
 
 			if !strings.Contains(chapter, "Datasektionen") {
-				if err := s.DB.UserSetMemberTo(ctx, database.UserSetMemberToParams{
-					Kthid:    kthid,
-					MemberTo: pgtype.Date{Time: time.Now(), Valid: true},
+				if err := s.DB.AddMembership(ctx, database.AddMembershipParams{
+					Kthid:   kthid,
+					Type:    "ordinary",
+					EndDate: pgtype.Date{Time: time.Now(), Valid: true},
 				}); err != nil {
 					events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
 						"Could not end membership for user '%s': %v",
@@ -429,8 +417,14 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 						Email:      email,
 						FirstName:  person.FirstName,
 						FamilyName: person.FamilyName,
-						YearTag:    "D-" + time.Now().Format("06"), // Assume all new ths members are new to kth
-						MemberTo:   pgtype.Date{Valid: true, Time: memberTo},
+						YearTag:    "D-??", // Assume all new ths members are new to kth
+					}); err != nil {
+						return err
+					}
+					if err := db.AddMembership(ctx, database.AddMembershipParams{
+						Kthid:   kthid,
+						Type:    "ordinary",
+						EndDate: pgtype.Date{Valid: true, Time: memberTo},
 					}); err != nil {
 						return err
 					}
@@ -439,9 +433,10 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 				if err != nil {
 					return err
 				}
-				return db.UserSetMemberTo(ctx, database.UserSetMemberToParams{
-					Kthid:    kthid,
-					MemberTo: pgtype.Date{Valid: true, Time: memberTo},
+				return db.AddMembership(ctx, database.AddMembershipParams{
+					Kthid:   kthid,
+					Type:    "ordinary",
+					EndDate: pgtype.Date{Valid: true, Time: memberTo},
 				})
 			}); err != nil {
 				events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(

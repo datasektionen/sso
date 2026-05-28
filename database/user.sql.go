@@ -18,9 +18,8 @@ set email = $2,
     first_name = $3,
     family_name = $4,
     year_tag = $5,
-    member_to = $6
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request
 `
 
 type AdminUpdateUserParams struct {
@@ -29,7 +28,6 @@ type AdminUpdateUserParams struct {
 	FirstName  string
 	FamilyName string
 	YearTag    string
-	MemberTo   pgtype.Date
 }
 
 func (q *Queries) AdminUpdateUser(ctx context.Context, arg AdminUpdateUserParams) (User, error) {
@@ -39,7 +37,6 @@ func (q *Queries) AdminUpdateUser(ctx context.Context, arg AdminUpdateUserParams
 		arg.FirstName,
 		arg.FamilyName,
 		arg.YearTag,
-		arg.MemberTo,
 	)
 	var i User
 	err := row.Scan(
@@ -49,7 +46,6 @@ func (q *Queries) AdminUpdateUser(ctx context.Context, arg AdminUpdateUserParams
 		&i.FirstName,
 		&i.FamilyName,
 		&i.YearTag,
-		&i.MemberTo,
 		&i.WebauthnID,
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
@@ -213,10 +209,9 @@ insert into users (
     email,
     first_name,
     family_name,
-    year_tag,
-    member_to
+    year_tag
 )
-values ($1, $2, $3, $4, $5, $6, $7)
+values ($1, $2, $3, $4, $5, $6)
 `
 
 type CreateUserParams struct {
@@ -226,7 +221,6 @@ type CreateUserParams struct {
 	FirstName  string
 	FamilyName string
 	YearTag    string
-	MemberTo   pgtype.Date
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -237,7 +231,30 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.FirstName,
 		arg.FamilyName,
 		arg.YearTag,
-		arg.MemberTo,
+	)
+	return err
+}
+
+const addMembership = `-- name: AddMembership :exec
+insert into memberships (
+	kthid,
+	type,
+	end_date
+)
+values ($1, $2, $3)
+`
+
+type AddMembershipParams struct {
+	Kthid      string
+	Type	   string
+	EndDate    pgtype.Date
+}
+
+func (q *Queries) AddMembership(ctx context.Context, arg AddMembershipParams) error {
+	_, err := q.db.Exec(ctx, addMembership,
+		arg.Kthid,
+		arg.Type,
+		arg.EndDate,
 	)
 	return err
 }
@@ -446,8 +463,9 @@ func (q *Queries) FinishEmailLogin(ctx context.Context, arg FinishEmailLoginPara
 const getAllActiveMemberYears = `-- name: GetAllActiveMemberYears :many
 select distinct year_tag
 from users
+left join membership on users.kthid = membership.kthid
 where year_tag != ''
-and member_to >= current_date
+and membership.type is not null
 order by year_tag
 `
 
@@ -564,9 +582,10 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (GetSessionRow, 
 }
 
 const getUser = `-- name: GetUser :one
-select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+select users.kthid, ug_kthid, email, first_name, family_name, year_tag, membership.type as "membership", webauthn_id, first_name_change_request, family_name_change_request
 from users
-where kthid = $1
+left join membership on users.kthid = membership.kthid
+where users.kthid = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
@@ -579,7 +598,7 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 		&i.FirstName,
 		&i.FamilyName,
 		&i.YearTag,
-		&i.MemberTo,
+		&i.Membership,
 		&i.WebauthnID,
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
@@ -588,9 +607,10 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 }
 
 const getUsersByIDs = `-- name: GetUsersByIDs :many
-select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+select users.kthid, ug_kthid, email, first_name, family_name, year_tag, membership.type as "membership", webauthn_id, first_name_change_request, family_name_change_request
 from users
-where kthid = any($1::text[])
+left join membership on users.kthid = membership.kthid
+where users.kthid = any($1::text[])
 `
 
 func (q *Queries) GetUsersByIDs(ctx context.Context, ids []string) ([]User, error) {
@@ -609,7 +629,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, ids []string) ([]User, erro
 			&i.FirstName,
 			&i.FamilyName,
 			&i.YearTag,
-			&i.MemberTo,
+			&i.Membership,
 			&i.WebauthnID,
 			&i.FirstNameChangeRequest,
 			&i.FamilyNameChangeRequest,
@@ -663,11 +683,12 @@ func (q *Queries) ListAccountRequests(ctx context.Context) ([]AccountRequest, er
 }
 
 const listUsers = `-- name: ListUsers :many
-select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+select users.kthid, ug_kthid, email, first_name, family_name, year_tag, membership.type as "membership", webauthn_id, first_name_change_request, family_name_change_request
 from users
+left join membership on users.kthid = membership.kthid
 where case
     when $3::text = '' then true
-    else kthid = lower($3)
+    else users.kthid = lower($3)
       or first_name ilike '%' || replace(replace(replace($3, '/', '//'), '%', '/%'), '_', '/_') || '%' escape '/'
       or family_name ilike '%' || replace(replace(replace($3, '/', '//'), '%', '/%'), '_', '/_') || '%' escape '/'
       or first_name || ' ' || family_name ilike '%' || replace(replace(replace($3, '/', '//'), '%', '/%'), '_', '/_') || '%' escape '/'
@@ -677,10 +698,10 @@ and case
     else $4 = year_tag
 end
 and case
-    when $5::boolean then member_to >= current_date
+    when $5::boolean then membership.type is not null
     else true
 end
-order by kthid
+order by users.kthid
 limit $1
 offset $2
 `
@@ -715,7 +736,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.FirstName,
 			&i.FamilyName,
 			&i.YearTag,
-			&i.MemberTo,
+			&i.Membership,
 			&i.WebauthnID,
 			&i.FirstNameChangeRequest,
 			&i.FamilyNameChangeRequest,
@@ -731,8 +752,9 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const listUsersWithNameChangeRequests = `-- name: ListUsersWithNameChangeRequests :many
-select kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+select users.kthid, ug_kthid, email, first_name, family_name, year_tag, membership.type as "membership", webauthn_id, first_name_change_request, family_name_change_request
 from users
+left join membership on users.kthid = membership.kthid
 where first_name_change_request != '' or family_name_change_request != ''
 `
 
@@ -752,7 +774,7 @@ func (q *Queries) ListUsersWithNameChangeRequests(ctx context.Context) ([]User, 
 			&i.FirstName,
 			&i.FamilyName,
 			&i.YearTag,
-			&i.MemberTo,
+			&i.Membership,
 			&i.WebauthnID,
 			&i.FirstNameChangeRequest,
 			&i.FamilyNameChangeRequest,
@@ -795,7 +817,7 @@ const userSetEmail = `-- name: UserSetEmail :one
 update users
 set email = $2
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request
 `
 
 type UserSetEmailParams struct {
@@ -813,7 +835,6 @@ func (q *Queries) UserSetEmail(ctx context.Context, arg UserSetEmailParams) (Use
 		&i.FirstName,
 		&i.FamilyName,
 		&i.YearTag,
-		&i.MemberTo,
 		&i.WebauthnID,
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
@@ -821,28 +842,12 @@ func (q *Queries) UserSetEmail(ctx context.Context, arg UserSetEmailParams) (Use
 	return i, err
 }
 
-const userSetMemberTo = `-- name: UserSetMemberTo :exec
-update users
-set member_to = $2
-where kthid = $1
-`
-
-type UserSetMemberToParams struct {
-	Kthid    string
-	MemberTo pgtype.Date
-}
-
-func (q *Queries) UserSetMemberTo(ctx context.Context, arg UserSetMemberToParams) error {
-	_, err := q.db.Exec(ctx, userSetMemberTo, arg.Kthid, arg.MemberTo)
-	return err
-}
-
 const userSetNameChangeRequest = `-- name: UserSetNameChangeRequest :one
 update users
 set first_name_change_request = $2,
     family_name_change_request = $3
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request
 `
 
 type UserSetNameChangeRequestParams struct {
@@ -861,7 +866,6 @@ func (q *Queries) UserSetNameChangeRequest(ctx context.Context, arg UserSetNameC
 		&i.FirstName,
 		&i.FamilyName,
 		&i.YearTag,
-		&i.MemberTo,
 		&i.WebauthnID,
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
@@ -873,7 +877,7 @@ const userSetYear = `-- name: UserSetYear :one
 update users
 set year_tag = coalesce($2, year_tag)
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, member_to, webauthn_id, first_name_change_request, family_name_change_request
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request
 `
 
 type UserSetYearParams struct {
@@ -891,7 +895,6 @@ func (q *Queries) UserSetYear(ctx context.Context, arg UserSetYearParams) (User,
 		&i.FirstName,
 		&i.FamilyName,
 		&i.YearTag,
-		&i.MemberTo,
 		&i.WebauthnID,
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,

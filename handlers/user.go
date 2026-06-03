@@ -96,7 +96,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	return templates.Account(*user, passkeys, pendingEmail)
 }
 
-var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z][A-Za-z]{0,3}-\d{2}$`)
+var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^([A-Z][A-Za-z]{0,3}-\d{2})|External|nØllan$`)
 var nfcRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z0-9]{2}(:[A-Z0-9]{2}){3}((:[A-Z0-9]{2}){3})?$`)
 
 func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -114,6 +114,10 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 	yearTagList := r.Form["year-tag"]
 	if len(yearTagList) > 0 {
 		yearTag := yearTagList[0]
+		if yearTag == "nØllan" {
+			// nØllan should not have the yearTag field so there is no error to display
+			return templates.AccountSettingsForm(*user, pendingEmail, nil)
+		}
 		if !yearTagRegex.Match([]byte(yearTag)) {
 			return templates.AccountSettingsForm(*user, pendingEmail, map[string]string{"year-tag": `Invalid format. Must match ` + yearTagRegex.String()})
 		}

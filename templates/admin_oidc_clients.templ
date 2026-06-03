@@ -58,6 +58,23 @@ templ OidcClient(client database.OidcClient, secret []byte) {
 				/>
 			</div>
 			<div class="flex gap-2 items-center">
+				<label for={ "allow-nollan-" + client.ID }>Allow nØllan:</label>
+				<input
+					type="checkbox"
+					id={ "allow-nollan-" + client.ID }
+					class={ checkboxStyle }
+					if client.AllowNollan {
+						checked
+					}
+					hx-patch={ "/admin/oidc-clients/" + client.ID }
+					hx-trigger="change"
+					hx-include="this"
+					hx-target="closest li"
+					hx-swap="outerHTML"
+					hx-vals={ `{"allow-nollan": ` + bigIfTrue(client.AllowNollan, "false", "true") + `}` }
+				/>
+			</div>
+			<div class="flex gap-2 items-center">
 				<label for={ "hive-system-id-" + client.ID }>Hive System ID:</label>
 				if client.HiveSystemID != "" {
 					<div class="flex gap-2 items-center hive-system-id">

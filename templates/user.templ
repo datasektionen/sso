@@ -252,19 +252,21 @@ templ AccountSettingsForm(user models.User, pendingEmail string, errors map[stri
 		    <p>Membership status: { cases.Title(language.English).String(user.Membership) }</p>
 		</div>
 		<form hx-patch="/account" hx-swap="outerHTML" hx-target="closest section" class="flex flex-col items-start">
-			<label for="year-tag" class="text-xl text-ceriselight">Year</label>
-			<div class="flex items-stretch gap-2">
-				<input
-					class={ input + " w-16" }
-					name="year-tag"
-					id="year-tag"
-					value={ user.YearTag }
-					required
-					autocomplete="off"
-				/>
-			</div>
-			if e, ok := errors["year-tag"]; ok {
-				<p class="text-red-500">{ e }</p>
+			if user.YearTag != "nØllan" {
+				<label for="year-tag" class="text-xl text-ceriselight">Year</label>
+				<div class="flex items-stretch gap-2">
+					<input
+						class={ input + " w-16" }
+						name="year-tag"
+						id="year-tag"
+						value={ user.YearTag }
+						required
+						autocomplete="off"
+					/>
+				</div>
+				if e, ok := errors["year-tag"]; ok {
+					<p class="text-red-500">{ e }</p>
+				}
 			}
 			<label for="nfc-id" class="text-xl text-ceriselight">NFC ID</label>
 			<script defer src="/public/nfc.js"></script>

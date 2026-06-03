@@ -671,6 +671,9 @@
   .text-ceriselight {
     color: var(--color-ceriselight);
   }
+  .text-ceriseregular {
+    color: var(--color-ceriseregular);
+  }
   .text-neutral-100 {
     color: var(--color-neutral-100);
   }

@@ -192,6 +192,15 @@ func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.R
 	} else {
 		return httputil.BadRequest("User did not seem to get logged in")
 	}
+
+	if user.YearTag == "nØllan" {
+		if client, err := p.s.DB.GetClient(r.Context(), req.GetClientID()); err != nil {
+			return err
+		} else if !client.AllowNollan {
+			return templates.NollanNotAllowed()
+		}
+	}
+
 	p.dotabase.reqByID[id] = req
 
 	return httputil.Redirect("/op" + op.AuthCallbackURL(p.provider)(r.Context(), authRequestID))

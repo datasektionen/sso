@@ -24,9 +24,9 @@ import (
 )
 
 func DBUserToModel(user database.User) models.User {
-	var memberTo time.Time
-	if user.MemberTo.Valid {
-		memberTo = user.MemberTo.Time
+	membership := "none"
+	if user.Membership.Valid == true {
+		membership = user.Membership.String
 	}
 	return models.User{
 		KTHID:                   user.Kthid,
@@ -35,7 +35,7 @@ func DBUserToModel(user database.User) models.User {
 		FirstName:               user.FirstName,
 		FamilyName:              user.FamilyName,
 		YearTag:                 user.YearTag,
-		MemberTo:                memberTo,
+		Membership:              membership,
 		WebAuthnID:              user.WebauthnID,
 		FirstNameChangeRequest:  user.FirstNameChangeRequest,
 		FamilyNameChangeRequest: user.FamilyNameChangeRequest,

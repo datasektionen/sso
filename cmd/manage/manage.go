@@ -44,7 +44,11 @@ func main() {
 			FirstName:  p.FirstName,
 			FamilyName: p.FamilyName,
 			YearTag:    "D-" + time.Now().Format("06"),
-			MemberTo:   pgtype.Date{Time: time.Now().AddDate(1, 0, 0), Valid: true},
+		}))
+		assert(db.AddMembership(ctx, database.AddMembershipParams{
+			Kthid:   p.KTHID,
+			Type:    "ordinary",
+			EndDate: pgtype.Date{Time: time.Now().AddDate(1, 0, 0), Valid: true},
 		}))
 	case "goose":
 		_, db := must2(database.Connect(ctx))

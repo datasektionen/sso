@@ -3,7 +3,8 @@ package templates
 import (
 	"github.com/datasektionen/sso/models"
 	"github.com/google/uuid"
-	"time"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 templ Index(devLogin func() templ.Component) {
@@ -266,13 +267,7 @@ templ AccountSettingsForm(user models.User, pendingEmail string, errors map[stri
 			}
 		</form>
 		<div>
-			if user.MemberTo == (time.Time{}) {
-				<p>Not a chapter member</p>
-			} else if user.MemberTo.Before(time.Now()) {
-				<p>Was a chapter member until { user.MemberTo.Format(time.DateOnly) }</p>
-			} else {
-				<p>Chapter member until { user.MemberTo.Format(time.DateOnly) }</p>
-			}
+		    <p>Membership status: { cases.Title(language.English).String(user.Membership) }</p>
 		</div>
 	</section>
 }

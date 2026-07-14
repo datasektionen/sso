@@ -5,6 +5,8 @@
 package database
 
 import (
+	"database/sql"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -91,7 +93,7 @@ type User struct {
 	FirstName               string
 	FamilyName              string
 	YearTag                 string
-	MemberTo                pgtype.Date
+	Membership              sql.NullString
 	WebauthnID              []byte
 	FirstNameChangeRequest  string
 	FamilyNameChangeRequest string

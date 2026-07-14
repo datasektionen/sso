@@ -25,14 +25,20 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		FamilyName string `json:"familyName,omitempty"`
 		Picture    string `json:"picture,omitempty"`
 		YearTag    string `json:"yearTag,omitempty"`
+		Membership string `json:"membership,omitempty"`
 	}
 	convert := func(user database.User, picture string) User {
+		membership := "none"
+		if user.Membership.Valid == true {
+			membership = user.Membership.String
+		}
 		return User{
 			Email:      user.Email,
 			FirstName:  user.FirstName,
 			FamilyName: user.FamilyName,
 			Picture:    picture,
 			YearTag:    user.YearTag,
+			Membership: membership,
 		}
 	}
 
@@ -152,10 +158,15 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		FamilyName string `json:"familyName,omitempty"`
 		Picture    string `json:"picture,omitempty"`
 		YearTag    string `json:"yearTag,omitempty"`
+		Membership string `json:"membership,omitempty"`
 	}
 
 	users := make([]User, len(res.Users))
 	for i, user := range res.Users {
+		membership := "none"
+		if user.Membership.Valid == true {
+			membership = user.Membership.String
+		}
 		users[i] = User{
 			KTHID:      user.Kthid,
 			Email:      user.Email,
@@ -163,6 +174,7 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 			FamilyName: user.FamilyName,
 			Picture:    res.Pictures[user.Kthid],
 			YearTag:    user.YearTag,
+			Membership: membership,
 		}
 	}
 	return httputil.JSON(users)

@@ -417,7 +417,7 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 						Email:      email,
 						FirstName:  person.FirstName,
 						FamilyName: person.FamilyName,
-						YearTag:    "D-??", // Assume all new ths members are new to kth
+						YearTag:    "D-??", // Default to member but unknown year
 					}); err != nil {
 						return err
 					}

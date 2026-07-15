@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -20,6 +21,7 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 	}
 
 	type User struct {
+		Kthid      string `json:"kthid,omitempty"`
 		Email      string `json:"email,omitempty"`
 		FirstName  string `json:"firstName,omitempty"`
 		FamilyName string `json:"familyName,omitempty"`
@@ -33,6 +35,7 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 			membership = user.Membership.String
 		}
 		return User{
+			Kthid:      user.Kthid,
 			Email:      user.Email,
 			FirstName:  user.FirstName,
 			FamilyName: user.FamilyName,
@@ -178,4 +181,26 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	return httputil.JSON(users)
+}
+
+type SetNFCIDParams struct {
+	Kthid string `json:"kthid"`
+	Nfcid string `json:"nfc_id"`
+}
+
+func apiSetNFCID(s *service.Service, _ http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	var params SetNFCIDParams
+	err := json.NewDecoder(r.Body).Decode(&params)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.UserSetNFCID(r.Context(), params.Kthid, params.Nfcid)
+
+	if err != nil {
+		return err
+	}
+
+	return ""
 }

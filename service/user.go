@@ -37,6 +37,7 @@ func DBUserToModel(user database.User) models.User {
 		YearTag:                 user.YearTag,
 		Membership:              membership,
 		WebAuthnID:              user.WebauthnID,
+		NFCID:                   user.NFCID,
 		FirstNameChangeRequest:  user.FirstNameChangeRequest,
 		FamilyNameChangeRequest: user.FamilyNameChangeRequest,
 	}
@@ -66,6 +67,17 @@ func (s *Service) UserSetYear(ctx context.Context, kthid string, yearTag string)
 	user, err := s.DB.UserSetYear(ctx, database.UserSetYearParams{
 		Kthid:   kthid,
 		YearTag: yearTag,
+	})
+	if err != nil {
+		return models.User{}, err
+	}
+	return DBUserToModel(user), nil
+}
+
+func (s *Service) UserSetNFCID(ctx context.Context, kthid string, nfcID string) (models.User, error) {
+	user, err := s.DB.UserSetNFCID(ctx, database.UserSetNFCIDParams{
+		Kthid: kthid,
+		NFCID: nfcID,
 	})
 	if err != nil {
 		return models.User{}, err

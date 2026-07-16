@@ -248,6 +248,9 @@ templ AccountSettingsForm(user models.User, pendingEmail string, errors map[stri
 				>Cancel</button>
 			</form>
 		</div>
+		<div>
+		    <p>Membership status: { cases.Title(language.English).String(user.Membership) }</p>
+		</div>
 		<form hx-patch="/account" hx-swap="outerHTML" hx-target="closest section" class="flex flex-col items-start">
 			<label for="year-tag" class="text-xl text-ceriselight">Year</label>
 			<div class="flex items-stretch gap-2">
@@ -256,19 +259,51 @@ templ AccountSettingsForm(user models.User, pendingEmail string, errors map[stri
 					name="year-tag"
 					id="year-tag"
 					value={ user.YearTag }
-					_="on input show next <button/>"
 					required
 					autocomplete="off"
 				/>
-				<button style="display: none" class={ button }>Save</button>
 			</div>
 			if e, ok := errors["year-tag"]; ok {
 				<p class="text-red-500">{ e }</p>
 			}
+			<label for="nfc-id" class="text-xl text-ceriselight">NFC ID</label>
+			<script defer src="/public/nfc.js"></script>
+			<div class="flex items-stretch gap-2">
+				<input
+					class={ input + " w-64" }
+					name="nfc-id"
+					id="nfc-id"
+					value={ user.NFCID }
+					autocomplete="off"
+				/>
+				<div class="relative group">
+					<button
+					id="nfc-button"
+					class="
+						bg-[#3f4c66] shrink-0 h-8 w-8 rounded-full
+						grid place-items-center pointer
+						border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight
+						nf nf-fa-wifi
+					"
+					onclick="startNFC()"
+					></button>
+					<div id="nfc-button-tooltip"
+						class="absolute bottom-full left-1/2
+							   transform -translate-x-1/2 mb-2
+							   w-max px-2 py-1 text-sm text-white
+							   bg-gray-700 rounded shadow-lg
+							   opacity-0 group-hover:opacity-100">
+						   Scan NFC card
+					</div>
+				</div>
+			</div>
+			if e, ok := errors["nfc-id"]; ok {
+				<p id="nfc-error" class="text-red-500">{ e }</p>
+			} else {
+				<p id="nfc-error" class="text-red-500"></p>
+			}
+			<button class={ button }>Save</button>
 		</form>
-		<div>
-		    <p>Membership status: { cases.Title(language.English).String(user.Membership) }</p>
-		</div>
 	</section>
 }
 

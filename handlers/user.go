@@ -97,6 +97,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 }
 
 var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z][A-Za-z]{0,3}-\d{2}$`)
+var nfcRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z0-9]{2}(:[A-Z0-9]{2}){3}((:[A-Z0-9]{2}){3})?$`)
 
 func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	user := s.GetLoggedInUser(r)
@@ -118,6 +119,18 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 		}
 		var err error
 		*user, err = s.UserSetYear(r.Context(), user.KTHID, yearTag)
+		if err != nil {
+			return err
+		}
+	}
+	nfcIDList := r.Form["nfc-id"]
+	if len(nfcIDList) > 0 {
+		nfcID := nfcIDList[0]
+		if !nfcRegex.Match([]byte(nfcID)) {
+			return templates.AccountSettingsForm(*user, pendingEmail, map[string]string{"nfc-id": `Invalid format. Must match ` + nfcRegex.String()})
+		}
+		var err error
+		*user, err = s.UserSetNFCID(r.Context(), user.KTHID, nfcID)
 		if err != nil {
 			return err
 		}

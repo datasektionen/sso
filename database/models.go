@@ -94,6 +94,7 @@ type User struct {
 	FamilyName              string
 	YearTag                 string
 	Membership              sql.NullString
+	NFCID                   string
 	WebauthnID              []byte
 	FirstNameChangeRequest  string
 	FamilyNameChangeRequest string

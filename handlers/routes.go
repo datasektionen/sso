@@ -30,12 +30,17 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 
 	// admin.go
 	mux.Handle("GET /admin/members", authorize(s, httputil.Route(s, membersPage), "read-members", nil))
+	mux.Handle("POST /admin/members/upload-sheet", authorize(s, httputil.Route(s, uploadSheet), "write-members", nil))
+	mux.Handle("GET /admin/members/upload-sheet", authorize(s, httputil.Route(s, processSheet), "write-members", nil))
 	mux.Handle("GET /admin/users", authorize(s, httputil.Route(s, adminUsersForm), "read-members", nil))
 	mux.Handle("GET /admin/users/{kthid}", authorize(s, httputil.Route(s, adminUser), "read-members", nil))
 	mux.Handle("GET /admin/users/{kthid}/edit", authorize(s, httputil.Route(s, editAdminUserForm), "manage-members", nil))
 	mux.Handle("PUT /admin/users/{kthid}", authorize(s, httputil.Route(s, updateAdminUser), "manage-members", nil))
-	mux.Handle("POST /admin/members/upload-sheet", authorize(s, httputil.Route(s, uploadSheet), "write-members", nil))
-	mux.Handle("GET /admin/members/upload-sheet", authorize(s, httputil.Route(s, processSheet), "write-members", nil))
+	mux.Handle("GET /admin/users/add", authorize(s, httputil.Route(s, add), "write-members", nil))
+	mux.Handle("POST /admin/users/kthid-add", authorize(s, httputil.Route(s, addUserWithKTHID), "write-members", nil))
+	mux.Handle("POST /admin/users/manual-add", authorize(s, httputil.Route(s, addUserManual), "write-members", nil))
+	mux.Handle("POST /admin/users/bulk-add", authorize(s, httputil.Route(s, bulkUpload), "write-members", nil))
+	mux.Handle("GET /admin/users/bulk-add", authorize(s, httputil.Route(s, processBulkAdd), "write-members", nil))
 
 	mux.Handle("GET /admin/oidc-clients", authorize(s, httputil.Route(s, oidcClients), "read-oidc-clients", nil))
 	mux.Handle("POST /admin/oidc-clients", authorize(s, httputil.Route(s, createOIDCClient), "write-oidc-clients", func(r *http.Request) string { return r.FormValue("id") }))

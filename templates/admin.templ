@@ -30,6 +30,9 @@ templ adminNav() {
 	if perms.ReadNameChangeRequests {
 		<a href="/admin/name-change-requests">Name Change Requests</a>
 	}
+	if perms.WriteMembers {
+		<a href="/admin/users/add">Add Users</a>
+	}
 }
 
 templ AdminPage() {
@@ -47,7 +50,7 @@ templ Members(lastUploadedAt time.Time, lastUploadedBy string) {
 			</section>
 			if perms.WriteMembers {
 				@uploadForm(lastUploadedAt, lastUploadedBy)
-				@UploadStatus(false)
+				@UploadStatus(false, "")
 			}
 		</div>
 	}
@@ -236,13 +239,13 @@ templ uploadForm(lastUploadedAt time.Time, lastUploadedBy string) {
 	</form>
 }
 
-templ UploadStatus(withStuff bool) {
+templ UploadStatus(withStuff bool, path string) {
 	if withStuff {
 		<div
 			id="upload-status"
 			class="w-full"
 			hx-ext="sse"
-			sse-connect="/admin/members/upload-sheet"
+			sse-connect={"/admin/" + path}
 		>
 			<div sse-swap="progress" hx-swap="innerHTML" class="w-full h-1 bg-white"></div>
 			<div class="flex flex-col gap-2 pt-2" sse-swap="message" hx-swap="beforeend"></div>
@@ -258,4 +261,119 @@ templ UploadProgress(progress float64) {
 
 templ UploadMessage(message string, isErr bool) {
 	<p class={ "p-2 rounded " + bigIfTrue(isErr, "bg-red-600/50", "bg-green-600/50") }>{ message }</p>
+}
+
+templ AddWithKTHID(kthid string, yearTag string, user *models.User, errors map[string]string) {
+	<form
+		class="flex flex-col items-start gap-2"
+		hx-post="/admin/users/kthid-add"
+		>
+		<label class="text-xl text-ceriselight" for="kthid">KTHID</label>
+		<input class={ input } type="text" name="kthid" placeholder="turetek" value={ kthid } required />
+		if e, ok := errors["kthid"]; ok {
+			<p id="kthid-error" class="text-red-500">{ e }</p>
+		} else {
+			<p id="kthid-error" class="text-red-500"></p>
+		}
+		<label class="text-xl text-ceriselight" for="year-tag">Year Tag</label>
+		<input class={ input } name="year-tag" placeholder="D-??" value={ yearTag } required />
+		if e, ok := errors["kthid-year-tag"]; ok {
+			<p id="kthid-year-tag-error" class="text-red-500">{ e }</p>
+		} else {
+			<p id="kthid-year-tag-error" class="text-red-500"></p>
+		}
+		<input class={ button } type="submit" value="Add" />
+	</form>
+}
+
+templ AddManual(id string, givenName string, familyName string, email string, yearTag string, errors map[string]string) {
+	<form
+		class="flex flex-col items-start gap-2"
+		hx-post="/admin/users/manual-add"
+		>
+		<label class="text-xl text-ceriselight" for="id">ID</label>
+		<input class={ input } type="text" name="id" placeholder="d-ture.teknolog" value={ id } required />
+		if e, ok := errors["id"]; ok {
+			<p id="id-error" class="text-red-500">{ e }</p>
+		} else {
+			<p id="id-error" class="text-red-500"></p>
+		}
+		<label class="text-xl text-ceriselight" for="given-name">Given Name</label>
+		<input class={ input } name="given-name" placeholder="Ture" value={ givenName } required />
+		if e, ok := errors["given-name"]; ok {
+			<p id="given-name-error" class="text-red-500">{ e }</p>
+		} else {
+			<p id="given-name-error" class="text-red-500"></p>
+		}
+		<label class="text-xl text-ceriselight" for="family-name">Family Name</label>
+		<input class={ input } name="family-name" placeholder="Teknolog" value={ familyName } required />
+		if e, ok := errors["family-name"]; ok {
+			<p id="family-name-error" class="text-red-500">{ e }</p>
+		} else {
+			<p id="family-name-error" class="text-red-500"></p>
+		}
+		<label class="text-xl text-ceriselight" for="email">E-mail</label>
+		<input class={ input } name="email" placeholder="turetek@datasektionen.se" value={ email } required />
+		if e, ok := errors["email"]; ok {
+			<p id="email-error" class="text-red-500">{ e }</p>
+		} else {
+			<p id="email-error" class="text-red-500"></p>
+		}
+		<label class="text-xl text-ceriselight" for="year-tag">Year Tag</label>
+		<input class={ input } name="year-tag" placeholder="D-??" value={ yearTag } required />
+		if e, ok := errors["manual-year-tag"]; ok {
+			<p id="manual-year-tag-error" class="text-red-500">{ e }</p>
+		} else {
+			<p id="manual-year-tag-error" class="text-red-500"></p>
+		}
+		<input class={ button } type="submit" value="Add" />
+	</form>
+}
+
+templ BulkAdd() {
+	<form
+		class="py-2 flex flex-col items-start gap-2"
+		hx-post="/admin/users/bulk-add"
+		hx-encoding="multipart/form-data"
+		hx-swap="outerHTML"
+		hx-target="#upload-status"
+	>
+		<label class="text-xl text-ceriselight" for="sheet">Sheet</label>
+		<input
+			name="sheet"
+			type="file"
+			required
+			class="
+				bg-[#3f4c66] rounded p-1 grid place-items-center pointer w-full
+				border border-transparent outline-none focus:border-cerisestrong hover:border-ceriselight relative
+			"
+		/>
+		<p>Must contain the fields kthid and yearTag</p>
+		<label class="text-xl text-ceriselight" for="term-start">Term Start</label>
+		<input class={ input } name="term-start" type="date" />
+		<p>Only used when adding n0llan</p>
+		<button
+			class={ button + "h-auto" }
+		>Upload</button>
+	</form>
+}
+
+templ Add() {
+	@AdminPage() {
+		<div class="p-8 flex flex-col gap-8">
+			<div>
+				<h1 class="text-2xl font-bold text-ceriselight">Add user using kthid</h1>
+				@AddWithKTHID("", "", nil, nil)
+			</div>
+			<div>
+				<h1 class="text-2xl font-bold text-ceriselight">Add user manualy</h1>
+				@AddManual("", "", "", "", "", nil)
+			</div>
+			<div>
+				<h1 class="text-2xl font-bold text-ceriselight">Bulk add users</h1>
+				@BulkAdd()
+				@UploadStatus(false, "")
+			</div>
+		</div>
+	}
 }

@@ -27,9 +27,8 @@ insert into users (
     first_name,
     family_name,
     year_tag,
-    member_to
 )
-values ($1, $2, $3, $4, $5, $6, $7);
+values ($1, $2, $3, $4, $5, $6);
 
 -- name: GetUser :one
 select *

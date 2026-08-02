@@ -453,7 +453,7 @@ func uploadSheet(s *service.Service, w http.ResponseWriter, r *http.Request) htt
 		}
 		events <- sheetEvent{"progress", templates.UploadProgress(1)}
 	}()
-	return templates.UploadStatus(true)
+	return templates.UploadStatus(true, "/members/upload-sheet")
 }
 
 func processSheet(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
@@ -754,4 +754,293 @@ func denyNameChangeRequest(s *service.Service, w http.ResponseWriter, r *http.Re
 		return err
 	}
 	return "Denied ❌"
+}
+
+var bulkAddSheet struct {
+	// This is locked when retrieving or assigning the reader channel.
+	mu sync.Mutex
+	// The post handler will instantiate this channel and finish the response.
+	// It will then wait for an "event channel" to be sent on this channel
+	// until it begins processing the uploaded sheet and then continuously send
+	// events from the sheet handling on the "event channel". After processing,
+	// this channel will be closed and reassigned to nil.
+	//
+	// The get handler will send an "event channel" on this channel, read
+	// events from that and send them along to the client with SSE.
+	reader chan<- chan<- sheetEvent
+}
+
+func bulkUpload(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	bulkAddSheet.mu.Lock()
+	defer bulkAddSheet.mu.Unlock()
+	if bulkAddSheet.reader != nil {
+		return httputil.BadRequest("Membership sheet upload currently in progress")
+	}
+	reader := make(chan chan<- sheetEvent)
+	bulkAddSheet.reader = reader
+	sheet, _, err := r.FormFile("sheet")
+	if err != nil {
+		return httputil.BadRequest("")
+	}
+	data, err := io.ReadAll(sheet)
+	if err != nil {
+		return err
+	}
+	ctx := context.WithoutCancel(r.Context())
+	go func() {
+		defer func() {
+			close(reader)
+			bulkAddSheet.mu.Lock()
+			bulkAddSheet.reader = nil
+			bulkAddSheet.mu.Unlock()
+		}()
+
+		var events chan<- sheetEvent
+		t := time.NewTimer(time.Second * 10)
+		select {
+		case e := <-reader:
+			events = e
+			t.Stop()
+		case <-t.C:
+			return
+		}
+
+		defer func() {
+			events <- sheetEvent{"message", templates.UploadMessage("Done!", false)}
+		}()
+
+		const (
+			sheetKTHIDCol = "kthid"
+			sheetYearCol  = "year"
+		)
+
+		sheet, err := excelize.OpenReader(bytes.NewBuffer(data))
+		if err != nil {
+			events <- sheetEvent{"message", templates.UploadMessage("Could not parse sheet: "+err.Error(), true)}
+			return
+		}
+		if sheet.SheetCount < 1 {
+			events <- sheetEvent{"message", templates.UploadMessage("No sheets found in the provided file", true)}
+			return
+		}
+		rows, err := sheet.GetRows(sheet.GetSheetName(0))
+		if err != nil {
+			events <- sheetEvent{"message", templates.UploadMessage("No sheets found in the provided file: "+err.Error(), true)}
+			return
+		}
+		if len(rows) == 0 {
+			events <- sheetEvent{"message", templates.UploadMessage("Header (first) row not found", true)}
+			return
+		}
+		var kthidCol, yearCol int = -1, -1
+		for i, title := range rows[0] {
+			title = strings.TrimSpace(title)
+			switch title {
+			case sheetKTHIDCol:
+				kthidCol = i
+			case sheetYearCol:
+				yearCol = i
+			}
+		}
+		if kthidCol == -1 {
+			events <- sheetEvent{"message", templates.UploadMessage("Could not find a column for kthid", true)}
+			return
+		}
+		if yearCol == -1 {
+			events <- sheetEvent{"message", templates.UploadMessage("Could not find a column for year tag", true)}
+			return
+		}
+
+		for i, columns := range rows[1:] {
+			if len(columns) == 0 {
+				continue
+			}
+			if kthidCol >= len(columns) || yearCol >= len(columns) {
+				events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
+					"Some column (with index %d or %d) not found on row '%s' with length %d",
+					kthidCol,
+					yearCol,
+					strings.Join(columns, ","),
+					len(columns),
+				), true)}
+				continue
+			}
+			kthid := columns[kthidCol]
+			year := columns[yearCol]
+
+			if err := s.DB.Tx(ctx, func(db *database.Queries) error {
+				_, err := db.GetUser(ctx, kthid)
+				if err == pgx.ErrNoRows {
+					person, err := kthldap.Lookup(ctx, kthid)
+					if err != nil {
+						return err
+					}
+					if person == nil {
+						events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
+							"Could not find user with kthid '%s' in KTH's ldap",
+							kthid,
+						), true)}
+						return nil
+					}
+					if err := db.CreateUser(ctx, database.CreateUserParams{
+						Kthid:      kthid,
+						UgKthid:    person.UGKTHID,
+						Email:      kthid + "@kth.se",
+						FirstName:  person.FirstName,
+						FamilyName: person.FamilyName,
+						YearTag:    year,
+					}); err != nil {
+						return err
+					}
+					// Set junior membership for n0llan othervise don't add a membership
+					if year == "n0llan" {
+						termValue := r.FormValue("term-start")
+						termStart, err := time.Parse(time.DateOnly, termValue)
+						if err != nil {
+							events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
+								"Invalid date '%s' for adding n0llan: %v",
+								termValue,
+								err,
+							), true)}
+						} else {
+							if err := db.AddMembership(ctx, database.AddMembershipParams{
+								Kthid:   kthid,
+								Type:    "junior",
+								EndDate: pgtype.Date{Valid: true, Time: termStart.AddDate(0, 0, 28)},
+							}); err != nil {
+								events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
+									"Failed to add membership for %s: %v",
+									kthid,
+									err,
+								), true)}
+							}
+						}
+					}
+					return nil
+				}
+				if err != nil {
+					return err
+				}
+				return nil
+			}); err != nil {
+				events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
+					"Could not add user '%s' in database: %v",
+					kthid,
+					err,
+				), true)}
+			}
+			events <- sheetEvent{"progress", templates.UploadProgress(float64(i) / float64(len(rows)-1))}
+		}
+		events <- sheetEvent{"progress", templates.UploadProgress(1)}
+	}()
+	return templates.UploadStatus(true, "/users/bulk-add")
+}
+
+func processBulkAdd(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	bulkAddSheet.mu.Lock()
+	reader := bulkAddSheet.reader
+	bulkAddSheet.mu.Unlock()
+	if reader == nil {
+		return httputil.BadRequest("No bulk add sheet upload waiting to get started")
+	}
+
+	ch := make(chan sheetEvent)
+	reader <- ch
+
+	// Yes, server-sent events actually are that easy
+	w.Header().Set("Content-Type", "text/event-stream")
+	flusher, canFlush := w.(interface{ Flush() })
+	for event := range ch {
+		_, _ = w.Write([]byte("event: " + event.name + "\n"))
+		var buf bytes.Buffer
+		if event.component != nil {
+			_ = event.component.Render(r.Context(), &buf)
+		}
+		for line := range strings.SplitSeq(buf.String(), "\n") {
+			_, _ = w.Write([]byte("data: " + line + "\n"))
+		}
+		_, _ = w.Write([]byte("\n"))
+		if canFlush {
+			flusher.Flush()
+		}
+	}
+
+	return nil
+}
+
+func addUserWithKTHID(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	if err := r.ParseForm(); err != nil {
+		return httputil.BadRequest("Invalid form body")
+	}
+
+	kthid := r.FormValue("kthid")
+	yearTag := r.FormValue("year-tag")
+
+	if _, err := s.DB.GetUser(r.Context(), kthid); err == nil {
+		return templates.AddWithKTHID(kthid, yearTag, nil, map[string]string{"kthid": "User with kthid " + kthid + " does already exist"})
+	}
+
+	person, err := kthldap.Lookup(r.Context(), kthid)
+
+	if err != nil {
+		return err
+	}
+
+	if person == nil {
+		return templates.AddWithKTHID(kthid, yearTag, nil, map[string]string{"kthid": "Could not find user with kthid " + kthid + " in ldap"})
+	}
+
+	if !yearTagRegex.Match([]byte(yearTag)) {
+		return templates.AddWithKTHID(kthid, yearTag, nil, map[string]string{"kthid-year-tag": "Invalid format. Must match " + yearTagRegex.String()})
+	}
+
+
+	if err := s.DB.CreateUser(r.Context(), database.CreateUserParams{
+		Kthid:      kthid,
+		UgKthid:    person.UGKTHID,
+		FirstName:  person.FirstName,
+		FamilyName: person.FamilyName,
+		Email:      person.KTHID + "@kth.se",
+		YearTag:    yearTag,
+	}); err != nil {
+		return err
+	}
+
+	return templates.AddWithKTHID("", "", &models.User{
+		FirstName:  person.FirstName,
+		FamilyName: person.FamilyName,
+	}, nil)
+}
+
+func addUserManual(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	id := r.FormValue("id")
+	givenName := r.FormValue("given-name")
+	familyName := r.FormValue("family-name")
+	email := r.FormValue("email")
+	yearTag := r.FormValue("year-tag")
+
+	if _, err := s.DB.GetUser(r.Context(), id); err == nil {
+		return templates.AddManual(id, givenName, familyName, email, yearTag, map[string]string{"id": "User with id " + id + " does already exist"})
+	}
+
+	if !yearTagRegex.Match([]byte(yearTag)) {
+		return templates.AddManual(id, givenName, familyName, email, yearTag, map[string]string{"manual-year-tag": "Invalid format. Must match " + yearTagRegex.String()})
+	}
+
+	if err := s.DB.CreateUser(r.Context(), database.CreateUserParams{
+		Kthid:      id,
+		UgKthid:    "ug" + id,
+		FirstName:  givenName,
+		FamilyName: familyName,
+		Email:      email,
+		YearTag:    yearTag,
+	}); err != nil {
+		return err
+	}
+
+	return templates.AddManual("", "", "", "", "", nil)
+}
+
+func add(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
+	return templates.Add()
 }

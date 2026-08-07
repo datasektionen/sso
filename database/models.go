@@ -68,6 +68,7 @@ type OidcClient struct {
 	HiveSystemID string
 	LastUsedAt   pgtype.Timestamp
 	AllowGuests  bool
+	AllowNollan  bool
 }
 
 type Passkey struct {

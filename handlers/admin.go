@@ -558,6 +558,17 @@ func updateOIDCClient(s *service.Service, w http.ResponseWriter, r *http.Request
 		}
 	}
 
+	if allowNollanVal := r.FormValue("allow-nollan"); allowNollanVal != "" {
+		allowNollan := allowNollanVal == "true"
+		client, err = s.DB.UpdateClientAllowNollan(r.Context(), database.UpdateClientAllowNollanParams{
+			ID:          id,
+			AllowNollan: allowNollan,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return templates.OidcClient(client, nil)
 }
 
@@ -892,13 +903,13 @@ func bulkUpload(s *service.Service, w http.ResponseWriter, r *http.Request) http
 					}); err != nil {
 						return err
 					}
-					// Set junior membership for n0llan othervise don't add a membership
-					if year == "n0llan" {
+					// Set junior membership for nØllan othervise don't add a membership
+					if year == "nØllan" {
 						termValue := r.FormValue("term-start")
 						termStart, err := time.Parse(time.DateOnly, termValue)
 						if err != nil {
 							events <- sheetEvent{"message", templates.UploadMessage(fmt.Sprintf(
-								"Invalid date '%s' for adding n0llan: %v",
+								"Invalid date '%s' for adding nØllan: %v",
 								termValue,
 								err,
 							), true)}

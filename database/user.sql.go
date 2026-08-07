@@ -17,7 +17,7 @@ update users
 set email = $2,
     first_name = $3,
     family_name = $4,
-    year_tag = $5,
+    year_tag = $5
 where kthid = $1
 returning kthid, ug_kthid, email, first_name, family_name, year_tag, nfc_id, webauthn_id, first_name_change_request, family_name_change_request
 `

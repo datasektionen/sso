@@ -176,6 +176,14 @@ func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.R
 	user := p.s.GetLoggedInUser(r)
 	guest := p.s.GetLoggedInGuestUser(r)
 	if user != nil {
+		if user.YearTag == "nØllan" {
+			if client, err := p.s.DB.GetClient(r.Context(), req.GetClientID()); err != nil {
+				return err
+			} else if !client.AllowNollan {
+				return templates.NollanNotAllowed()
+			}
+		}
+
 		req.subject = url.Values{"kthid": {user.KTHID}}.Encode()
 	} else if guest != nil {
 		if client, err := p.s.DB.GetClient(r.Context(), req.GetClientID()); err != nil {
@@ -191,14 +199,6 @@ func (p *provider) callback(_ *service.Service, w http.ResponseWriter, r *http.R
 		req.subject = url.Values{"guest": {string(guestJSON)}}.Encode()
 	} else {
 		return httputil.BadRequest("User did not seem to get logged in")
-	}
-
-	if user.YearTag == "nØllan" {
-		if client, err := p.s.DB.GetClient(r.Context(), req.GetClientID()); err != nil {
-			return err
-		} else if !client.AllowNollan {
-			return templates.NollanNotAllowed()
-		}
 	}
 
 	p.dotabase.reqByID[id] = req

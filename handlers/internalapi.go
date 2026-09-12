@@ -20,6 +20,15 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		return err
 	}
 
+	nfcSearch := false
+
+	for _, user := range dbUsers {
+		if user.NFCID == q[0] {
+			nfcSearch = true
+			break
+		}
+	}
+
 	type User struct {
 		Kthid      string `json:"kthid,omitempty"`
 		Email      string `json:"email,omitempty"`
@@ -28,6 +37,15 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		Picture    string `json:"picture,omitempty"`
 		YearTag    string `json:"yearTag,omitempty"`
 		Membership string `json:"membership,omitempty"`
+	}
+	getKTHID := func(users []database.User) []string {
+		var kthids []string
+
+		for _, user := range users {
+			kthids = append(kthids, user.Kthid)
+		}
+
+		return kthids
 	}
 	convert := func(user database.User, picture string) User {
 		membership := "none"
@@ -50,9 +68,9 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 	if r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail" {
 		var err error
 		if r.FormValue("format") == "single" {
-			pictures[q[0]], err = rfinger.GetPicture(r.Context(), q[0], r.FormValue("picture") == "full")
+			pictures[dbUsers[0].Kthid], err = rfinger.GetPicture(r.Context(), dbUsers[0].Kthid, r.FormValue("picture") == "full")
 		} else {
-			pictures, err = rfinger.GetPictures(r.Context(), q, r.FormValue("picture") == "full")
+			pictures, err = rfinger.GetPictures(r.Context(), getKTHID(dbUsers), r.FormValue("picture") == "full")
 		}
 
 		if err != nil {
@@ -79,8 +97,15 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 			indices[username] = i
 		}
 		users := make([]User, len(q))
-		for _, user := range dbUsers {
-			users[indices[user.Kthid]] = convert(user, pictures[user.Kthid])
+
+		if nfcSearch {
+			for _, user := range dbUsers {
+				users[indices[user.NFCID]] = convert(user, pictures[user.Kthid])
+			}
+		} else {
+			for _, user := range dbUsers {
+				users[indices[user.Kthid]] = convert(user, pictures[user.Kthid])
+			}
 		}
 		return httputil.JSON(users)
 	case "map":

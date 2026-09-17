@@ -65,7 +65,7 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 
 	pictures := make(map[string]string)
 
-	if r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail" {
+	if (r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail") && len(dbUsers) > 0 {
 		var err error
 		if r.FormValue("format") == "single" {
 			pictures[dbUsers[0].Kthid], err = rfinger.GetPicture(r.Context(), dbUsers[0].Kthid, r.FormValue("picture") == "full")

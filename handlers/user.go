@@ -96,7 +96,7 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	return templates.Account(*user, passkeys, pendingEmail)
 }
 
-var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^([A-Z][A-Za-z]{0,3}-\d{2})|External|nØllan$`)
+var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^([A-Z][A-Za-z]{0,3}-(\d{2}|intis|\?\?))|External|nØllan$`)
 var nfcRegex regexp.Regexp = *regexp.MustCompile(`^[A-Z0-9]{2}(:[A-Z0-9]{2}){3}((:[A-Z0-9]{2}){3})?$`)
 
 func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {

@@ -243,6 +243,8 @@ insert into memberships (
 	end_date
 )
 values ($1, $2, $3)
+on conflict (kthid, type)
+do update set end_date = excluded.end_date;
 `
 
 type AddMembershipParams struct {

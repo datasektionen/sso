@@ -8,7 +8,7 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/datasektionen/sso/database"
+import "github.com/datasektionen/sso/models"
 
 func MemberSearchPage(years []string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -154,7 +154,7 @@ func MemberSearchPage(years []string) templ.Component {
 	})
 }
 
-func MemberSearchResults(users []database.User, pictures map[string]string, search string, year string, offset int, more bool) templ.Component {
+func MemberSearchResults(users []models.User, pictures map[string]string, search string, year string, offset int, more bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -195,7 +195,7 @@ func MemberSearchResults(users []database.User, pictures map[string]string, sear
 				return templ_7745c5c3_Err
 			}
 			for _, user := range users {
-				templ_7745c5c3_Err = MemberSearchCard(user, pictures[user.Kthid]).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = MemberSearchCard(user, pictures[user.KTHID]).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -303,7 +303,7 @@ func MemberSearchResults(users []database.User, pictures map[string]string, sear
 	})
 }
 
-func MemberSearchCard(user database.User, picture string) templ.Component {
+func MemberSearchCard(user models.User, picture string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -383,7 +383,7 @@ func MemberSearchCard(user database.User, picture string) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(user.Kthid)
+		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(user.KTHID)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `members.templ`, Line: 95, Col: 38}
 		}

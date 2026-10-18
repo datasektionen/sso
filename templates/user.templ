@@ -249,7 +249,7 @@ templ AccountSettingsForm(user models.User, pendingEmail string, errors map[stri
 			</form>
 		</div>
 		<div>
-		    <p>Membership status: { cases.Title(language.English).String(user.Membership) }</p>
+		    <p>Membership status: { cases.Title(language.English).String(string(*user.Membership)) }</p>
 		</div>
 		<form hx-patch="/account" hx-swap="outerHTML" hx-target="closest section" class="flex flex-col items-start">
 			if user.YearTag != "nØllan" {

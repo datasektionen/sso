@@ -1,11 +1,11 @@
 package templates
 
 import (
-	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/hive"
 )
 
-templ NameChangeRequests(users []database.User) {
+templ NameChangeRequests(users []models.User) {
 	{{ perms := ctx.Value(hive.PermissionsCtxKey{}).(hive.Permissions) }}
 	@AdminPage() {
 		<ul class="flex flex-col p-2 gap-2">
@@ -39,7 +39,7 @@ templ NameChangeRequests(users []database.User) {
 							if perms.ManageNameChangeRequests {
 								<button
 									class={ button }
-									hx-post={ "/admin/name-change-requests/" + user.Kthid }
+									hx-post={ "/admin/name-change-requests/" + user.KTHID }
 									hx-target="closest li"
 									hx-swap="outerHTML"
 								>
@@ -47,7 +47,7 @@ templ NameChangeRequests(users []database.User) {
 								</button>
 								<button
 									class={ button }
-									hx-delete={ "/admin/name-change-requests/" + user.Kthid }
+									hx-delete={ "/admin/name-change-requests/" + user.KTHID }
 									hx-target="closest li"
 									hx-swap="outerHTML"
 								>

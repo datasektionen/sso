@@ -135,7 +135,7 @@ templ Member(user models.User) {
 			}
 		</span>
 		<span>{ user.YearTag }</span>
-		<span>{ cases.Title(language.English).String(user.Membership) }</span>
+		<span>{ cases.Title(language.English).String(string(*user.Membership)) }</span>
 	</div>
 }
 

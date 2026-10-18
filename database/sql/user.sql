@@ -26,13 +26,13 @@ insert into users (
     email,
     first_name,
     family_name,
-    year_tag,
+    year_tag
 )
 values ($1, $2, $3, $4, $5, $6);
 
 -- name: GetUser :one
 select *
-from users
+from users_view
 where kthid = $1;
 
 -- name: GetKTHIDByWebauthnID :one
@@ -42,12 +42,12 @@ where webauthn_id = $1;
 
 -- name: GetUsersByIDs :many
 select *
-from users
-where kthid = any(@ids::text[]);
+from users_view
+where kthid = any(@ids::text[]) or nfc_id = any(@ids::text[]);
 
 -- name: ListUsers :many
 select *
-from users
+from users_view
 where case
     when @search::text = '' then true
     else kthid = lower(@search)
@@ -60,7 +60,7 @@ and case
     else @year = year_tag
 end
 and case
-    when @members_only::boolean then member_to >= current_date
+    when @members_only::boolean then membership is not null
     else true
 end
 order by kthid
@@ -69,40 +69,50 @@ offset $2;
 
 -- name: GetAllYears :many
 select distinct year_tag
-from users
+from users_view
 where year_tag != ''
 order by year_tag;
 
 -- name: GetAllActiveMemberYears :many
 select distinct year_tag
-from users
+from users_view
 where year_tag != ''
-and member_to >= current_date
+and membership is not null
 order by year_tag;
 
--- name: UserSetMemberTo :exec
-update users
-set member_to = $2
-where kthid = $1;
-
 -- name: AdminUpdateUser :one
-update users
+update users_view
 set email = $2,
     first_name = $3,
     family_name = $4,
-    year_tag = $5,
-    member_to = $6
+    year_tag = $5
 where kthid = $1
 returning *;
 
 -- name: UserSetYear :one
-update users
+update users_view
 set year_tag = coalesce($2, year_tag)
 where kthid = $1
 returning *;
 
+-- name: UserSetNFCID :one
+update users_view
+set nfc_id = coalesce($2, nfc_id)
+where kthid = $1
+returning *;
+
+-- name: AddMembership :exec
+insert into memberships (
+    kthid,
+    type,
+    end_date
+)
+values ($1, $2, $3)
+on conflict (kthid, type)
+do update set end_date = excluded.end_date;
+
 -- name: UserSetNameChangeRequest :one
-update users
+update users_view
 set first_name_change_request = $2,
     family_name_change_request = $3
 where kthid = $1
@@ -110,11 +120,11 @@ returning *;
 
 -- name: ListUsersWithNameChangeRequests :many
 select *
-from users
+from users_view
 where first_name_change_request != '' or family_name_change_request != '';
 
 -- name: ApproveNameChangeRequest :exec
-update users
+update users_view
 set first_name = case when first_name_change_request != '' then first_name_change_request else first_name end,
     family_name = case when family_name_change_request != '' then family_name_change_request else family_name end,
     first_name_change_request = '',
@@ -122,7 +132,7 @@ set first_name = case when first_name_change_request != '' then first_name_chang
 where kthid = $1;
 
 -- name: DenyNameChangeRequest :exec
-update users
+update users_view
 set first_name_change_request = '',
     family_name_change_request = ''
 where kthid = $1;
@@ -289,7 +299,7 @@ union
 select ok, 'no code', new_email from not_existing;
 
 -- name: UserSetEmail :one
-update users
+update users_view
 set email = $2
 where kthid = $1
 returning *;

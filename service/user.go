@@ -23,10 +23,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func DBUserToModel(user database.User) models.User {
-	membership := "none"
+func DBUserToModel(user database.UsersView) models.User {
+	var membership database.MembershipType
 	if user.Membership.Valid == true {
-		membership = user.Membership.String
+		membership = user.Membership.MembershipType
+	} else {
+		membership = "none"
 	}
 	return models.User{
 		KTHID:                   user.Kthid,
@@ -35,15 +37,15 @@ func DBUserToModel(user database.User) models.User {
 		FirstName:               user.FirstName,
 		FamilyName:              user.FamilyName,
 		YearTag:                 user.YearTag,
-		Membership:              membership,
+		Membership:              &membership,
 		WebAuthnID:              user.WebauthnID,
-		NFCID:                   user.NFCID,
+		NFCID:                   user.NfcID,
 		FirstNameChangeRequest:  user.FirstNameChangeRequest,
 		FamilyNameChangeRequest: user.FamilyNameChangeRequest,
 	}
 }
 
-func DBUsersToModel(users []database.User) []models.User {
+func DBUsersToModel(users []database.UsersView) []models.User {
 	us := make([]models.User, len(users))
 	for i, u := range users {
 		us[i] = DBUserToModel(u)
@@ -63,6 +65,33 @@ func (s *Service) GetUser(ctx context.Context, kthid string) (*models.User, erro
 	return &u, nil
 }
 
+func (s *Service) GetUsersByIDs(ctx context.Context, ids []string) ([]models.User, error) {
+	dbUsers, err := s.DB.GetUsersByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return DBUsersToModel(dbUsers), nil
+}
+
+func (s *Service) ListUsers(ctx context.Context, params database.ListUsersParams) ([]models.User, error) {
+	dbUsers, err := s.DB.ListUsers(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return DBUsersToModel(dbUsers), nil
+}
+
+func (s *Service) ListUsersWithNameChangeRequests(ctx context.Context) ([]models.User, error) {
+	dbUsers, err := s.DB.ListUsersWithNameChangeRequests(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return DBUsersToModel(dbUsers), nil
+}
+
 func (s *Service) UserSetYear(ctx context.Context, kthid string, yearTag string) (models.User, error) {
 	user, err := s.DB.UserSetYear(ctx, database.UserSetYearParams{
 		Kthid:   kthid,
@@ -77,7 +106,7 @@ func (s *Service) UserSetYear(ctx context.Context, kthid string, yearTag string)
 func (s *Service) UserSetNFCID(ctx context.Context, kthid string, nfcID string) (models.User, error) {
 	user, err := s.DB.UserSetNFCID(ctx, database.UserSetNFCIDParams{
 		Kthid: kthid,
-		NFCID: nfcID,
+		NfcID: nfcID,
 	})
 	if err != nil {
 		return models.User{}, err

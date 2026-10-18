@@ -1,0 +1,201 @@
+package templates
+
+import "database/sql"
+import "github.com/datasektionen/sso/models"
+import "github.com/google/uuid"
+import "slices"
+import "time"
+
+templ DietSettings(
+	language models.Language,
+	user models.User,
+	allFoodPreferences []models.FoodPreference,
+	userFoodPreferences []uuid.UUID,
+	allAllergies []models.Allergy,
+	userAllergiesFlat []models.UserAllergy,
+	isUpdate bool,
+) {
+	@FoodPreferences(language, allFoodPreferences, userFoodPreferences, user.FoodPreferenceFreetext, isUpdate)
+	@Allergies(language, allAllergies, userAllergiesFlat, user.AllergyFreetext, isUpdate)
+}
+
+templ FoodPreferences(
+	language models.Language,
+	allFoodPreferences []models.FoodPreference,
+	userFoodPreferences []uuid.UUID,
+	freetext string,
+	isUpdate bool,
+) {
+	<section class="flex flex-col max-w-lg items-start">
+		<form hx-post="/account/food-preferences" hx-swap="outerHTML" hx-target="closest section">
+			<h2 class="text-xl text-ceriselight">Food Preferences</h2>
+			// <div>
+			// 	Språk/Language: <select name="language">
+			// 		<option value="sv">Svenska</option>
+			// 		<option value="en">English</option>
+			// 	</select>
+			// </div>
+			for _, foodPreference := range allFoodPreferences {
+				<label class="flex gap-2 items-center">
+					<input
+						type="checkbox"
+						name="food-preferences"
+						value={ foodPreference.ID.String() }
+						checked?={ slices.Contains(userFoodPreferences, foodPreference.ID) }
+					/>
+					{ foodPreference.Name(language) }
+				</label>
+			}
+			<textarea placeholder="Fritext" name="food-preference-freetext" class={ input + " my-1 resize" }>{ freetext }</textarea>
+			<button type="submit" class={ button }>Save</button>
+			if isUpdate {
+				<p><strong>Saved { time.Now().Format(time.TimeOnly) }</strong></p>
+			}
+		</form>
+	</section>
+}
+
+func getUserAllergy(userAllergiesFlat []models.UserAllergy, allergyID uuid.UUID) *models.UserAllergy {
+	for _, userAllergy := range userAllergiesFlat {
+		if userAllergy.AllergyID == allergyID {
+			return &userAllergy
+		}
+	}
+	return nil
+}
+
+templ Allergies(
+	language models.Language,
+	allAllergies []models.Allergy,
+	userAllergiesFlat []models.UserAllergy,
+	freetext string,
+	isUpdate bool,
+) {
+	<section class="flex flex-col max-w-lg items-start">
+		<form hx-post="/account/allergies" hx-swap="outerHTML" hx-target="closest section">
+			<h2 class="text-xl text-ceriselight">Allergies</h2>
+			for _, allergy := range allAllergies {
+				@Allergy(language, allergy, make([]models.Allergy, 0), userAllergiesFlat)
+			}
+			<textarea placeholder="Fritext" name="allergy-freetext" class={ input + " my-1 resize" }>{ freetext }</textarea>
+			<button type="submit" class={ button }>Save</button>
+			if isUpdate {
+				<p><strong>Saved { time.Now().Format(time.TimeOnly) }</strong></p>
+			}
+			<style>
+			.allergy-container:has(input[name="allergies"]:checked) {
+				border: 2px solid;
+				padding: 0.5rem;
+			}
+			.allergy-modifiers {
+				display: none;
+			}
+			.allergy-container:has(input[name="allergies"]:checked) .allergy-modifiers {
+				display: block;
+			}
+			</style>
+		</form>
+	</section>
+}
+
+func orEmpty(userAllergy *models.UserAllergy) models.UserAllergy {
+	if userAllergy == nil {
+		return models.UserAllergy{}
+	}
+	return *userAllergy
+}
+
+func detectInfiniteRecursion(allergy models.Allergy, allergyPath []models.Allergy) bool {
+	return slices.ContainsFunc(allergyPath, func(a models.Allergy) bool {
+		return a.ID == allergy.ID
+	})
+}
+
+templ Allergy(
+	language models.Language,
+	allergy models.Allergy,
+	allergyPath []models.Allergy,
+	userAllergiesFlat []models.UserAllergy,
+) {
+	{{ userAllergy := getUserAllergy(userAllergiesFlat, allergy.ID) }}
+	// Sanity check to avoid infinite recursion.
+	// Do not render this allergy if it is already in the path.
+	if detectInfiniteRecursion(allergy, allergyPath) {
+		<p>Recursive allergy detected</p>
+	} else {
+		<div>
+			<!-- CSS will only show border here if checkbox is clicked -->
+			<div class="allergy-container border-gray-300">
+				<label class="flex gap-2 items-center">
+					<input
+						type="checkbox"
+						name="allergies"
+						value={ allergy.ID.String() }
+						checked?={ userAllergy != nil }
+					/>
+					{ allergy.Name(language) }
+				</label>
+				<!-- Modifiers -->
+				<!-- CSS will ensure this is only visible when the checkbox is checked -->
+				<div class="allergy-modifiers">
+					if allergy.ShowRaw {
+						@AllergyModifier(language, "allergy-" + allergy.ID.String() + "-raw", "Gäller endast råa/otillagade produkter", orEmpty(userAllergy).Raw)
+					}
+					if allergy.ShowSevere {
+						@AllergyModifier(language, "allergy-" + allergy.ID.String() + "-severe", "Allvarlig allergi", orEmpty(userAllergy).Severe)
+					}
+					if allergy.ShowAirborne {
+						@AllergyModifier(language, "allergy-" + allergy.ID.String() + "-airborne", "Luftburet", orEmpty(userAllergy).Airborne)
+					}
+				</div>
+			</div>
+			if len(allergy.Children) > 0 {
+				<div class="ml-4">
+					for _, child := range allergy.Children {
+						@Allergy(language, child, append(allergyPath, allergy), userAllergiesFlat)
+					}
+				</div>
+			}
+		</div>
+	}
+}
+
+templ AllergyModifier(
+	language models.Language,
+	formName string,
+	description string,
+	active sql.NullBool,
+) {
+	<div class="flex gap-2 flex-wrap items-center">
+		<span class="flex-grow">{ description }</span>
+		<div class="flex gap-3 items-center">
+			<label class="flex gap-1 items-center">
+				<input
+					type="radio"
+					name={formName}
+					value="null"
+					checked?={ !active.Valid }
+				/>
+				-
+			</label>
+			<label class="flex gap-1 items-center">
+				<input
+					type="radio"
+					name={formName}
+					value="true"
+					checked?={ active.Valid && active.Bool }
+				/>
+				Ja
+			</label>
+			<label class="flex gap-1 items-center">
+				<input
+					type="radio"
+					name={formName}
+					value="false"
+					checked?={ active.Valid && !active.Bool }
+				/>
+				Nej
+			</label>
+		</div>
+	</div>
+}

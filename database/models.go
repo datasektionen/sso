@@ -99,6 +99,8 @@ type User struct {
 	WebauthnID              []byte
 	FirstNameChangeRequest  string
 	FamilyNameChangeRequest string
+	FoodPreferenceFreetext  string
+	AllergyFreetext         string
 }
 
 type WebauthnSessionDatum struct {

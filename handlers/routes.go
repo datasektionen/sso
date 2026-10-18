@@ -99,4 +99,8 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 		mux.Handle("GET /api/search", httputil.Route(s, apiSearchUsers))
 		mux.Handle("POST /api/nfc", httputil.Route(s, apiSetNFCID))
 	}
+
+	// diet.go
+	mux.Handle("POST /account/food-preferences", httputil.Route(s, updateFoodPreferences))
+	mux.Handle("POST /account/allergies", httputil.Route(s, updateAllergies))
 }

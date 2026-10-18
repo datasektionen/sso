@@ -36,6 +36,12 @@ set allow_guests = $2
 where id = $1
 returning *;
 
+-- name: UpdateClientAllowNollan :one
+update oidc_clients
+set allow_nollan = $2
+where id = $1
+returning *;
+
 -- name: DeleteClient :exec
 delete from oidc_clients
 where id = $1;

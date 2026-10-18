@@ -12,6 +12,8 @@ type User struct {
 	WebAuthnID              []byte
 	FirstNameChangeRequest  string
 	FamilyNameChangeRequest string
+	FoodPreferenceFreetext  string
+	AllergyFreetext         string
 }
 
 type GuestUser struct {

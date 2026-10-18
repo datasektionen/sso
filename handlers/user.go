@@ -93,7 +93,23 @@ func account(s *service.Service, w http.ResponseWriter, r *http.Request) httputi
 	if err != nil && err != pgx.ErrNoRows {
 		return nil
 	}
-	return templates.Account(*user, passkeys, pendingEmail)
+	allFoodPreferences, err := s.DB.ListAllFoodPreferences(r.Context())
+	if err != nil {
+		return nil
+	}
+	userFoodPreferences, err := s.DB.ListUserFoodPreferences(r.Context(), user.KTHID)
+	if err != nil {
+		return nil
+	}
+	allAllergies, err := s.DB.ListAllAllergiesWithChildren(r.Context())
+	if err != nil {
+		return nil
+	}
+	userAllergiesFlat, err := s.DB.ListUserAllergiesFlat(r.Context(), user.KTHID)
+	if err != nil {
+		return nil
+	}
+	return templates.Account(*user, passkeys, pendingEmail, allFoodPreferences, userFoodPreferences, allAllergies, userAllergiesFlat)
 }
 
 var yearTagRegex regexp.Regexp = *regexp.MustCompile(`^([A-Z][A-Za-z]{0,3}-\d{2})|External|nØllan$`)

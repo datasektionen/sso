@@ -583,7 +583,7 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (GetSessionRow, 
 }
 
 const getUser = `-- name: GetUser :one
-select users.kthid, ug_kthid, email, first_name, family_name, year_tag, membership.type as "membership", nfc_id, webauthn_id, first_name_change_request, family_name_change_request
+select users.kthid, ug_kthid, email, first_name, family_name, year_tag, membership.type as "membership", nfc_id, webauthn_id, first_name_change_request, family_name_change_request, food_preference_freetext, allergy_freetext
 from users
 left join membership on users.kthid = membership.kthid
 where users.kthid = $1
@@ -604,6 +604,8 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (User, error) {
 		&i.WebauthnID,
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
+		&i.FoodPreferenceFreetext,
+		&i.AllergyFreetext,
 	)
 	return i, err
 }

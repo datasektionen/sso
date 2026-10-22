@@ -51,6 +51,67 @@ func (q *Queries) AddUserFoodPreferences(ctx context.Context, arg AddUserFoodPre
 	return err
 }
 
+const createAllergy = `-- name: CreateAllergy :exec
+insert into allergy (parent_allergy_id, name_sv, name_en, show_raw, show_severe, show_airborne)
+values ($1, $2, $3, $4, $5, $6)
+`
+
+type CreateAllergyParams struct {
+	ParentAllergyID pgtype.UUID
+	NameSv          string
+	NameEn          string
+	ShowRaw         bool
+	ShowSevere      bool
+	ShowAirborne    bool
+}
+
+func (q *Queries) CreateAllergy(ctx context.Context, arg CreateAllergyParams) error {
+	_, err := q.db.Exec(ctx, createAllergy,
+		arg.ParentAllergyID,
+		arg.NameSv,
+		arg.NameEn,
+		arg.ShowRaw,
+		arg.ShowSevere,
+		arg.ShowAirborne,
+	)
+	return err
+}
+
+const createFoodPreference = `-- name: CreateFoodPreference :exec
+insert into food_preference (name_sv, name_en)
+values ($1, $2)
+`
+
+type CreateFoodPreferenceParams struct {
+	NameSv string
+	NameEn string
+}
+
+func (q *Queries) CreateFoodPreference(ctx context.Context, arg CreateFoodPreferenceParams) error {
+	_, err := q.db.Exec(ctx, createFoodPreference, arg.NameSv, arg.NameEn)
+	return err
+}
+
+const deleteAllergy = `-- name: DeleteAllergy :exec
+delete from allergy
+where id = $1
+`
+
+func (q *Queries) DeleteAllergy(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteAllergy, id)
+	return err
+}
+
+const deleteFoodPreference = `-- name: DeleteFoodPreference :exec
+delete from food_preference
+where id = $1
+`
+
+func (q *Queries) DeleteFoodPreference(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteFoodPreference, id)
+	return err
+}
+
 const listAllAllergies = `-- name: ListAllAllergies :many
 select id, name_sv, name_en, parent_allergy_id, show_raw, show_severe, show_airborne
 from allergy
@@ -222,5 +283,51 @@ type SetUserFoodPreferenceFreetextParams struct {
 
 func (q *Queries) SetUserFoodPreferenceFreetext(ctx context.Context, arg SetUserFoodPreferenceFreetextParams) error {
 	_, err := q.db.Exec(ctx, setUserFoodPreferenceFreetext, arg.Kthid, arg.FoodPreferenceFreetext)
+	return err
+}
+
+const updateAllergy = `-- name: UpdateAllergy :exec
+update allergy
+set parent_allergy_id = $2, name_sv = $3, name_en = $4, show_raw = $5, show_severe = $6, show_airborne = $7
+where id = $1
+`
+
+type UpdateAllergyParams struct {
+	ID              uuid.UUID
+	ParentAllergyID pgtype.UUID
+	NameSv          string
+	NameEn          string
+	ShowRaw         bool
+	ShowSevere      bool
+	ShowAirborne    bool
+}
+
+func (q *Queries) UpdateAllergy(ctx context.Context, arg UpdateAllergyParams) error {
+	_, err := q.db.Exec(ctx, updateAllergy,
+		arg.ID,
+		arg.ParentAllergyID,
+		arg.NameSv,
+		arg.NameEn,
+		arg.ShowRaw,
+		arg.ShowSevere,
+		arg.ShowAirborne,
+	)
+	return err
+}
+
+const updateFoodPreference = `-- name: UpdateFoodPreference :exec
+update food_preference
+set name_sv = $2, name_en = $3
+where id = $1
+`
+
+type UpdateFoodPreferenceParams struct {
+	ID     uuid.UUID
+	NameSv string
+	NameEn string
+}
+
+func (q *Queries) UpdateFoodPreference(ctx context.Context, arg UpdateFoodPreferenceParams) error {
+	_, err := q.db.Exec(ctx, updateFoodPreference, arg.ID, arg.NameSv, arg.NameEn)
 	return err
 }

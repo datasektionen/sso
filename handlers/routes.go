@@ -103,4 +103,11 @@ func MountRoutes(s *service.Service, mux *http.ServeMux, includeInternal bool) {
 	// diet.go
 	mux.Handle("POST /account/food-preferences", httputil.Route(s, updateFoodPreferences))
 	mux.Handle("POST /account/allergies", httputil.Route(s, updateAllergies))
+	mux.Handle("GET /admin/diet-options", authorize(s, httputil.Route(s, adminDietOptions), "manage-members", nil))
+	mux.Handle("POST /admin/diet-options/food-preferences", authorize(s, httputil.Route(s, createFoodPreference), "manage-members", nil))
+	mux.Handle("PUT /admin/diet-options/food-preferences/{id}", authorize(s, httputil.Route(s, updateFoodPreference), "manage-members", nil))
+	mux.Handle("DELETE /admin/diet-options/food-preferences/{id}", authorize(s, httputil.Route(s, deleteFoodPreference), "manage-members", nil))
+	mux.Handle("POST /admin/diet-options/allergies", authorize(s, httputil.Route(s, createAllergy), "manage-members", nil))
+	mux.Handle("PUT /admin/diet-options/allergies/{id}", authorize(s, httputil.Route(s, updateAllergy), "manage-members", nil))
+	mux.Handle("DELETE /admin/diet-options/allergies/{id}", authorize(s, httputil.Route(s, deleteAllergy), "manage-members", nil))
 }

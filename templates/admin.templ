@@ -33,6 +33,9 @@ templ adminNav() {
 	if perms.WriteMembers {
 		<a href="/admin/users/add">Add Users</a>
 	}
+	if perms.ManageMembers {
+		<a href="/admin/diet-options">Diet options</a>
+	}
 }
 
 templ AdminPage() {

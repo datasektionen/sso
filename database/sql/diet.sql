@@ -41,3 +41,29 @@ values ($1, $2, $3, $4, $5);
 update users
 set allergy_freetext = $2
 where kthid = $1;
+
+-- name: CreateFoodPreference :exec
+insert into food_preference (name_sv, name_en)
+values ($1, $2);
+
+-- name: UpdateFoodPreference :exec
+update food_preference
+set name_sv = $2, name_en = $3
+where id = $1;
+
+-- name: DeleteFoodPreference :exec
+delete from food_preference
+where id = $1;
+
+-- name: CreateAllergy :exec
+insert into allergy (parent_allergy_id, name_sv, name_en, show_raw, show_severe, show_airborne)
+values ($1, $2, $3, $4, $5, $6);
+
+-- name: UpdateAllergy :exec
+update allergy
+set parent_allergy_id = $2, name_sv = $3, name_en = $4, show_raw = $5, show_severe = $6, show_airborne = $7
+where id = $1;
+
+-- name: DeleteAllergy :exec
+delete from allergy
+where id = $1;

@@ -76,6 +76,16 @@ type ActiveMembership struct {
 	Type  MembershipType
 }
 
+type Allergy struct {
+	ID              uuid.UUID
+	NameSv          string
+	NameEn          string
+	ParentAllergyID pgtype.UUID
+	ShowRaw         bool
+	ShowSevere      bool
+	ShowAirborne    bool
+}
+
 type EmailChangeRequest struct {
 	Kthid     string
 	NewEmail  string
@@ -89,6 +99,12 @@ type EmailLogin struct {
 	Code      string
 	CreatedAt pgtype.Timestamp
 	Attempts  int32
+}
+
+type FoodPreference struct {
+	ID     uuid.UUID
+	NameSv string
+	NameEn string
 }
 
 type Invite struct {
@@ -155,6 +171,21 @@ type User struct {
 	FirstNameChangeRequest  string
 	FamilyNameChangeRequest string
 	NfcID                   string
+	FoodPreferenceFreetext  string
+	AllergyFreetext         string
+}
+
+type UserAllergy struct {
+	Kthid     string
+	AllergyID uuid.UUID
+	Raw       pgtype.Bool
+	Severe    pgtype.Bool
+	Airborne  pgtype.Bool
+}
+
+type UserFoodPreference struct {
+	Kthid            string
+	FoodPreferenceID uuid.UUID
 }
 
 type UsersView struct {
@@ -168,6 +199,8 @@ type UsersView struct {
 	FirstNameChangeRequest  string
 	FamilyNameChangeRequest string
 	NfcID                   string
+	FoodPreferenceFreetext  string
+	AllergyFreetext         string
 	Membership              NullMembershipType
 }
 

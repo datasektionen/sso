@@ -128,7 +128,7 @@ func updateAccount(s *service.Service, w http.ResponseWriter, r *http.Request) h
 		}
 	}
 	nfcIDList := r.Form["nfc-id"]
-	if len(nfcIDList) > 0 {
+	if len(nfcIDList) > 0 && len(nfcIDList[0]) > 0 {
 		nfcID := nfcIDList[0]
 		if !nfcRegex.Match([]byte(nfcID)) {
 			return templates.AccountSettingsForm(*user, pendingEmail, map[string]string{"nfc-id": `Invalid format. Must match ` + nfcRegex.String()})

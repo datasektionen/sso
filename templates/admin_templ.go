@@ -572,9 +572,9 @@ func Member(user models.User) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var28 string
-		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(cases.Title(language.English).String(user.Membership))
+		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(cases.Title(language.English).String(string(*user.Membership)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin.templ`, Line: 138, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin.templ`, Line: 138, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {

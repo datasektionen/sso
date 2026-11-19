@@ -1,5 +1,7 @@
 package models
 
+import "github.com/datasektionen/sso/database"
+
 type User struct {
 	KTHID                   string
 	UGKTHID                 string
@@ -7,7 +9,7 @@ type User struct {
 	FirstName               string
 	FamilyName              string
 	YearTag                 string
-	Membership              string
+	Membership              *database.MembershipType
 	NFCID                   string
 	WebAuthnID              []byte
 	FirstNameChangeRequest  string
@@ -21,7 +23,7 @@ type GuestUser struct {
 }
 
 func IsActiveMember(user *User) bool {
-	return user != nil && user.Membership != "none"
+	return user != nil && user.Membership != nil
 }
 
 type UserCtxKey struct{}

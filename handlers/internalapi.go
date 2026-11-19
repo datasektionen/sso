@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/config"
 	"github.com/datasektionen/sso/pkg/httputil"
 	"github.com/datasektionen/sso/pkg/rfinger"
@@ -15,14 +16,14 @@ import (
 
 func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
 	q := r.URL.Query()["u"]
-	dbUsers, err := s.DB.GetUsersByIDs(r.Context(), q)
+	users, err := s.GetUsersByIDs(r.Context(), q)
 	if err != nil {
 		return err
 	}
 
 	nfcSearch := false
 
-	for _, user := range dbUsers {
+	for _, user := range users {
 		if user.NFCID == q[0] {
 			nfcSearch = true
 			break
@@ -38,39 +39,35 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		YearTag    string `json:"yearTag,omitempty"`
 		Membership string `json:"membership,omitempty"`
 	}
-	getKTHID := func(users []database.User) []string {
+	getKTHID := func(users []models.User) []string {
 		var kthids []string
 
 		for _, user := range users {
-			kthids = append(kthids, user.Kthid)
+			kthids = append(kthids, user.KTHID)
 		}
 
 		return kthids
 	}
-	convert := func(user database.User, picture string) User {
-		membership := "none"
-		if user.Membership.Valid == true {
-			membership = user.Membership.String
-		}
+	convert := func(user models.User, picture string) User {
 		return User{
-			Kthid:      user.Kthid,
+			Kthid:      user.KTHID,
 			Email:      user.Email,
 			FirstName:  user.FirstName,
 			FamilyName: user.FamilyName,
 			Picture:    picture,
 			YearTag:    user.YearTag,
-			Membership: membership,
+			Membership: string(*user.Membership),
 		}
 	}
 
 	pictures := make(map[string]string)
 
-	if (r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail") && len(dbUsers) > 0 {
+	if (r.FormValue("picture") == "full" || r.FormValue("picture") == "thumbnail") && len(users) > 0 {
 		var err error
 		if r.FormValue("format") == "single" {
-			pictures[dbUsers[0].Kthid], err = rfinger.GetPicture(r.Context(), dbUsers[0].Kthid, r.FormValue("picture") == "full")
+			pictures[users[0].KTHID], err = rfinger.GetPicture(r.Context(), users[0].KTHID, r.FormValue("picture") == "full")
 		} else {
-			pictures, err = rfinger.GetPictures(r.Context(), getKTHID(dbUsers), r.FormValue("picture") == "full")
+			pictures, err = rfinger.GetPictures(r.Context(), getKTHID(users), r.FormValue("picture") == "full")
 		}
 
 		if err != nil {
@@ -83,11 +80,11 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 		if len(q) != 1 {
 			return httputil.BadRequest("Single user requested but not exactly one username provided")
 		}
-		if len(dbUsers) != 1 {
+		if len(users) != 1 {
 			return httputil.NotFound()
 		}
 
-		return httputil.JSON(convert(dbUsers[0], pictures[dbUsers[0].Kthid]))
+		return httputil.JSON(convert(users[0], pictures[users[0].KTHID]))
 	case "array":
 		indices := map[string]int{}
 		for i, username := range q {
@@ -96,22 +93,22 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 			}
 			indices[username] = i
 		}
-		users := make([]User, len(q))
+		convertedUsers := make([]User, len(q))
 
 		if nfcSearch {
-			for _, user := range dbUsers {
-				users[indices[user.NFCID]] = convert(user, pictures[user.Kthid])
+			for _, user := range users {
+				convertedUsers[indices[user.NFCID]] = convert(user, pictures[user.KTHID])
 			}
 		} else {
-			for _, user := range dbUsers {
-				users[indices[user.Kthid]] = convert(user, pictures[user.Kthid])
+			for _, user := range users {
+				convertedUsers[indices[user.KTHID]] = convert(user, pictures[user.KTHID])
 			}
 		}
 		return httputil.JSON(users)
 	case "map":
-		users := map[string]User{}
-		for _, user := range dbUsers {
-			users[user.Kthid] = convert(user, pictures[user.Kthid])
+		convertedUsers := map[string]User{}
+		for _, user := range users {
+			convertedUsers[user.KTHID] = convert(user, pictures[user.KTHID])
 		}
 
 		return httputil.JSON(users)
@@ -121,12 +118,12 @@ func apiListUsers(s *service.Service, w http.ResponseWriter, r *http.Request) ht
 }
 
 type userSearchResult struct {
-	Users    []database.User
+	Users    []models.User
 	Pictures map[string]string
 }
 
 func searchUsers(s *service.Service, r *http.Request, searchParam string, limit int32, offset int32, membersOnly bool, includePictures bool, fullQualityPictures bool) (userSearchResult, error) {
-	dbUsers, err := s.DB.ListUsers(r.Context(), database.ListUsersParams{
+	dbUsers, err := s.ListUsers(r.Context(), database.ListUsersParams{
 		Limit:       limit,
 		Offset:      offset,
 		Search:      r.FormValue(searchParam),
@@ -141,7 +138,7 @@ func searchUsers(s *service.Service, r *http.Request, searchParam string, limit 
 	if includePictures && len(dbUsers) > 0 && config.Config.RfingerURL != nil {
 		pictureUsers := make([]string, len(dbUsers))
 		for i, user := range dbUsers {
-			pictureUsers[i] = user.Kthid
+			pictureUsers[i] = user.KTHID
 		}
 		pictures, err = rfinger.GetPictures(r.Context(), pictureUsers, fullQualityPictures)
 		if err != nil {
@@ -191,18 +188,14 @@ func apiSearchUsers(s *service.Service, w http.ResponseWriter, r *http.Request) 
 
 	users := make([]User, len(res.Users))
 	for i, user := range res.Users {
-		membership := "none"
-		if user.Membership.Valid == true {
-			membership = user.Membership.String
-		}
 		users[i] = User{
-			KTHID:      user.Kthid,
+			KTHID:      user.KTHID,
 			Email:      user.Email,
 			FirstName:  user.FirstName,
 			FamilyName: user.FamilyName,
-			Picture:    res.Pictures[user.Kthid],
+			Picture:    res.Pictures[user.KTHID],
 			YearTag:    user.YearTag,
-			Membership: membership,
+			Membership: string(*user.Membership),
 		}
 	}
 	return httputil.JSON(users)

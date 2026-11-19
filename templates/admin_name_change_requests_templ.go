@@ -9,11 +9,11 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/datasektionen/sso/database"
+	"github.com/datasektionen/sso/models"
 	"github.com/datasektionen/sso/pkg/hive"
 )
 
-func NameChangeRequests(users []database.User) templ.Component {
+func NameChangeRequests(users []models.User) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -132,7 +132,7 @@ func NameChangeRequests(users []database.User) templ.Component {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var9 string
-					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/name-change-requests/" + user.Kthid)
+					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/name-change-requests/" + user.KTHID)
 					if templ_7745c5c3_Err != nil {
 						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin_name_change_requests.templ`, Line: 42, Col: 62}
 					}
@@ -167,7 +167,7 @@ func NameChangeRequests(users []database.User) templ.Component {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var12 string
-					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/name-change-requests/" + user.Kthid)
+					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/name-change-requests/" + user.KTHID)
 					if templ_7745c5c3_Err != nil {
 						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin_name_change_requests.templ`, Line: 50, Col: 64}
 					}

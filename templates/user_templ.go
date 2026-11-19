@@ -572,9 +572,9 @@ func AccountSettingsForm(user models.User, pendingEmail string, errors map[strin
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var34 string
-		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(cases.Title(language.English).String(user.Membership))
+		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(cases.Title(language.English).String(string(*user.Membership)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 252, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `user.templ`, Line: 252, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {

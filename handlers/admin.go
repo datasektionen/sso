@@ -744,7 +744,7 @@ You can go to [sso.datasektionen.se](https://sso.datasektionen.se/) to log in an
 }
 
 func nameChangeRequests(s *service.Service, w http.ResponseWriter, r *http.Request) httputil.ToResponse {
-	users, err := s.DB.ListUsersWithNameChangeRequests(r.Context())
+	users, err := s.ListUsersWithNameChangeRequests(r.Context())
 	if err != nil {
 		return err
 	}

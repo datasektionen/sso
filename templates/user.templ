@@ -96,11 +96,13 @@ templ CodeForm(kthid string) {
 	</form>
 }
 
-templ Account(user models.User, passkeys []models.Passkey, pendingEmail string) {
+templ Account(user models.User, passkeys []models.Passkey, pendingEmail string, allFoodPreferences []models.FoodPreference, userFoodPreferences []uuid.UUID, allAllergies []models.Allergy, userAllergiesFlat []models.UserAllergy) {
 	@page(nav()) {
 		<div class="p-8 flex flex-col gap-8">
 			@AccountSettingsForm(user, pendingEmail, nil)
 			@PasskeySettings(passkeys)
+			// TODO: do i18n properly
+			@DietSettings(models.LanguageSv, user, allFoodPreferences, userFoodPreferences, allAllergies, userAllergiesFlat, false)
 		</div>
 	}
 }

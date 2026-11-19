@@ -42,6 +42,8 @@ func DBUserToModel(user database.UsersView) models.User {
 		NFCID:                   user.NfcID,
 		FirstNameChangeRequest:  user.FirstNameChangeRequest,
 		FamilyNameChangeRequest: user.FamilyNameChangeRequest,
+		FoodPreferenceFreetext:  user.FoodPreferenceFreetext,
+		AllergyFreetext:         user.AllergyFreetext,
 	}
 }
 

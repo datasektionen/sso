@@ -41,7 +41,7 @@ set email = $2,
     family_name = $4,
     year_tag = $5
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 `
 
 type AdminUpdateUserParams struct {
@@ -72,6 +72,8 @@ func (q *Queries) AdminUpdateUser(ctx context.Context, arg AdminUpdateUserParams
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
 		&i.NfcID,
+		&i.FoodPreferenceFreetext,
+		&i.AllergyFreetext,
 		&i.Membership,
 	)
 	return i, err
@@ -581,7 +583,7 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (GetSessionRow, 
 }
 
 const getUser = `-- name: GetUser :one
-select kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+select kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 from users_view
 where kthid = $1
 `
@@ -600,13 +602,15 @@ func (q *Queries) GetUser(ctx context.Context, kthid string) (UsersView, error) 
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
 		&i.NfcID,
+		&i.FoodPreferenceFreetext,
+		&i.AllergyFreetext,
 		&i.Membership,
 	)
 	return i, err
 }
 
 const getUsersByIDs = `-- name: GetUsersByIDs :many
-select kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+select kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 from users_view
 where kthid = any($1::text[]) or nfc_id = any($1::text[])
 `
@@ -631,6 +635,8 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, ids []string) ([]UsersView,
 			&i.FirstNameChangeRequest,
 			&i.FamilyNameChangeRequest,
 			&i.NfcID,
+			&i.FoodPreferenceFreetext,
+			&i.AllergyFreetext,
 			&i.Membership,
 		); err != nil {
 			return nil, err
@@ -682,7 +688,7 @@ func (q *Queries) ListAccountRequests(ctx context.Context) ([]AccountRequest, er
 }
 
 const listUsers = `-- name: ListUsers :many
-select kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+select kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 from users_view
 where case
     when $3::text = '' then true
@@ -738,6 +744,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]UsersVi
 			&i.FirstNameChangeRequest,
 			&i.FamilyNameChangeRequest,
 			&i.NfcID,
+			&i.FoodPreferenceFreetext,
+			&i.AllergyFreetext,
 			&i.Membership,
 		); err != nil {
 			return nil, err
@@ -751,7 +759,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]UsersVi
 }
 
 const listUsersWithNameChangeRequests = `-- name: ListUsersWithNameChangeRequests :many
-select kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+select kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 from users_view
 where first_name_change_request != '' or family_name_change_request != ''
 `
@@ -776,6 +784,8 @@ func (q *Queries) ListUsersWithNameChangeRequests(ctx context.Context) ([]UsersV
 			&i.FirstNameChangeRequest,
 			&i.FamilyNameChangeRequest,
 			&i.NfcID,
+			&i.FoodPreferenceFreetext,
+			&i.AllergyFreetext,
 			&i.Membership,
 		); err != nil {
 			return nil, err
@@ -816,7 +826,7 @@ const userSetEmail = `-- name: UserSetEmail :one
 update users_view
 set email = $2
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 `
 
 type UserSetEmailParams struct {
@@ -838,6 +848,8 @@ func (q *Queries) UserSetEmail(ctx context.Context, arg UserSetEmailParams) (Use
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
 		&i.NfcID,
+		&i.FoodPreferenceFreetext,
+		&i.AllergyFreetext,
 		&i.Membership,
 	)
 	return i, err
@@ -847,7 +859,7 @@ const userSetNFCID = `-- name: UserSetNFCID :one
 update users_view
 set nfc_id = coalesce($2, nfc_id)
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 `
 
 type UserSetNFCIDParams struct {
@@ -869,6 +881,8 @@ func (q *Queries) UserSetNFCID(ctx context.Context, arg UserSetNFCIDParams) (Use
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
 		&i.NfcID,
+		&i.FoodPreferenceFreetext,
+		&i.AllergyFreetext,
 		&i.Membership,
 	)
 	return i, err
@@ -879,7 +893,7 @@ update users_view
 set first_name_change_request = $2,
     family_name_change_request = $3
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 `
 
 type UserSetNameChangeRequestParams struct {
@@ -902,6 +916,8 @@ func (q *Queries) UserSetNameChangeRequest(ctx context.Context, arg UserSetNameC
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
 		&i.NfcID,
+		&i.FoodPreferenceFreetext,
+		&i.AllergyFreetext,
 		&i.Membership,
 	)
 	return i, err
@@ -911,7 +927,7 @@ const userSetYear = `-- name: UserSetYear :one
 update users_view
 set year_tag = coalesce($2, year_tag)
 where kthid = $1
-returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, membership
+returning kthid, ug_kthid, email, first_name, family_name, year_tag, webauthn_id, first_name_change_request, family_name_change_request, nfc_id, food_preference_freetext, allergy_freetext, membership
 `
 
 type UserSetYearParams struct {
@@ -933,6 +949,8 @@ func (q *Queries) UserSetYear(ctx context.Context, arg UserSetYearParams) (Users
 		&i.FirstNameChangeRequest,
 		&i.FamilyNameChangeRequest,
 		&i.NfcID,
+		&i.FoodPreferenceFreetext,
+		&i.AllergyFreetext,
 		&i.Membership,
 	)
 	return i, err

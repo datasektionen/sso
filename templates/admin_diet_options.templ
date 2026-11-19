@@ -1,0 +1,132 @@
+package templates
+
+import "github.com/datasektionen/sso/models"
+
+templ AdminDietOptions(
+	allFoodPreferences []models.FoodPreference,
+	allAllergiesFlat []models.Allergy,
+) {
+	@page(nav()) {
+		@AdminFoodPreferences(allFoodPreferences)
+		@AdminAllergies(allAllergiesFlat)
+	}
+}
+
+templ AdminFoodPreferences(allFoodPreferences []models.FoodPreference) {
+	<section>
+	    <h2 class="text-xl text-ceriselight">Food preferences</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Name (sv)</th>
+					<th>Name (en)</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, fp := range allFoodPreferences {
+					{{ formID := "food-preference-" + fp.ID.String() }}
+					<tr>
+						<td><input form={formID} value={fp.NameSv} name="name-sv"/></td>
+						<td><input form={formID} value={fp.NameEn} name="name-en"/></td>
+						<td>
+							<form id={formID} hx-put={"/admin/diet-options/food-preferences/" + fp.ID.String()} hx-target="closest section" hx-swap="outerHTML">
+								<button class={button} type="submit">Save changes</button>
+							</form>
+						</td>
+						<td><button class={button} type="button" hx-delete={"/admin/diet-options/food-preferences/" + fp.ID.String()} hx-target="closest section" hx-swap="outerHTML">Delete</button></td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<form hx-post="/admin/diet-options/food-preferences" hx-swap="outerHTML" hx-target="closest section">
+			<h3 class="text-lg text-ceriselight mt-2">Create new food preference</h3>
+			<label>
+				Name (sv):
+				<input class="border" name="name-sv" required />
+			</label>
+			<label>
+				Name (en):
+				<input class="border" name="name-en" required />
+			</label>
+			<button class={button} type="submit">Create food preference</button>
+		</form>
+	</section>
+}
+
+templ AdminAllergies(allAllergiesFlat []models.Allergy) {
+	<section>
+	    <h2 class="text-xl text-ceriselight mt-4">Allergies</h2>
+		<span>Depending on the allergy, you can configure the three options show below. For example, an allergy which can never be airborne does not need to ask the user if their allergy is airborne, so "Show Airborne" can be disabled.</span>
+		<ul class="py-2">
+			<li class="px-8 py-1"><strong>Show Raw:</strong> If enabled, the allergy shows an option to specify if the allergy only applies to raw products (råa/otillagade produkter).</li>
+			<li class="px-8 py-1"><strong>Show Severe:</strong> If enabled, the allergy shows an option to specify if the allergy is severe.</li>
+			<li class="px-8 py-1"><strong>Show Airborne:</strong> If enabled, the allergy shows an option to specify if the allergy is airborne.</li>
+		</ul>
+		<table>
+			<thead>
+				<tr>
+					<th>Parent</th>
+					<th>Name (sv)</th>
+					<th>Name (en)</th>
+					<th class="pe-2">Show Raw</th>
+					<th class="pe-2">Show Severe</th>
+					<th class="pe-2">Show Airborne</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, a := range allAllergiesFlat {
+					{{ formID := "allergy-" + a.ID.String() }}
+					<tr>
+						<td><select form={formID} name="parent-id">
+							<option value="null">No parent</option>
+							for _, fp := range allAllergiesFlat {
+								<option selected?={a.ParentID != nil && fp.ID == *a.ParentID} value={fp.ID.String()}>{fp.NameEn} ({fp.NameSv})</option>
+							}
+						</select></td>
+						<td><input form={formID} value={a.NameSv} name="name-sv"/></td>
+						<td><input form={formID} value={a.NameEn} name="name-en"/></td>
+						<td><input form={formID} type="checkbox" checked?={a.ShowRaw} name="show-raw"/></td>
+						<td><input form={formID} type="checkbox" checked?={a.ShowSevere} name="show-severe"/></td>
+						<td><input form={formID} type="checkbox" checked?={a.ShowAirborne} name="show-airborne"/></td>
+						<td>
+							<form id={formID} hx-put={"/admin/diet-options/allergies/" + a.ID.String()} hx-target="closest section" hx-swap="outerHTML">
+								<button class={button} type="submit">Save changes</button>
+							</form>
+						</td>
+						<td><button class={button} type="button" hx-delete={"/admin/diet-options/allergies/" + a.ID.String()} hx-target="closest section" hx-swap="outerHTML">Delete</button></td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<form hx-post="/admin/diet-options/allergies" hx-swap="outerHTML" hx-target="closest section">
+			<h3 class="text-lg text-ceriselight mt-2">Create new allergy</h3>
+			<select name="parent-id">
+				<option value="null">No parent</option>
+				for _, fp := range allAllergiesFlat {
+					<option value={fp.ID.String()}>{fp.NameEn} ({fp.NameSv})</option>
+				}
+			</select>
+			<label>
+				Name (sv):
+				<input class="border" name="name-sv" required />
+			</label>
+			<label>
+				Name (en):
+				<input class="border" name="name-en" required />
+			</label>
+			<label class="me-2">
+				Show Raw:
+				<input type="checkbox" name="show-raw" checked />
+			</label>
+			<label class="me-2">
+				Show Severe:
+				<input type="checkbox" name="show-severe" checked />
+			</label>
+			<label class="me-2">
+				Show Airborne:
+				<input type="checkbox" name="show-airborne" checked />
+			</label>
+			<button class={button} type="submit">Create allergy</button>
+		</form>
+	</section>
+}

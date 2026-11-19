@@ -18,8 +18,8 @@ create view users_view as (
 
 -- +goose Down
 -- +goose StatementBegin
-drop view active_membership;
 drop view users_view;
+drop view active_membership;
 
 create view membership as (
     select kthid, max(type) as "type"
